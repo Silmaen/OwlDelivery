@@ -329,13 +329,15 @@ article, aside, dialog, figcaption, figure, footer, header, hgroup, main, nav, s
 /* -------------- LOWER HEADER -------------- */
 .page-title {
     background-color:var(--theme-page-title-bg-color);
-    padding-top:0.4em;
-    padding-bottom: 0.4em;
+    padding:0.4em 1.4em;
     display: flex;
-    flex-flow: column;
-    align-items: center;
+    flex-flow: column wrap;
+    align-content: center;
     text-align: center;
     width: 100%;
+}
+.page-title .navmenu .current{
+    background:var(--theme-bg-color);
 }
 
 /* ============= MAIN SECTION ============= */

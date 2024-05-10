@@ -7,13 +7,13 @@ from django.conf.urls.static import static
 from django.urls import path
 
 from .views import *
-from .views_user import *
+from .views_admin import *
 
 urlpatterns = [
-    path("", index, name="index"),
-    path("news", index, name="news"),
-    path("documentation", documentation, name="documentation"),
-    path("download", download, name="download"),
-    path("users", users, name="users"),
-    path("user/<int:pk>", modif_user, name="modif_user"),
-] + static(main_settings.MEDIA_URL, document_root=main_settings.MEDIA_ROOT)
+                  path("", news, name="index"),
+                  path("news", news, name="news"),
+                  path("revisions", revisions, name="revisions"),
+                  path("admin", admin, name="admin"),
+                  path("admin/users", users, name="a_users"),
+                  path("admin/user/<int:pk>", modif_user, name="modif_user"),
+              ] + static(main_settings.MEDIA_URL, document_root=main_settings.MEDIA_ROOT)

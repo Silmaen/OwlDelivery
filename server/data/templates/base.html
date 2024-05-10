@@ -42,23 +42,31 @@
             {% endif %}
         </div>
         <nav class="site-nav">
+            {% if has_menu %}
             <ul class="navmenu">
                 <li class="navitem {% if page == 'news' %}current{% endif %}"><A
                         href="{% url 'news' %}">News</A></li>
-                <li class="navitem {% if page == 'documentation' %}current{% endif %}"><A
-                        href="{% url 'documentation' %}">Documentation</A>
-                </li>
-                <li class="navitem {% if page == 'download' %}current{% endif %}"><A href="{% url 'download' %}">Download</A>
+                <li class="navitem {% if page == 'revisions' %}current{% endif %}"><A
+                        href="{% url 'revisions' %}">Revisions</A>
                 </li>
                 {% if perms.auth.view_user %}
-                <li class="navitem {% if page == 'users' %}current{% endif %}"><A href="{% url 'users' %}">Users</A>
+                <li class="navitem {% if page == 'admin' %}current{% endif %}"><A href="{% url 'admin' %}">Admin</A>
                 </li>
                 {% endif %}
             </ul>
+            {% endif %}
         </nav>
     </div>
     <div class="page-title">
         <H1>{{ title }}</H1>
+        {% if has_submenu %}
+        <ul class="navmenu">
+            {% for subpage_info in subpages %}
+            <li class="navitem {% if subpage == subpage_info.name %}current{% endif %}"><A
+                    href="{% url subpage_info.url %}">{{ subpage_info.display_name }}</A></li>
+            {% endfor %}
+        </ul>
+        {% endif %}
     </div>
 </header>
 <div class="content">

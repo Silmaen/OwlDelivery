@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 set -e
+echo "cleaning docker."
+docker builder prune -a -f
+docker system prune -a -f
 echo "building the docker image."
 version=$(cat VERSION)
 branch=$(git rev-parse --abbrev-ref HEAD)

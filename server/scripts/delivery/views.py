@@ -4,7 +4,7 @@ Package views
 
 from pathlib import Path
 
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 
 root = Path(__file__).resolve().parent.parent.parent
 with open(root / "VERSION") as fp:
@@ -13,7 +13,7 @@ SiteVersion = lines[0].strip()
 SiteHash = lines[1].strip()
 
 
-def index(request):
+def news(request):
     """
 
     :param request:
@@ -21,16 +21,18 @@ def index(request):
     """
     return render(
         request,
-        "delivery/index.html",
+        "delivery/news.html",
         {
             "title": "news",
             "page": "news",
+            "has_menu": True,
+            "has_submenu": False,
             "version": {"number": SiteVersion, "hash": SiteHash},
         },
     )
 
 
-def documentation(request):
+def revisions(request):
     """
 
     :param request:
@@ -38,27 +40,31 @@ def documentation(request):
     """
     return render(
         request,
-        "delivery/documentation.html",
+        "delivery/revisions.html",
         {
-            "title": "documentation",
-            "page": "documentation",
+            "title": "revisions",
+            "page": "revisions",
+            "has_menu": True,
+            "has_submenu": False,
             "version": {"number": SiteVersion, "hash": SiteHash},
         },
     )
 
 
-def download(request):
+def admin(request):
     """
 
     :param request:
     :return:
     """
-    return render(
-        request,
-        "delivery/download.html",
-        {
-            "title": "download",
-            "page": "download",
-            "version": {"number": SiteVersion, "hash": SiteHash},
-        },
-    )
+    return redirect("a_users")
+    # return render(
+    #     request,
+    #     "delivery/admin.html",
+    #     {
+    #         "title": "admin",
+    #         "page": "admin",
+    #         "has_menu": True,
+    #         "version": {"number": SiteVersion, "hash": SiteHash},
+    #     },
+    # )

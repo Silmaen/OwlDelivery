@@ -4,6 +4,12 @@ from django.shortcuts import render, redirect
 from .db_locking import locker
 from .views import SiteVersion, SiteHash
 
+subpages = [
+    {"name": "news", "url": "news", "display_name": "News"},
+    {"name": "revisions", "url": "revisions", "display_name": "Revisions"},
+    {"name": "users", "url": "a_users", "display_name": "Users"},
+]
+
 
 def users(request):
     """
@@ -35,8 +41,12 @@ def users(request):
         request,
         "delivery/users.html",
         {
-            "title": "users",
-            "page": "users",
+            "title": "admin",
+            "page": "admin",
+            "subpage": "users",
+            "subpages": subpages,
+            "has_menu": True,
+            "has_submenu": True,
             "version": {"number": SiteVersion, "hash": SiteHash},
             "users": p_users,
         },
@@ -97,4 +107,4 @@ def modif_user(request, pk):
         #     else:
         #         user.user_permissions.add(ido)
         #     user.save()
-    return redirect("users")
+    return redirect("a_users")
