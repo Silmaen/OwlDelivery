@@ -38,6 +38,7 @@ services:
     - EMAIL_USE_TLS:"True"           # If server uses TLS.
     - EMAIL_USER:"admin"             # Email user login.
     - EMAIL_PASSWD:"MyBigPassW0rd"   # Email user password.
+    - DEBUG_MODE:"False"             # Set Django in debug mode.
 networks:
   default:
     name: proxyed_servers

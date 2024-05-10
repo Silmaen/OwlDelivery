@@ -21,7 +21,7 @@ def index(request):
     """
     return render(
         request,
-        "index.html",
+        "delivery/index.html",
         {
             "title": "news",
             "page": "news",
@@ -38,7 +38,7 @@ def documentation(request):
     """
     return render(
         request,
-        "documentation.html",
+        "delivery/documentation.html",
         {
             "title": "documentation",
             "page": "documentation",
@@ -55,7 +55,7 @@ def download(request):
     """
     return render(
         request,
-        "download.html",
+        "delivery/download.html",
         {
             "title": "download",
             "page": "download",

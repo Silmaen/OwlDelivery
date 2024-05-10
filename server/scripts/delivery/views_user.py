@@ -33,7 +33,7 @@ def users(request):
         )
     return render(
         request,
-        "users.html",
+        "delivery/users.html",
         {
             "title": "users",
             "page": "users",

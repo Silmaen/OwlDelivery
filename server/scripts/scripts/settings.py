@@ -24,7 +24,7 @@ SITE_DIR = BASE_DIR.parent
 SECRET_KEY = "django-insecure-=mnlaqamlk--(f7q19^w(6q0cfx6q&t@_^78r=9cyqwn9ux(t*"
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get("DEBUG_MODE", "True") == "True"
 #
 ALLOWED_HOSTS = ["*"]
 CSRF_TRUSTED_ORIGINS = ["http://127.0.0.1", "http://localhost"]
@@ -167,3 +167,9 @@ EMAIL_USE_TLS = os.environ.get("EMAIL_USE_TLS", "True") == "True"
 # Ici, elles sont écrites clairement à des fins d'illustration seulement.
 EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "")
 EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
+
+# error handlers
+handler400 = "delivery.views_error.bad_request"
+handler403 = "delivery.views_error.permission_denied"
+handler404 = "delivery.views_error.page_not_found"
+handler500 = "delivery.views_error.server_error"
