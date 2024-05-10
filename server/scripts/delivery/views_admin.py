@@ -5,13 +5,13 @@ from .db_locking import locker
 from .views import SiteVersion, SiteHash
 
 subpages = [
-    {"name": "news", "url": "news", "display_name": "News"},
-    {"name": "revisions", "url": "revisions", "display_name": "Revisions"},
+    {"name": "news", "url": "a_news", "display_name": "News"},
+    {"name": "revisions", "url": "a_revisions", "display_name": "Revisions"},
     {"name": "users", "url": "a_users", "display_name": "Users"},
 ]
 
 
-def users(request):
+def admin_users(request):
     """
 
     :param request:
@@ -39,7 +39,7 @@ def users(request):
         )
     return render(
         request,
-        "delivery/users.html",
+        "delivery/admin/users.html",
         {
             "title": "admin",
             "page": "admin",
@@ -53,7 +53,7 @@ def users(request):
     )
 
 
-def modif_user(request, pk):
+def admin_modif_user(request, pk):
     """
 
     :param request:
@@ -108,3 +108,49 @@ def modif_user(request, pk):
         #         user.user_permissions.add(ido)
         #     user.save()
     return redirect("a_users")
+
+
+def admin_news(request):
+    """
+
+    :param request:
+    :return:
+    """
+    if not request.user.is_authenticated:
+        return redirect("/")
+    return render(
+        request,
+        "delivery/admin/news.html",
+        {
+            "title": "admin",
+            "page": "admin",
+            "subpage": "news",
+            "subpages": subpages,
+            "has_menu": True,
+            "has_submenu": True,
+            "version": {"number": SiteVersion, "hash": SiteHash},
+        },
+    )
+
+
+def admin_revisions(request):
+    """
+
+    :param request:
+    :return:
+    """
+    if not request.user.is_authenticated:
+        return redirect("/")
+    return render(
+        request,
+        "delivery/admin/revisions.html",
+        {
+            "title": "admin",
+            "page": "admin",
+            "subpage": "revisions",
+            "subpages": subpages,
+            "has_menu": True,
+            "has_submenu": True,
+            "version": {"number": SiteVersion, "hash": SiteHash},
+        },
+    )

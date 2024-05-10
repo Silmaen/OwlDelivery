@@ -329,7 +329,7 @@ article, aside, dialog, figcaption, figure, footer, header, hgroup, main, nav, s
 /* -------------- LOWER HEADER -------------- */
 .page-title {
     background-color:var(--theme-page-title-bg-color);
-    padding:0.4em 1.4em;
+    padding-top:0.4em;
     display: flex;
     flex-flow: column wrap;
     align-content: center;
