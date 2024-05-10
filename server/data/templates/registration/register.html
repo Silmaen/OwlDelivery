@@ -1,0 +1,56 @@
+{% extends 'registration/base_registration.html' %}
+
+{%block mainsection %}
+<div class="Article user_form">
+    <div class="ArticleHeader">
+        <h4>New user</h4>
+    </div>
+    <div class="ArticleContent user_form">
+        <p>Please fill this form to be registered.</p>
+        {% if form.errors %}
+        {% for field in form %}
+        {% for error in field.errors %}
+        <div class="alert alert-danger">
+            <strong>{{ error|escape }}</strong>
+        </div>
+        {% endfor %}
+        {% endfor %}
+        {% for error in form.non_field_errors %}
+        <div class="alert alert-danger">
+            <strong>{{ error|escape }}</strong>
+        </div>
+        {% endfor %}
+        {% endif %}
+        {% if profile_form.errors %}
+        {% for field in profile_form %}
+        {% for error in field.errors %}
+        <div class="alert alert-danger">
+            <strong>{{ error|escape }}</strong>
+        </div>
+        {% endfor %}
+        {% endfor %}
+        {% for error in profile_form.non_field_errors %}
+        <div class="alert alert-danger">
+            <strong>{{ error|escape }}</strong>
+        </div>
+        {% endfor %}
+        {% endif %}
+        <form method="post">
+
+            {% csrf_token %}
+            {{ form.as_p }}
+            {{ profile_form.as_p }}
+            <button id="submit" class="button">
+                <span class="material-symbols-outlined">person_add</span>
+                Register
+            </button>
+        </form>
+    </div>
+    <div class="ArticleFooter">
+        <a class="button" href="{% url 'login' %}">
+            <span class="material-symbols-outlined">arrow_circle_left</span>
+            Back
+        </a>
+    </div>
+</div>
+{% endblock %}
