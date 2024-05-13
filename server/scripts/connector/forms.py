@@ -1,10 +1,13 @@
-"""Fichier UserProfile.users.forms.py les formulaires utilisateur"""
+"""
+Forms for user.
+"""
+
 from django.contrib.auth.forms import UserCreationForm, UserChangeForm
 
 
 class CustomUserCreationForm(UserCreationForm):
     """
-    Formulaire pour la création d’un utilisateur.
+    Form for user creation.
     """
 
     class Meta(UserCreationForm.Meta):
@@ -16,7 +19,7 @@ class CustomUserCreationForm(UserCreationForm):
 
     def save(self, commit=True):
         """
-        Fonction de sauvegarde.
+        Save function.
         """
         user = super(CustomUserCreationForm, self).save(commit=False)
         user.first_name = self.cleaned_data["first_name"]
@@ -29,7 +32,7 @@ class CustomUserCreationForm(UserCreationForm):
 
 class CustomUserChangeForm(UserChangeForm):
     """
-    Formulaire pour la modification de user
+    Form for user modification.
     """
 
     class Meta(UserChangeForm.Meta):

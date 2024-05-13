@@ -49,7 +49,7 @@
                 <li class="navitem {% if page == 'revisions' %}current{% endif %}"><A
                         href="{% url 'revisions' %}">Revisions</A>
                 </li>
-                {% if perms.auth.view_user %}
+                {% if is_admin %}
                 <li class="navitem {% if page == 'admin' %}current{% endif %}"><A href="{% url 'admin' %}">Admin</A>
                 </li>
                 {% endif %}
@@ -92,6 +92,12 @@
         <span class="material-symbols-outlined">grading</span>
         Icons from Material Design Icon.
     </A>
+    {% if user.is_staff and staff_active %}
+    <a class="button" href="staff">
+        <span class="material-symbols-outlined">shield_person</span>
+        staff
+    </a>
+    {% endif %}
 
 </footer>
 {% block script_content %}

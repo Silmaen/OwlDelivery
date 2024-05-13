@@ -27,6 +27,9 @@
     --theme-btn-color-hv-danger: #000;
     --theme-btn-bg-color-danger: #840000;
     --theme-btn-bg-color-hv-danger: #d94545;
+    --theme-markdown_bg: #565656;
+    --theme-comment_bg: #565656;
+    --theme-comment_before_bg: #565656;
     --font-family-sans-serif: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans",sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol","Noto Color Emoji";
     --font-family-monospace: SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;
 }
@@ -41,6 +44,7 @@ h1,h2,h3,h4,h5,h6 {
     font-weight:500;
     font-family: sans-serif;
     text-transform: uppercase;
+    display: flex;
 }
 p {
   margin-top: 0;
@@ -58,6 +62,9 @@ body {
     text-align: left;
     background-color: var(--theme-bg-color);
     line-height: 1.5;
+}
+span {
+    font-size: 1em;
 }
 h1 {font-size: 1.5em;}
 h2 {font-size: 1.2em;}
@@ -344,10 +351,18 @@ article, aside, dialog, figcaption, figure, footer, header, hgroup, main, nav, s
 .content {
     flex-grow: 1;
     padding: 1.7em;
-    align-content: center;
-    flex-direction: column;
+    align-items: center;
+    flex-flow: column wrap;
 }
 
+.bottom-section {
+    display: flex;
+    flex-flow: column nowrap;
+    padding: 1.7em;
+    padding-bottom:4.7rem;
+    flex-grow:1;
+    width: 100%;
+}
 
 /* ============= FOOTER SECTION ============= */
 .footer {

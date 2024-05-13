@@ -50,6 +50,21 @@
     flex-direction: row;
     justify-content: space-between;
 }
+.ArticleAuthor {
+    display:flex;
+    flex-flow: row nowrap;
+    justify-content: flex-start;
+}
+.ArticleComments {
+    display:flex;
+    flex-flow: row nowrap;
+    justify-content: center;
+}
+.ArticleDate {
+    display:flex;
+    flex-flow: row nowrap;
+    justify-content: flex-end;
+}
 
 /* Page de packages */
 
@@ -190,4 +205,71 @@
 }
 .user-tab {
     content-align: center;
+}
+
+.Comments {
+    margin: 1em;
+    padding: 1em;
+    border-radius: 0.5em;
+    background-color: var(--theme-comment_bg);
+    display: flex;
+    flex-flow: column nowrap;
+    font-size: 0.8em;
+}
+.comment::before {
+    position: relative;
+    content:"";
+    height: 2px;
+    left:5%;
+    width:90%;
+    background-color:var(--theme-comment_before_bg);
+    display: inline-block;
+}
+.c_head {
+    display: flex;
+    flex-flow: row nowrap;
+    align-content: center;
+    align-items: center;
+    justify-content: space-between;
+}
+.c_body {
+
+}
+.c_author {
+    display: flex;
+    flex-flow: row nowrap;
+    justify-content: flex-start;
+}
+.c_date {
+    display: flex;
+    flex-flow: row nowrap;
+    justify-content: flex-end;
+}
+
+.comment-subbing{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+}
+.comment-subbing form{
+    min-width: 50%;
+    max-width: 100%;
+    padding: 1em;
+}
+.markdownx{
+    display: flex;
+    flex-flow: row nowrap;
+    max-width: 100%
+}
+.markdownx textarea{
+    width: 50%
+}
+
+.markdownx-preview{
+    width:50%;
+    margin: 1em;
+    padding-left:1em;
+    background-color: var(--theme-markdown_bg);
+    border-radius: 0.5em;
 }

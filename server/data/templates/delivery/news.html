@@ -1,12 +1,57 @@
 {% extends 'base.html' %}
 
 {% block content %}
+
+{% block mainsection %}
+{% for news_item in news_list %}
+
 <div class="Article">
     <div class="ArticleHeader">
-        <h3>Welcome to Owl Game Engine</h3>
+        <a href="{% url 'news_detail' news_item.id %}"><h1>{{ news_item.title }}</h1></a>
     </div>
     <div class="ArticleContent">
-        <p>You will be able to find here all informations about Owl Game engine.</p>
+        {{ news_item.content_md|safe }}
     </div>
+    <div class="ArticleFooter">
+        <div class="ArticleAuthor">
+            <span class="material-symbols-outlined">account_circle</span>
+            {{ news_item.author }}
+        </div>
+        <div class="ArticleComments">
+            <span class="material-symbols-outlined">comment</span>
+            {{ news_item.nb_comments }}
+        </div>
+        <div class="ArticleDate">
+            <span class="material-symbols-outlined">acute</span>
+            {{ news_item.date }}
+        </div>
+    </div>
+    {% if news_item.nb_comments > 0 %}
+    <div class="Comments">
+        {% for cc in news_item.get_comments %}
+        <div class="comment">
+            <div class="c_head">
+                <div class="c_author">
+                    <span class="material-symbols-outlined">account_circle</span>
+                    {{cc.author}}
+                </div>
+                <div class="c_date">
+                    <span class="material-symbols-outlined">acute</span>
+                    {{cc.date}}
+                </div>
+            </div>
+            <div class="c_body">{{cc.content_md| safe}}</div>
+        </div>
+        {% endfor%}
+    </div>
+    {% endif %}
 </div>
+{% empty %}
+<div class="Article">
+    No news to display.
+</div>
+{% endfor %}
+
+{% endblock %}
+
 {% endblock %}

@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+{%block mainsection %}
+<div class="Article Article_detail">
+    <div class="ArticleHeader">
+        <a href="{% url 'index' %}"><h1>{{ news_item.title }}</h1></a>
+    </div>
+    <div class="ArticleContent">
+        {{ news_item.content_all_md|safe }}
+    </div>
+    <div class="ArticleFooter">
+        <div class="ArticleAuthor">
+            <span class="material-symbols-outlined">account_circle</span>
+            {{ news_item.author }}
+        </div>
+        <div class="ArticleComments">
+            <span class="material-symbols-outlined">comment</span>
+            {{ news_item.nb_comments }}
+        </div>
+        <div class="ArticleDate">
+            <span class="material-symbols-outlined">acute</span>
+            {{ news_item.date }}
+        </div>
+    </div>
+    {% if news_item.nb_comments > 0 %}
+    <div class="Comments">
+        {% for cc in news_item.get_all_active_comments %}
+        <div class="comment">
+            <div class="c_head">
+                <div class="c_author ">
+                    <span class="material-symbols-outlined">account_circle</span>
+                    {{cc.author}}
+                </div>
+                <div class="c_date">
+                    <span class="material-symbols-outlined">acute</span>
+                    {{cc.date}}
+                </div>
+            </div>
+            <div class="c_body">
+                {{cc.content_all_md| safe}}
+            </div>
+        </div>
+        {% endfor%}
+    </div>
+    {% endif %}
+</div>
+{%endblock%}
+
+{%block additionnalsection %}
+{% if user.is_authenticated %}
+<section class="bottom-section">
+    <div class="comment-subbing">
+        {% if new_comment %}
+        {% if new_comment.related_news != news_item %}
+        <div class="alert alert-fail" role="alert">
+            <span class="material-symbols-outlined">error</span>
+            Problem in comment and cannot be saved.
+        </div>
+        {% else %}
+        {% if new_comment.active %}
+        <div class="alert alert-success" role="alert">
+            <span class="material-symbols-outlined">download_done</span>
+            You are moderator so the comment is directly visible.
+        </div>
+        {% else %}
+        <div class="alert alert-success" role="alert">
+            <span class="material-symbols-outlined">approval_delegation</span>
+            Your comment submission has been registered, it will be visible after moderation.
+        </div>
+        {% endif %}
+        {% endif %}
+        {% else %}
+        <h5>
+            <span class="material-symbols-outlined">add_comment</span>
+            Add a comment
+        </h5>
+        <form method="post">
+            {% csrf_token %}
+            {{ comment_form }}
+            <button type="submit" class="button">
+                <span class="material-symbols-outlined">send</span>
+                Submit
+            </button>
+        </form>
+        {{ comment_form.media }}
+        {% endif %}
+    </div>
+</section>
+{% else %}
+<section class="bottom-section">
+    <div class="comment-subbing">
+        <p>You need to be logged in to leave comments.</p>
+        <p>Registration is free. </p>
+        <a class="button" href="{% url 'register' %}"><span class="material-symbols-outlined">person_add</span>Register</a>
+    </div>
+</section>
+{% endif %}
+{% endblock %}
+
+{% endblock %}

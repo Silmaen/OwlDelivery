@@ -7,9 +7,9 @@
         <tr>
             <th>name</th>
             <th>last connexion</th>
-            <!--            <th class="center-content">can view package</th>-->
-            <!--            <th class="center-content">can add package</th>-->
-            <!--            <th class="center-content">can delete package</th>-->
+            <th class="center-content">can add news</th>
+            <th class="center-content">can edit news</th>
+            <th class="center-content">can moderate comment</th>
             <th class="center-content">can view user</th>
             <th class="center-content">can delete users</th>
             <th class="center-content"></th>
@@ -21,16 +21,20 @@
             <td>{{ user_for.name }}</td>
             <td>{{ user_for.last_conn }}</td>
             {% if user_for.admin or not perms.auth.delete_user %}
-            <!--            <td class="center-content">{% if user_for.can_view_pack %}<span class="material-symbols-outlined perm">visibility</span>-->
-            <!--                {% else %}<span class="material-symbols-outlined noperm">visibility_off</span>{% endif %}-->
-            <!--            </td>-->
-            <!--            <td class="center-content">{% if user_for.can_add_pack %}<span class="material-symbols-outlined perm">file_upload</span>-->
-            <!--                {% else %}<span class="material-symbols-outlined noperm">file_upload_off</span>{% endif %}-->
-            <!--            </td>-->
-            <!--            <td class="center-content">{% if user_for.can_delete_pack %}<span class="material-symbols-outlined perm">do_not_disturb</span>-->
-            <!--                {% else %}<span class="material-symbols-outlined noperm">do_not_disturb_off</span>{% endif %}-->
-            <!--            </td>-->
-            <td class="center-content">{% if user_for.can_view_user %}<span class="material-symbols-outlined perm">visibility</span>
+            <td class="center-content">
+                {% if user_for.can_add_news %}<span class="material-symbols-outlined perm">subtitles</span>
+                {% else %}<span class="material-symbols-outlined noperm">subtitles_off</span>{% endif %}
+            </td>
+            <td class="center-content">
+                {% if user_for.can_delete_news %}<span class="material-symbols-outlined perm">edit</span>
+                {% else %}<span class="material-symbols-outlined noperm">edit_off</span>{% endif %}
+            </td>
+            <td class="center-content">
+                {% if user_for.can_delete_comment %}<span class="material-symbols-outlined perm">comment</span>
+                {% else %}<span class="material-symbols-outlined noperm">comments_disabled</span>{% endif %}
+            </td>
+            <td class="center-content">
+                {% if user_for.can_view_user %}<span class="material-symbols-outlined perm">visibility</span>
                 {% else %}<span class="material-symbols-outlined noperm">visibility_off</span>{% endif %}
             </td>
             <td class="center-content">{% if user_for.can_delete_user %}<span
@@ -38,43 +42,41 @@
                 {% else %}<span class="material-symbols-outlined noperm">edit_off</span>{% endif %}
             </td>
             {% else %}
-            <!--            <td class="center-content">-->
-            <!--                <form method="post" action="{% url 'modif_user' user_for.pk %}">-->
-            <!--                    {% csrf_token %}-->
-            <!--                    <input type="hidden" value="toggle_pack_view" name="action"/>-->
-            <!--                    <button type="submit">-->
-            <!--                        {% if user_for.can_view_pack %}<span class="material-symbols-outlined perm">visibility</span>-->
-            <!--                        {% else %}<span class="material-symbols-outlined noperm">visibility_off</span>{% endif %}-->
-            <!--                    </button>-->
-            <!--                </form>-->
-
-            <!--            </td>-->
-            <!--            <td class="center-content">-->
-            <!--                <form method="post" action="{% url 'modif_user' user_for.pk %}">-->
-            <!--                    {% csrf_token %}-->
-            <!--                    <input type="hidden" value="toggle_pack_add" name="action"/>-->
-            <!--                    <button type="submit">-->
-            <!--                        {% if user_for.can_add_pack %}<span class="material-symbols-outlined perm">file_upload</span>-->
-            <!--                        {% else %}<span class="material-symbols-outlined noperm">file_upload_off</span>{% endif %}-->
-            <!--                    </button>-->
-            <!--                </form>-->
-
-            <!--            </td>-->
-            <!--            <td class="center-content">-->
-
-            <!--                <form method="post" action="{% url 'modif_user' user_for.pk %}">-->
-            <!--                    {% csrf_token %}-->
-            <!--                    <input type="hidden" value="toggle_pack_delete" name="action"/>-->
-            <!--                    <button type="submit">-->
-            <!--                        {% if user_for.can_delete_pack %}<span-->
-            <!--                            class="material-symbols-outlined perm">do_not_disturb</span>-->
-            <!--                        {% else %}<span class="material-symbols-outlined noperm">do_not_disturb_off</span>{% endif %}-->
-            <!--                    </button>-->
-            <!--                </form>-->
-
-            <!--            </td>-->
             <td class="center-content">
+                <form method="post" action="{% url 'modif_user' user_for.pk %}">
+                    {% csrf_token %}
+                    <input type="hidden" value="toggle_news_add" name="action"/>
+                    <button type="submit">
+                        {% if user_for.can_add_news %}<span class="material-symbols-outlined perm">subtitles</span>
+                        {% else %}<span class="material-symbols-outlined noperm">subtitles_off</span>{% endif %}
+                    </button>
+                </form>
+            </td>
 
+            <td class="center-content">
+                <form method="post" action="{% url 'modif_user' user_for.pk %}">
+                    {% csrf_token %}
+                    <input type="hidden" value="toggle_news_delete" name="action"/>
+                    <button type="submit">
+                        {% if user_for.can_delete_news %}<span class="material-symbols-outlined perm">edit</span>
+                        {% else %}<span class="material-symbols-outlined noperm">edit_off</span>{% endif %}
+                    </button>
+                </form>
+            </td>
+
+            <td class="center-content">
+                <form method="post" action="{% url 'modif_user' user_for.pk %}">
+                    {% csrf_token %}
+                    <input type="hidden" value="toggle_comment_delete" name="action"/>
+                    <button type="submit">
+                        {% if user_for.can_delete_comment %}<span
+                            class="material-symbols-outlined perm">comment</span>
+                        {% else %}<span class="material-symbols-outlined noperm">comments_disabled</span>{% endif %}
+                    </button>
+                </form>
+            </td>
+
+            <td class="center-content">
                 <form method="post" action="{% url 'modif_user' user_for.pk %}">
                     {% csrf_token %}
                     <input type="hidden" value="toggle_user_view" name="action"/>
@@ -83,10 +85,9 @@
                         {% else %}<span class="material-symbols-outlined noperm">visibility_off</span>{% endif %}
                     </button>
                 </form>
-
             </td>
-            <td class="center-content">
 
+            <td class="center-content">
                 <form method="post" action="{% url 'modif_user' user_for.pk %}">
                     {% csrf_token %}
                     <input type="hidden" value="toggle_user_delete" name="action"/>
@@ -95,8 +96,8 @@
                         {% else %}<span class="material-symbols-outlined noperm">edit_off</span>{% endif %}
                     </button>
                 </form>
-
             </td>
+
             <td>
                 <form method="post" action="{% url 'modif_user' user_for.pk %}">
                     {% csrf_token %}

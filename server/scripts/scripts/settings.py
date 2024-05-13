@@ -116,13 +116,16 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/4.2/topics/i18n/
 
-LANGUAGE_CODE = "en"
+LANGUAGE_CODE = "en-us"
 
 TIME_ZONE = "CET"
+DATETIME_FORMAT = "Y/m/d H:i"
+DATE_FORMAT = "Y/m/d"
+TIME_FORMAT = "H:i"
 
 USE_I18N = True
 
-USE_L10N = True
+USE_L10N = False
 
 USE_TZ = True
 
@@ -173,3 +176,5 @@ handler400 = "delivery.views_error.bad_request"
 handler403 = "delivery.views_error.permission_denied"
 handler404 = "delivery.views_error.page_not_found"
 handler500 = "delivery.views_error.server_error"
+
+ENABLE_STAFF = os.environ.get("ENABLE_STAFF", "").lower() in ["on", "true", "yes"]

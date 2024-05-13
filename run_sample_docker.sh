@@ -13,6 +13,7 @@ image="${registry}/${image_name}:${tag}"
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
 env="-e DOMAIN_NAME=example.com -e ADMIN_NAME=admin -e ADMIN_PASSWD=admin -e DEBUG_MODE=True"
+env="${env} -e ENABLE_STAFF=yes"
 
 echo ">>> docker run --rm -v \"${SCRIPT_DIR}/sample_data\":/data ${env} -p 80:80 ${image}"
 docker run --rm -v "${SCRIPT_DIR}/sample_data":/data ${env} -p 80:80 ${image}

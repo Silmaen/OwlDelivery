@@ -15,9 +15,14 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 
+from django.conf import settings
+from django.contrib import admin
 from django.urls import path, include
 
 urlpatterns = [
     path("", include("delivery.urls")),
     path("profile/", include("connector.urls")),
+    path("markdownx/", include("markdownx.urls")),  # for markdown decode.
 ]
+if settings.ENABLE_STAFF:
+    urlpatterns.append(path("staff/", admin.site.urls, name="staff"))
