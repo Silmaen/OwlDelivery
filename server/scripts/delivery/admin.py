@@ -8,6 +8,9 @@ from markdownx.admin import MarkdownxModelAdmin
 from delivery.models import *
 
 
+# --------------------- The news -------------------------------------
+
+
 class NewsEntryAdmin(MarkdownxModelAdmin):
     """
     Admin page for news
@@ -71,3 +74,36 @@ class NewsCommentAdmin(MarkdownxModelAdmin):
 
 admin.site.register(NewsEntry, NewsEntryAdmin)
 admin.site.register(NewsComment, NewsCommentAdmin)
+
+
+# --------------------- The files -------------------------------------
+
+
+class RevisionItemEntryAdmin(admin.ModelAdmin):
+    """
+    Admin model for Revision Items
+    """
+
+    list_display = ("hash", "name", "flavor_name", "date", "rev_type")
+    list_filter = ("date", "hash")
+    ordering = (
+        "-date",
+        "rev_type",
+    )
+    # Configuration of edit page
+    fieldsets = (
+        # Fieldset 1 : meta-info (hash, author…)
+        (
+            "Name & type",
+            {
+                "fields": ("name", "rev_type", "flavor_name"),
+            },
+        ),
+        # Fieldset 2 : revision info (title, author…)
+        ("Revision info", {"fields": ("hash", "branch", "date")}),
+        # Fieldset 3 : The file
+        ("File", {"fields": ("package",)}),
+    )
+
+
+admin.site.register(RevisionItemEntry, RevisionItemEntryAdmin)

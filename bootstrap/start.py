@@ -15,6 +15,7 @@ server_data_upload = server_data / "_upload"
 server_scripts = server_path / "scripts"
 server_log = server_data / "log"
 fallback_run = False
+migrations_dir = server_data / "migrations"
 
 config = {
     "puid": 1000,
@@ -322,11 +323,29 @@ def check_admin_user():
     return True
 
 
+def dump_migrations(src: Path, dest: Path):
+    """
+    Dump or restore migration files
+    :param src:
+    :param dest:
+    :return:
+    """
+    dest.mkdir(parents=True, exist_ok=True)
+    for file in src.glob("**/migrations/*.py"):
+        if file.is_file():
+            destination = dest / file.relative_to(src)
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(file, destination)
+
+
 def do_migrations():
     """
     Execute the migrations
     """
     print("Checking migrations")
+    if migrations_dir.exists():
+        print("Restoring previous migrations")
+        dump_migrations(migrations_dir, server_path)
     os.chdir(server_scripts)
     if not exec_cmd("python3 manage.py makemigrations"):
         print("ERROR: Error making migrations.", file=stderr)
@@ -334,6 +353,8 @@ def do_migrations():
     if not exec_cmd("python3 manage.py migrate"):
         print("ERROR: Error migrating.", file=stderr)
         return False
+    print("Saving migrations")
+    dump_migrations(server_path, migrations_dir)
     print("Migrations OK.")
     return True
 

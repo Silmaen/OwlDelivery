@@ -36,3 +36,17 @@ class NewsCommentForm(forms.ModelForm):
 
         model = NewsComment
         fields = ("content",)
+
+
+class RevisionItemEntryForm(forms.ModelForm):
+    """
+    Form for Revision entry.
+    """
+
+    class Meta:
+        """
+        Meta information
+        """
+
+        model = RevisionItemEntry
+        fields = ("hash", "branch", "name", "flavor_name", "date", "rev_type")

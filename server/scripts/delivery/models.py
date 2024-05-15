@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from django.conf import settings
 from django.db import models
 from django.utils import timezone
@@ -128,3 +130,60 @@ class NewsComment(models.Model):
 
     def __str__(self):
         return str(self.author) + "_" + str(self.date)
+
+
+def get_upload_to(instance, filename):
+    return f"packages/{instance.branch}/{instance.hash}/{filename}"
+
+
+RevType = (("d", "doc"), ("e", "engine"), ("a", "application"))
+
+
+class RevisionItemEntry(models.Model):
+    """
+    Model for a file entry
+    """
+
+    hash = models.CharField(max_length=12, verbose_name="Revision hash")
+    branch = models.CharField(
+        max_length=50, default="main", verbose_name="Revision branch"
+    )
+    name = models.CharField(max_length=50, verbose_name="Revision name", default="")
+    flavor_name = models.CharField(
+        max_length=50, verbose_name="Revision's flavor name", default=""
+    )
+    date = models.DateTimeField(default=timezone.now, verbose_name="date of build")
+    rev_type = models.CharField(
+        max_length=1, choices=RevType, verbose_name="Type of item"
+    )
+    package = models.FileField(upload_to=get_upload_to, verbose_name="Package file")
+
+    class Meta:
+        """
+        Metadata for the revision item.
+        """
+
+        verbose_name = "Revision item"
+        ordering = ["-date"]
+
+    def get_pretty_size_display(self):
+        """
+
+        :return:
+        """
+        if not Path(self.package.path).exists():
+            return f"(void)"
+        raw_size = Path(self.package.path).stat().st_size
+        for unite in ["", "K", "M", "G", "T"]:
+            if raw_size < 1024.0:
+                break
+            raw_size /= 1024.0
+        return f"{raw_size:.2f} {unite}"
+
+    def get_pretty_type(self):
+        if self.rev_type == "d":
+            return "doc"
+        elif self.rev_type == "e":
+            return "engine"
+        elif self.rev_type == "a":
+            return "application"

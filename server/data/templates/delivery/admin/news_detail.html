@@ -1,82 +1,103 @@
 {% extends 'base.html' %}
+{% load static %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'css/folding_box.css' %}"/>
+{% endblock %}
 
 {% block content %}
-<div class="Article">
-    <div class="ArticleHeader">
-        <h2>Modify the news</h2>
-    </div>
-    <div class="ArticleContent">
-        {% if new_news %}
-        <p>The news has been modified.</p>
-        {% else %}
-        <form method="post">
-            {% csrf_token %}
-            {{ news_form }}
-            {% if perms.delivery.delete_newsentry %}
-            <button type="submit" class="button">
-                <span class="material-symbols-outlined">send</span>
-                Submit
-            </button>
+<div class="PackageList">
+    <div class="Package  folding_box" id="news_modif">
+        <div class="PackageHeader folding_box_header {% if new_news %}open{% endif %}"
+             onclick="toggleContent('news_modif')">
+            <div class="PackageName">Modify the news</div>
+        </div>
+        <div class="PackageFlavors centering-row-left folding_box_content {% if new_news %}open{% endif %}">
+            {% if new_news %}
+            <p class="alert-success">The news has been modified.</p>
+            <div class="button" onclick="window.history.go(-2);return false;">
+                <span class="material-symbols-outlined mdi-icon">arrow_back</span>Return
+            </div>
+            {% else %}
+            <form class="PackageForm" method="post">
+                {% csrf_token %}
+                {{ news_form.as_p }}
+                <div class="centering-row-left">
+                    <div class="button" onclick="window.history.go(-1);return false;">
+                        <span class="material-symbols-outlined mdi-icon">arrow_back</span>Return
+                    </div>
+                    {% if perms.delivery.delete_newsentry %}
+                    <button type="submit" class="button">
+                        <span class="material-symbols-outlined mdi-icon">send</span>
+                        Submit
+                    </button>
+                    {% endif %}
+                </div>
+            </form>
+            {{ news_form.media }}
             {% endif %}
-        </form>
-        {{ news_form.media }}
-        {% endif %}
-    </div>
-    <div class="ArticleFooter">
-        <p>Warning: It is not yet possible to upload images.</p>
+        </div>
     </div>
 </div>
-<div class="Article">
-    <div class="ArticleHeader">
-        <h2>Associated Comments</h2>
-    </div>
-    <div class="ArticleContent">
-        <table class="user-tab">
-            <thead>
-            <tr>
-                <th>comment</th>
-                <th>date</th>
-                <th>author</th>
-                <th class="center-content">Visible?</th>
-                <th class="center-content"></th>
-            </tr>
-            </thead>
-            <tbody>
-            {% for cc in news_item.get_all_comments %}
-            <tr>
-                <td> {{ cc.content_md|safe }}</td>
-                <td> {{ cc.date }}</td>
-                <td> {{ cc.author }}</td>
-                {% if perms.delivery.delete_newscomment %}
-                <td>
-                    <form method="post" action="{% url 'a_modif_comment' cc.pk %}">
-                        {% csrf_token %}
-                        <input type="hidden" value="toggle_active" name="action"/>
-                        <button type="submit">
-                            {% if cc.active %}<span class="material-symbols-outlined perm">visibility</span>
-                            {% else %}<span class="material-symbols-outlined noperm">visibility_off</span>{% endif %}
-                        </button>
-                    </form>
-                </td>
-                <td>
-                    <form method="post" action="{% url 'a_modif_comment' cc.pk %}">
-                        {% csrf_token %}
-                        <input type="hidden" value="delete" name="action"/>
-                        <button type="submit" class="button-icon danger"><span
-                                class="material-symbols-outlined">delete</span></button>
-                    </form>
-                </td>
-                {% else %}
-                <td>
-                    {% if cc.active %}<span class="material-symbols-outlined perm">visibility</span>
-                    {% else %}<span class="material-symbols-outlined noperm">visibility_off</span>{% endif %}
-                </td>
-                <td></td>
-                {% endif %}
-            </tr>
-            {% endfor %}
-            </tbody>
-        </table>
+<div class="PackageList">
+    <div class="Package">
+        <div class="PackageHeader">
+            <div class="PackageName">Associated Comments</div>
+        </div>
+        <div class="PackageFlavors centering-row-left">
+            <table class="user-tab">
+                <thead>
+                <tr>
+                    <th>comment</th>
+                    <th>date</th>
+                    <th>author</th>
+                    <th class="center-content">Visible?</th>
+                    <th class="center-content"></th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for cc in news_item.get_all_comments %}
+                <tr>
+                    <td> {{ cc.content_md|safe }}</td>
+                    <td> {{ cc.date }}</td>
+                    <td> {{ cc.author }}</td>
+                    {% if perms.delivery.delete_newscomment %}
+                    <td>
+                        <form method="post" action="{% url 'a_modif_comment' cc.pk %}" class="center-content">
+                            {% csrf_token %}
+                            <input type="hidden" value="toggle_active" name="action"/>
+                            <button type="submit" class="button-icon">
+                                {% if cc.active %}<span class="material-symbols-outlined perm">visibility</span>
+                                {% else %}<span class="material-symbols-outlined noperm">visibility_off</span>
+                                {% endif %}
+                            </button>
+                        </form>
+                    </td>
+                    <td>
+                        <form method="post" action="{% url 'a_modif_comment' cc.pk %}" class="center-content">
+                            {% csrf_token %}
+                            <input type="hidden" value="delete" name="action"/>
+                            <button type="submit" class="button-icon danger"><span
+                                    class="material-symbols-outlined mdi-icon">delete</span></button>
+                        </form>
+                    </td>
+                    {% else %}
+                    <td>
+                        {% if cc.active %}<span class="material-symbols-outlined perm">visibility</span>
+                        {% else %}<span class="material-symbols-outlined noperm">visibility_off</span>
+                        {% endif %}
+                    </td>
+                    <td></td>
+                    {% endif %}
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
+{% endblock %}
+
+{% block script_content %}
+<script src="{% static 'js/folding_box.js' %}"></script>
 {% endblock %}

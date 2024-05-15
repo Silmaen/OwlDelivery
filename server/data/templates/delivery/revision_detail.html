@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'css/folding_box.css' %}"/>
+{% endblock %}
+
+{% block content %}
+<div class="PackageList">
+    <div class="Package">
+        <div class="PackageHeader clickable" onclick="window.history.go(-1);return false;">
+            <div class="PackageName">Current Revision:</div>
+            <div class="PackageName">{{ revision.hash }}</div>
+            <div class="PackageName">{{ revision.date }}</div>
+        </div>
+    </div>
+</div>
+
+<div class="PackageList">
+    {% for item in revision.item_list %}
+    {% if item.type == 'doc' %}
+    <div class="Package folding_box" id="doc_{{item.name}}">
+        <div class="PackageHeader folding_box_header" onclick="toggleContent('doc_{{item.name}}')">
+            <div class="PackageName">{% if item.icon %}<img src="{{ item.icon }}">{% endif %} {{ item.name }}</div>
+        </div>
+        <div class="PackageFlavors_alt folding_box_content">
+            <a class="PackageFlavor_alt clickable" href="{{ item.url }}">Doc</a>
+        </div>
+    </div>
+    {% endif %}
+    {% endfor %}
+</div>
+
+<div class="PackageList">
+    {% for item in revision.item_list %}
+    {% if item.type == 'engine' %}
+    <div class="Package folding_box" id="engine_{{item.name}}">
+        <div class="PackageHeader folding_box_header" onclick="toggleContent('engine_{{item.name}}')">
+            <div class="PackageName">{% if item.icon %}<img src="{{ item.icon }}">{% endif %} {{ item.name }}</div>
+        </div>
+        <div class="PackageFlavors_alt folding_box_content">
+            {% for flavor in item.flavors %}
+            <a class="PackageFlavor_alt clickable" href="{{ flavor.url }}">
+                <p>{{ flavor.name }}</p>-<p>{{ flavor.size }}</p></a>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+    {% endfor %}
+</div>
+
+<div class="PackageList">
+    {% for item in revision.item_list %}
+    {% if item.type == 'application' %}
+    <div class="Package folding_box" id="app_{{item.name}}">
+        <div class="PackageHeader folding_box_header" onclick="toggleContent('app_{{item.name}}')">
+            <div class="PackageName">{% if item.icon %}<img src="{{ item.icon }}">{% endif %} {{ item.name }}</div>
+        </div>
+        <div class="PackageFlavors_alt folding_box_content">
+            {% for flavor in item.flavors %}
+            <a class="PackageFlavor_alt clickable" href="{{ flavor.url }}">
+                <p>{{ flavor.name }}</p>-<p>{{ flavor.size }}</p></a>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+    {% endfor %}
+</div>
+
+{% endblock %}
+
+{% block script_content %}
+<script src="{% static 'js/folding_box.js' %}"></script>
+{% endblock %}

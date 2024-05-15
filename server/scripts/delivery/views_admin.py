@@ -2,9 +2,14 @@ from django.conf import settings
 from django.contrib.auth.models import Permission, User
 from django.shortcuts import render, redirect
 
+from .Revision_utils import (
+    get_revision_branches,
+    get_revision_hashes,
+    get_revision_info,
+)
 from .db_locking import locker
-from .forms import NewsEntryForm
-from .models import NewsEntry, NewsComment
+from .forms import NewsEntryForm, RevisionItemEntryForm
+from .models import NewsEntry, NewsComment, RevisionItemEntry
 from .perms_utils import *
 from .views import SiteVersion, SiteHash
 
@@ -29,6 +34,7 @@ subpages = [
     },
 ]
 staff_active = settings.ENABLE_STAFF
+revision_per_page = 15
 
 
 def extract_subpages(request):
@@ -61,6 +67,10 @@ def admin_users(request):
                 "can_add_news": entry.has_perm("delivery.add_newsentry"),
                 "can_delete_news": entry.has_perm("delivery.delete_newsentry"),
                 "can_delete_comment": entry.has_perm("delivery.delete_newscomment"),
+                "can_add_revision": entry.has_perm("delivery.add_revisionitementry"),
+                "can_delete_revision": entry.has_perm(
+                    "delivery.delete_revisionitementry"
+                ),
                 "can_view_user": entry.has_perm("auth.view_user"),
                 "can_delete_user": entry.has_perm("auth.delete_user"),
             }
@@ -93,7 +103,7 @@ def admin_modif_user(request, pk):
     if not request.user.is_authenticated:
         return redirect("/")
     if not request.user.has_perm("auth.delete_user"):
-        return redirect("/")
+        return redirect(request.META.get("HTTP_REFERER", "a_news"))
     if locker.is_locked():
         return redirect("maintenance")
     if request.method == "POST":
@@ -133,6 +143,20 @@ def admin_modif_user(request, pk):
         elif request.POST["action"] == "toggle_comment_delete":
             ido = Permission.objects.get(codename="delete_newscomment")
             if user.has_perm("delivery.delete_newscomment"):
+                user.user_permissions.remove(ido)
+            else:
+                user.user_permissions.add(ido)
+            user.save()
+        elif request.POST["action"] == "toggle_revision_add":
+            ido = Permission.objects.get(codename="add_revisionitementry")
+            if user.has_perm("delivery.add_revisionitementry"):
+                user.user_permissions.remove(ido)
+            else:
+                user.user_permissions.add(ido)
+            user.save()
+        elif request.POST["action"] == "toggle_revision_delete":
+            ido = Permission.objects.get(codename="delete_revisionitementry")
+            if user.has_perm("delivery.delete_revisionitementry"):
                 user.user_permissions.remove(ido)
             else:
                 user.user_permissions.add(ido)
@@ -221,12 +245,16 @@ def admin_modif_news(request, news_id):
     :param news_id:
     :return:
     """
+    if not request.user.is_authenticated:
+        return redirect("/")
+    if not request.user.has_perm("delivery.delete_newsentry"):
+        return redirect(request.META.get("HTTP_REFERER", "a_news"))
     if request.method == "POST":
         news = NewsEntry.objects.get(pk=news_id)
         if "action" not in request.POST:
             return redirect(request.META.get("HTTP_REFERER", "a_news"))
         if request.POST["action"] == "delete" and request.user.has_perm(
-                "delivery.delete_newsentry"
+            "delivery.delete_newsentry"
         ):
             news.delete()
     return redirect(request.META.get("HTTP_REFERER", "a_news"))
@@ -239,6 +267,10 @@ def admin_modif_comment(request, comment_id):
     :param comment_id:
     :return:
     """
+    if not request.user.is_authenticated:
+        return redirect("/")
+    if not request.user.has_perm("delivery.delete_newscomment"):
+        return redirect(request.META.get("HTTP_REFERER", "a_news"))
     if request.method == "POST":
         comment = NewsComment.objects.get(pk=comment_id)
         if "action" not in request.POST:
@@ -251,14 +283,14 @@ def admin_modif_comment(request, comment_id):
     return redirect(request.META.get("HTTP_REFERER", "a_news"))
 
 
-def admin_revisions(request):
-    """
-
-    :param request:
-    :return:
-    """
+def admin_revisions_page(request, page):
     if not request.user.is_authenticated:
         return redirect("/")
+    revisions = {}
+    for branch in get_revision_branches():
+        revisions[branch] = []
+        for rev_hash in get_revision_hashes(branch):
+            revisions[branch].append(get_revision_info(rev_hash))
     return render(
         request,
         "delivery/admin/revisions.html",
@@ -271,6 +303,65 @@ def admin_revisions(request):
             "has_submenu": True,
             "staff_active": staff_active,
             "is_admin": can_see_admin(request),
+            "revisions": revisions,
+            "version": {"number": SiteVersion, "hash": SiteHash},
+        },
+    )
+
+
+def admin_revisions(request):
+    """
+
+    :param request:
+    :return:
+    """
+    return admin_revisions_page(request, 0)
+
+
+def admin_modif_revision(request, rev_hash):
+    if not request.user.is_authenticated:
+        return redirect("/")
+    if not request.user.has_perm("delivery.delete_revisionitementry"):
+        return redirect(request.META.get("HTTP_REFERER", "a_news"))
+
+    return redirect(request.META.get("HTTP_REFERER", "a_news"))
+
+
+def admin_modif_revision_item(request, pk):
+    if not request.user.is_authenticated:
+        return redirect("/")
+    if not request.user.has_perm("delivery.delete_revisionitementry"):
+        return redirect(request.META.get("HTTP_REFERER", "a_news"))
+
+    return redirect(request.META.get("HTTP_REFERER", "a_news"))
+
+
+def admin_edit_revision_item(request, pk):
+    rev = RevisionItemEntry.objects.get(pk=pk)
+    modified = False
+    rev_form = RevisionItemEntryForm(instance=rev)
+    if request.method == "POST" and request.user.has_perm(
+        "delivery.delete_revisionitementry"
+    ):
+        rev_form = RevisionItemEntryForm(data=request.POST, instance=rev)
+        if rev_form.is_valid():
+            rev_form.save()
+            modified = True
+    return render(
+        request,
+        "delivery/admin/revisions_edit.html",
+        {
+            "title": "admin",
+            "page": "admin",
+            "subpage": "revisions",
+            "subpages": extract_subpages(request),
+            "has_menu": True,
+            "has_submenu": True,
+            "staff_active": staff_active,
+            "is_admin": can_see_admin(request),
+            "revision": rev,
+            "rev_form": rev_form,
+            "new_revision": modified,
             "version": {"number": SiteVersion, "hash": SiteHash},
         },
     )

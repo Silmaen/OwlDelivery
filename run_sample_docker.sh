@@ -16,4 +16,4 @@ env="-e DOMAIN_NAME=example.com -e ADMIN_NAME=admin -e ADMIN_PASSWD=admin -e DEB
 env="${env} -e ENABLE_STAFF=yes"
 
 echo ">>> docker run --rm -v \"${SCRIPT_DIR}/sample_data\":/data ${env} -p 80:80 ${image}"
-docker run --rm -v "${SCRIPT_DIR}/sample_data":/data ${env} -p 80:80 ${image}
+docker run --rm -v "${SCRIPT_DIR}/sample_data":/data ${env} -p 80:80 --name delivery_server ${image}

@@ -7,6 +7,7 @@ from pathlib import Path
 from django.conf import settings
 from django.shortcuts import render, redirect, get_object_or_404
 
+from .Revision_utils import *
 from .forms import NewsCommentForm
 from .models import NewsEntry
 from .perms_utils import *
@@ -91,6 +92,21 @@ def revisions(request):
     :param request:
     :return:
     """
+    current_revision = None
+    older_revisions = []
+    branch_filter = ""
+    # get last hash
+    if get_revision_count(branch_filter) > 0:
+        hashes = get_revision_hashes(branch_filter)
+        current_revision = {
+            "hash": hashes[0],
+            "date": get_revision_date(hashes[0]),
+        }
+        for rev_hash in hashes[1:]:
+            older_revisions.append(
+                {"hash": rev_hash, "date": get_revision_date(rev_hash)}
+            )
+
     return render(
         request,
         "delivery/revisions.html",
@@ -101,6 +117,33 @@ def revisions(request):
             "has_submenu": False,
             "staff_active": staff_active,
             "is_admin": can_see_admin(request),
+            "current_revision": current_revision,
+            "older_revisions": older_revisions,
+            "version": {"number": SiteVersion, "hash": SiteHash},
+        },
+    )
+
+
+def revision_detail(request, rev_hash):
+    """
+
+    :param request:
+    :param rev_hash:
+    :return:
+    """
+    current_revision = get_revision_info(rev_hash)
+
+    return render(
+        request,
+        "delivery/revision_detail.html",
+        {
+            "title": "revisions",
+            "page": "revisions",
+            "has_menu": True,
+            "has_submenu": False,
+            "staff_active": staff_active,
+            "is_admin": can_see_admin(request),
+            "revision": current_revision,
             "version": {"number": SiteVersion, "hash": SiteHash},
         },
     )
@@ -116,14 +159,6 @@ def admin(request):
         return redirect("/")
     if can_see_news_admin(request):
         return redirect("a_news")
+    if can_see_revision_admin(request):
+        return redirect("a_revisions")
     return redirect("a_users")
-    # return render(
-    #     request,
-    #     "delivery/admin.html",
-    #     {
-    #         "title": "admin",
-    #         "page": "admin",
-    #         "has_menu": True,
-    #         "version": {"number": SiteVersion, "hash": SiteHash},
-    #     },
-    # )
