@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'css/folding_box.css' %}"/>
+{% endblock %}
+
+{% block content %}
+<div class="PackageList">
+    <div class="Package">
+        <div class="PackageHeader">
+            <div class="PackageName">Branch: {{branch_name}}</div>
+        </div>
+        <div class="PackageFlavors centering-row-left">
+            {% if new_revision %}
+            <p class="alert-success">The revision has been modified.</p>
+            <div class="button" onclick="window.history.go(-2);return false;">
+                <span class="material-symbols-outlined mdi-icon">arrow_back</span>Return
+            </div>
+            {% else %}
+            <form class="PackageForm" method="post">
+                {% csrf_token %}
+                {{ rev_form.as_p }}
+                <div class="centering-row-left">
+                    <div class="button" onclick="window.history.go(-1);return false;">
+                        <span class="material-symbols-outlined mdi-icon">arrow_back</span>Return
+                    </div>
+                    {% if perms.delivery.delete_newsentry %}
+                    <button type="submit" class="button">
+                        <span class="material-symbols-outlined mdi-icon">send</span>
+                        Submit
+                    </button>
+                    {% endif %}
+                </div>
+            </form>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block script_content %}
+<script src="{% static 'js/folding_box.js' %}"></script>
+{% endblock %}

@@ -1,4 +1,9 @@
 {% extends 'base.html' %}
+{% load static %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'css/folding_box.css' %}"/>
+{% endblock %}
 
 {% block content %}
 
@@ -12,15 +17,15 @@
     </div>
     <div class="ArticleFooter">
         <div class="ArticleAuthor">
-            <span class="material-symbols-outlined">account_circle</span>
+            <span class="material-symbols-outlined mdi-icon">account_circle</span>
             {{ news_item.author }}
         </div>
         <div class="ArticleComments">
-            <span class="material-symbols-outlined">comment</span>
+            <span class="material-symbols-outlined mdi-icon">comment</span>
             {{ news_item.nb_comments }}
         </div>
         <div class="ArticleDate">
-            <span class="material-symbols-outlined">acute</span>
+            <span class="material-symbols-outlined mdi-icon">acute</span>
             {{ news_item.date }}
         </div>
     </div>
@@ -30,11 +35,11 @@
         <div class="comment">
             <div class="c_head">
                 <div class="c_author ">
-                    <span class="material-symbols-outlined">account_circle</span>
+                    <span class="material-symbols-outlined mdi-icon">account_circle</span>
                     {{cc.author}}
                 </div>
                 <div class="c_date">
-                    <span class="material-symbols-outlined">acute</span>
+                    <span class="material-symbols-outlined mdi-icon">acute</span>
                     {{cc.date}}
                 </div>
             </div>
@@ -51,36 +56,38 @@
 {%block additionnalsection %}
 {% if user.is_authenticated %}
 <section class="bottom-section">
-    <div class="comment-subbing">
+    <div class="comment-subbing folding_box" id="comment_sub">
         {% if new_comment %}
         {% if new_comment.related_news != news_item %}
         <div class="alert alert-fail" role="alert">
-            <span class="material-symbols-outlined">error</span>
+            <span class="material-symbols-outlined mdi-icon">error</span>
             Problem in comment and cannot be saved.
         </div>
         {% else %}
         {% if new_comment.active %}
         <div class="alert alert-success" role="alert">
-            <span class="material-symbols-outlined">download_done</span>
+            <span class="material-symbols-outlined mdi-icon">download_done</span>
             You are moderator so the comment is directly visible.
         </div>
         {% else %}
         <div class="alert alert-success" role="alert">
-            <span class="material-symbols-outlined">approval_delegation</span>
+            <span class="material-symbols-outlined mdi-icon">approval_delegation</span>
             Your comment submission has been registered, it will be visible after moderation.
         </div>
         {% endif %}
         {% endif %}
         {% else %}
-        <h5>
-            <span class="material-symbols-outlined">add_comment</span>
-            Add a comment
-        </h5>
-        <form method="post">
+        <div class="folding_box_header centering-row" onclick="toggleContent('comment_sub')">
+            <h4>
+                <span class="material-symbols-outlined mdi-icon">add_comment</span>
+                Add a comment
+            </h4>
+        </div>
+        <form method="post" class="PackageForm folding_box_content">
             {% csrf_token %}
             {{ comment_form }}
             <button type="submit" class="button">
-                <span class="material-symbols-outlined">send</span>
+                <span class="material-symbols-outlined mdi-icon">send</span>
                 Submit
             </button>
         </form>
@@ -93,10 +100,14 @@
     <div class="comment-subbing">
         <p>You need to be logged in to leave comments.</p>
         <p>Registration is free. </p>
-        <a class="button" href="{% url 'register' %}"><span class="material-symbols-outlined">person_add</span>Register</a>
+        <a class="button" href="{% url 'register' %}"><span class="material-symbols-outlined mdi-icon">person_add</span>Register</a>
     </div>
 </section>
 {% endif %}
 {% endblock %}
 
+{% endblock %}
+
+{% block script_content %}
+<script src="{% static 'js/folding_box.js' %}"></script>
 {% endblock %}

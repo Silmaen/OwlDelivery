@@ -1,12 +1,61 @@
 {% extends 'base.html' %}
+{% load static %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'css/folding_box.css' %}"/>
+{% endblock %}
 
 {% block content %}
-<div class="Article">
-    <div class="ArticleHeader">
-        <h3>Section is under construction</h3>
-    </div>
-    <div class="ArticleContent">
-        <p>Feature is not yet available please try again later.</p>
+{% for branch_name,branch in revisions.items %}
+<div class="PackageList">
+    <div class="Package folding_box" id="Branch_{{branch_name}}">
+        <div class="PackageHeader folding_box_header" onclick="toggleContent('Branch_{{branch_name}}')">
+            <div class="PackageName">Branch: {{branch_name}}</div>
+        </div>
+        <div class="folding_box_content">
+            {% for rev in branch %}
+            <div class="Package folding_box" id="flavor_{{branch_name}}_{{rev.hash}}">
+                <div class="PackageVersion folding_box_header centering-row-left"
+                     onclick="toggleContent('flavor_{{branch_name}}_{{rev.hash}}')">
+                    {% if perms.delivery.delete_revisionitementry %}
+                    <form method="post" action="{% url 'a_modif_revision' rev.hash %}">
+                        {% csrf_token %}
+                        <input type="hidden" value="delete_revision" name="action"/>
+                        <button type="submit" class="button-icon danger"><span
+                                class="material-symbols-outlined mdi-icon">delete</span></button>
+                    </form>
+                    {% endif %}
+                    {{ rev.hash }} - {{ rev.date }}
+                </div>
+                <div class="PackageFlavors folding_box_content">
+                    {% for item in rev.item_list %}
+                    {% for flavor in item.flavors %}
+                    <div class="PackageFlavor clickable_simple"
+                         onclick="location.href='{% url 'a_edit_revision_item' flavor.pk %}'">
+                        {% if perms.delivery.delete_revisionitementry %}
+                        <div class="button-icon" onclick="location.href='{% url 'a_edit_revision_item' flavor.pk %}'">
+                            <span class="material-symbols-outlined mdi-icon">edit</span>
+                        </div>
+                        <form method="post" action="{% url 'a_modif_revision_item' flavor.pk %}">
+                            {% csrf_token %}
+                            <input type="hidden" value="delete" name="action"/>
+                            <button type="submit" class="button-icon danger"><span
+                                    class="material-symbols-outlined mdi-icon">delete</span></button>
+                        </form>
+                        {% endif %}
+                        {{item.name}} / {{ flavor.name }} - {{ flavor.size }}
+                    </div>
+                    {% endfor %}
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
     </div>
 </div>
+{% endfor %}
+{% endblock %}
+
+{% block script_content %}
+<script src="{% static 'js/folding_box.js' %}"></script>
 {% endblock %}

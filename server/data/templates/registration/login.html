@@ -10,23 +10,25 @@
         <form class="centering-col" method="post">
             {% csrf_token %}
             {{ form.as_p }}
-            <button id="submit" class="button"><span class="material-symbols-outlined">login</span>Login</button>
+            <button id="submit" class="button"><span class="material-symbols-outlined mdi-icon">login</span>Login
+            </button>
         </form>
         {% if has_email %}
         <div class="centering-row">
-            <p>Lost credentials?</p>
+            <div>Lost credentials?</div>
             <a class="button" href="{% url 'password_reset' %}"><span
-                    class="material-symbols-outlined">lock_reset</span>Reset</a>
+                    class="material-symbols-outlined mdi-icon">lock_reset</span>Reset</a>
         </div>
         {% endif %}
         <div class="centering-row">
-            <p>Request credentials?</p>
-            <a class="button" href="{% url 'register' %}"><span class="material-symbols-outlined">person_add</span>Register</a>
+            <div>Request credentials?</div>
+            <a class="button" href="{% url 'register' %}"><span
+                    class="material-symbols-outlined mdi-icon">person_add</span>Register</a>
         </div>
     </div>
     <div class="ArticleFooter">
         <a class="button" href="{% url 'index' %}">
-            <span class="material-symbols-outlined">arrow_circle_left</span>
+            <span class="material-symbols-outlined mdi-icon">arrow_circle_left</span>
             Back
         </a>
     </div>

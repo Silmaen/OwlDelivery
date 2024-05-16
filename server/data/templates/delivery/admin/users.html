@@ -7,11 +7,13 @@
         <tr>
             <th>name</th>
             <th>last connexion</th>
-            <th class="center-content">can add news</th>
-            <th class="center-content">can edit news</th>
-            <th class="center-content">can moderate comment</th>
-            <th class="center-content">can view user</th>
-            <th class="center-content">can delete users</th>
+            <th class="center-content">news add</th>
+            <th class="center-content">news edit</th>
+            <th class="center-content">news moderator</th>
+            <th class="center-content">revision add</th>
+            <th class="center-content">revision delete</th>
+            <th class="center-content">user view</th>
+            <th class="center-content">users delete</th>
             <th class="center-content"></th>
         </tr>
         </thead>
@@ -34,6 +36,14 @@
                 {% else %}<span class="material-symbols-outlined noperm">comments_disabled</span>{% endif %}
             </td>
             <td class="center-content">
+                {% if user_for.can_add_revision %}<span class="material-symbols-outlined perm">file_upload</span>
+                {% else %}<span class="material-symbols-outlined noperm">file_upload_off</span>{% endif %}
+            </td>
+            <td class="center-content">
+                {% if user_for.can_delete_revision %}<span class="material-symbols-outlined perm">open_in_new</span>
+                {% else %}<span class="material-symbols-outlined noperm">open_in_new_off</span>{% endif %}
+            </td>
+            <td class="center-content">
                 {% if user_for.can_view_user %}<span class="material-symbols-outlined perm">visibility</span>
                 {% else %}<span class="material-symbols-outlined noperm">visibility_off</span>{% endif %}
             </td>
@@ -43,10 +53,10 @@
             </td>
             {% else %}
             <td class="center-content">
-                <form method="post" action="{% url 'modif_user' user_for.pk %}">
+                <form method="post" action="{% url 'modif_user' user_for.pk %}" class="center-content">
                     {% csrf_token %}
                     <input type="hidden" value="toggle_news_add" name="action"/>
-                    <button type="submit">
+                    <button type="submit" class="button-icon">
                         {% if user_for.can_add_news %}<span class="material-symbols-outlined perm">subtitles</span>
                         {% else %}<span class="material-symbols-outlined noperm">subtitles_off</span>{% endif %}
                     </button>
@@ -54,10 +64,10 @@
             </td>
 
             <td class="center-content">
-                <form method="post" action="{% url 'modif_user' user_for.pk %}">
+                <form method="post" action="{% url 'modif_user' user_for.pk %}" class="center-content">
                     {% csrf_token %}
                     <input type="hidden" value="toggle_news_delete" name="action"/>
-                    <button type="submit">
+                    <button type="submit" class="button-icon">
                         {% if user_for.can_delete_news %}<span class="material-symbols-outlined perm">edit</span>
                         {% else %}<span class="material-symbols-outlined noperm">edit_off</span>{% endif %}
                     </button>
@@ -65,22 +75,45 @@
             </td>
 
             <td class="center-content">
-                <form method="post" action="{% url 'modif_user' user_for.pk %}">
+                <form method="post" action="{% url 'modif_user' user_for.pk %}" class="center-content">
                     {% csrf_token %}
                     <input type="hidden" value="toggle_comment_delete" name="action"/>
-                    <button type="submit">
-                        {% if user_for.can_delete_comment %}<span
-                            class="material-symbols-outlined perm">comment</span>
+                    <button type="submit" class="button-icon">
+                        {% if user_for.can_delete_comment %}<span class=" material-symbols-outlined perm">comment</span>
                         {% else %}<span class="material-symbols-outlined noperm">comments_disabled</span>{% endif %}
                     </button>
                 </form>
             </td>
 
             <td class="center-content">
-                <form method="post" action="{% url 'modif_user' user_for.pk %}">
+                <form method="post" action="{% url 'modif_user' user_for.pk %}" class="center-content">
+                    {% csrf_token %}
+                    <input type="hidden" value="toggle_revision_add" name="action"/>
+                    <button type="submit" class="button-icon">
+                        {% if user_for.can_add_revision %}<span
+                            class="material-symbols-outlined perm">file_upload</span>
+                        {% else %}<span class="material-symbols-outlined noperm">file_upload_off</span>{% endif %}
+                    </button>
+                </form>
+            </td>
+
+            <td class="center-content">
+                <form method="post" action="{% url 'modif_user' user_for.pk %}" class="center-content">
+                    {% csrf_token %}
+                    <input type="hidden" value="toggle_revision_delete" name="action"/>
+                    <button type="submit" class="button-icon">
+                        {% if user_for.can_delete_revision %}<span class="material-symbols-outlined perm">open_in_new
+                    </span>
+                        {% else %}<span class="material-symbols-outlined noperm">open_in_new_off</span>{% endif %}
+                    </button>
+                </form>
+            </td>
+
+            <td class="center-content">
+                <form method="post" action="{% url 'modif_user' user_for.pk %}" class="center-content">
                     {% csrf_token %}
                     <input type="hidden" value="toggle_user_view" name="action"/>
-                    <button type="submit">
+                    <button type="submit" class="button-icon">
                         {% if user_for.can_view_user %}<span class="material-symbols-outlined perm">visibility</span>
                         {% else %}<span class="material-symbols-outlined noperm">visibility_off</span>{% endif %}
                     </button>
@@ -88,10 +121,10 @@
             </td>
 
             <td class="center-content">
-                <form method="post" action="{% url 'modif_user' user_for.pk %}">
+                <form method="post" action="{% url 'modif_user' user_for.pk %}" class="center-content">
                     {% csrf_token %}
                     <input type="hidden" value="toggle_user_delete" name="action"/>
-                    <button type="submit">
+                    <button type="submit" class="button-icon">
                         {% if user_for.can_delete_user %}<span class="material-symbols-outlined perm">edit</span>
                         {% else %}<span class="material-symbols-outlined noperm">edit_off</span>{% endif %}
                     </button>
@@ -99,11 +132,11 @@
             </td>
 
             <td>
-                <form method="post" action="{% url 'modif_user' user_for.pk %}">
+                <form method="post" action="{% url 'modif_user' user_for.pk %}" class="center-content">
                     {% csrf_token %}
                     <input type="hidden" value="delete" name="action"/>
                     <button type="submit" class="button-icon danger"><span
-                            class="material-symbols-outlined">delete</span></button>
+                            class="material-symbols-outlined mdi-icon">delete</span></button>
                 </form>
             </td>
             {% endif %}

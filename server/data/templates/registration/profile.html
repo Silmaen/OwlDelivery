@@ -2,30 +2,35 @@
 {%block mainsection %}
 <div class="Article user_form">
     <div class="ArticleHeader">
-        <h4 class="centering"><span class="material-symbols-outlined">account_circle</span>{{ user }}</h4>
+        <h4 class="centering"><span class="material-symbols-outlined mdi-icon">account_circle</span>{{ user }}</h4>
     </div>
     <div class="ArticleContent user_form">
         <p>Here are your account information.</p>
         <table class="centering-row">
             <tr>
-                <td class="centering-row-left"><span class="material-symbols-outlined">account_circle</span> Username:
+                <td class="centering-row-left"><span class="material-symbols-outlined mdi-icon">account_circle</span>
+                    Username:
                 </td>
                 <td>{{user.username}}</td>
             </tr>
             <tr>
-                <td class="centering-row-left"><span class="material-symbols-outlined">person</span> First name:</td>
+                <td class="centering-row-left"><span class="material-symbols-outlined mdi-icon">person</span> First
+                    name:
+                </td>
                 <td>{{user.first_name}}</td>
             </tr>
             <tr>
-                <td class="centering-row-left"><span class="material-symbols-outlined">group</span> Last name:</td>
+                <td class="centering-row-left"><span class="material-symbols-outlined mdi-icon">group</span> Last name:
+                </td>
                 <td>{{user.last_name}}</td>
             </tr>
             <tr>
-                <td class="centering-row-left"><span class="material-symbols-outlined">mail</span> Mail:</td>
+                <td class="centering-row-left"><span class="material-symbols-outlined mdi-icon">mail</span> Mail:</td>
                 <td>{{user.email}}</td>
             </tr>
             <tr>
-                <td class="centering-row-left"><span class="material-symbols-outlined">history</span> Last connexion:
+                <td class="centering-row-left"><span class="material-symbols-outlined mdi-icon">history</span> Last
+                    connexion:
                 </td>
                 <td>{{user.last_login}}</td>
             </tr>
@@ -34,34 +39,35 @@
                 <td></td>
             </tr>
             <!--            <tr>-->
-            <!--                <td class="centering-row-left"><span class="material-symbols-outlined">package</span>Package</td>-->
+            <!--                <td class="centering-row-left"><span class="material-symbols-outlined mdi-icon">package</span>Package</td>-->
             <!--                <td>-->
-            <!--                    {% if perms.pack.view_packageentry %}<span class="material-symbols-outlined">visibility</span>-->
-            <!--                    {% else %}<span class="material-symbols-outlined">visibility_off</span>{% endif %}-->
-            <!--                    {% if perms.pack.add_packageentry %}<span class="material-symbols-outlined">file_upload</span>-->
-            <!--                    {% else %}<span class="material-symbols-outlined">file_upload_off</span>{% endif %}-->
-            <!--                    {% if perms.pack.delete_packageentry %}<span class="material-symbols-outlined">do_not_disturb</span>-->
-            <!--                    {% else %}<span class="material-symbols-outlined">do_not_disturb_off</span>{% endif %}-->
+            <!--                    {% if perms.pack.view_packageentry %}<span class="material-symbols-outlined mdi-icon">visibility</span>-->
+            <!--                    {% else %}<span class="material-symbols-outlined mdi-icon">visibility_off</span>{% endif %}-->
+            <!--                    {% if perms.pack.add_packageentry %}<span class="material-symbols-outlined mdi-icon">file_upload</span>-->
+            <!--                    {% else %}<span class="material-symbols-outlined mdi-icon">file_upload_off</span>{% endif %}-->
+            <!--                    {% if perms.pack.delete_packageentry %}<span class="material-symbols-outlined mdi-icon">do_not_disturb</span>-->
+            <!--                    {% else %}<span class="material-symbols-outlined mdi-icon">do_not_disturb_off</span>{% endif %}-->
             <!--                </td>-->
             <!--            </tr>-->
             <tr>
-                <td class="centering-row-left"><span class="material-symbols-outlined">person</span>User</td>
+                <td class="centering-row-left"><span class="material-symbols-outlined mdi-icon">person</span>User</td>
                 <td>
-                    {% if perms.auth.view_user %}<span class="material-symbols-outlined">visibility</span>
-                    {% else %}<span class="material-symbols-outlined">visibility_off</span>{% endif %}
-                    {% if perms.auth.delete_user %}<span class="material-symbols-outlined">edit</span>
-                    {% else %}<span class="material-symbols-outlined">edit_off</span>{% endif %}
+                    {% if perms.auth.view_user %}<span class="material-symbols-outlined mdi-icon">visibility</span>
+                    {% else %}<span class="material-symbols-outlined mdi-icon">visibility_off</span>{% endif %}
+                    {% if perms.auth.delete_user %}<span class="material-symbols-outlined mdi-icon">edit</span>
+                    {% else %}<span class="material-symbols-outlined mdi-icon">edit_off</span>{% endif %}
                 </td>
             </tr>
         </table>
-        <a class="button" href="{% url 'password' %}"><span class="material-symbols-outlined">password</span> Change
+        <a class="button" href="{% url 'password' %}"><span class="material-symbols-outlined mdi-icon">password</span>
+            Change
             passwd</a>
-        <a class="button" href="{% url 'profile_edit' %}"><span class="material-symbols-outlined">manage_accounts</span>
+        <a class="button" href="{% url 'profile_edit' %}"><span class="material-symbols-outlined mdi-icon">manage_accounts</span>
             Edit profile</a>
     </div>
     <div class="ArticleFooter">
         <a class="button" href="{% url 'index' %}">
-            <span class="material-symbols-outlined">arrow_circle_left</span>
+            <span class="material-symbols-outlined mdi-icon">arrow_circle_left</span>
             Back
         </a>
     </div>
