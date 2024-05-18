@@ -19,7 +19,15 @@ def can_see_admin(request):
 
 
 def can_see_revision_admin(request):
-    return True
+    if not request.user.is_authenticated:
+        return False
+    for perm in [
+        "delivery.add_revisionitementry",
+        "delivery.delete_revisionitementry",
+    ]:
+        if request.user.has_perm(perm):
+            return True
+    return False
 
 
 def can_see_user_admin(request):

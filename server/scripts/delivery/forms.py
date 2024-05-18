@@ -50,3 +50,25 @@ class RevisionItemEntryForm(forms.ModelForm):
 
         model = RevisionItemEntry
         fields = ("hash", "branch", "name", "flavor_name", "date", "rev_type")
+
+
+class RevisionItemEntryFullForm(forms.ModelForm):
+    """
+    Form for Revision entry.
+    """
+
+    class Meta:
+        """
+        Meta information
+        """
+
+        model = RevisionItemEntry
+        fields = (
+            "hash",
+            "branch",
+            "name",
+            "flavor_name",
+            "date",
+            "rev_type",
+            "package",
+        )

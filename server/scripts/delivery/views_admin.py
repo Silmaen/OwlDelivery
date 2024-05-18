@@ -286,6 +286,8 @@ def admin_modif_comment(request, comment_id):
 def admin_revisions_page(request, page):
     if not request.user.is_authenticated:
         return redirect("/")
+    if not can_see_revision_admin(request):
+        return redirect("/")
     revisions = {}
     for branch in get_revision_branches():
         revisions[branch] = []
@@ -323,7 +325,14 @@ def admin_modif_revision(request, rev_hash):
         return redirect("/")
     if not request.user.has_perm("delivery.delete_revisionitementry"):
         return redirect(request.META.get("HTTP_REFERER", "a_news"))
-
+    if request.method != "POST":
+        return redirect(request.META.get("HTTP_REFERER", "a_news"))
+    if "action" not in request.POST:
+        return redirect(request.META.get("HTTP_REFERER", "a_news"))
+    revs = RevisionItemEntry.objects.filter(hash=rev_hash)
+    if request.POST["action"] == "delete" and is_comment_moderator(request):
+        for rev in revs:
+            rev.delete()
     return redirect(request.META.get("HTTP_REFERER", "a_news"))
 
 
@@ -332,7 +341,13 @@ def admin_modif_revision_item(request, pk):
         return redirect("/")
     if not request.user.has_perm("delivery.delete_revisionitementry"):
         return redirect(request.META.get("HTTP_REFERER", "a_news"))
-
+    if request.method != "POST":
+        return redirect(request.META.get("HTTP_REFERER", "a_news"))
+    if "action" not in request.POST:
+        return redirect(request.META.get("HTTP_REFERER", "a_news"))
+    rev_item = RevisionItemEntry.objects.get(pk=pk)
+    if request.POST["action"] == "delete" and is_comment_moderator(request):
+        rev_item.delete()
     return redirect(request.META.get("HTTP_REFERER", "a_news"))
 
 

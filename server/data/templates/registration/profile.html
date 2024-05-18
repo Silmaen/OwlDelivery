@@ -38,17 +38,31 @@
                 <td>Possible actions:</td>
                 <td></td>
             </tr>
-            <!--            <tr>-->
-            <!--                <td class="centering-row-left"><span class="material-symbols-outlined mdi-icon">package</span>Package</td>-->
-            <!--                <td>-->
-            <!--                    {% if perms.pack.view_packageentry %}<span class="material-symbols-outlined mdi-icon">visibility</span>-->
-            <!--                    {% else %}<span class="material-symbols-outlined mdi-icon">visibility_off</span>{% endif %}-->
-            <!--                    {% if perms.pack.add_packageentry %}<span class="material-symbols-outlined mdi-icon">file_upload</span>-->
-            <!--                    {% else %}<span class="material-symbols-outlined mdi-icon">file_upload_off</span>{% endif %}-->
-            <!--                    {% if perms.pack.delete_packageentry %}<span class="material-symbols-outlined mdi-icon">do_not_disturb</span>-->
-            <!--                    {% else %}<span class="material-symbols-outlined mdi-icon">do_not_disturb_off</span>{% endif %}-->
-            <!--                </td>-->
-            <!--            </tr>-->
+            <tr>
+                <td class="centering-row-left"><span class="material-symbols-outlined mdi-icon">newspaper</span>News
+                </td>
+                <td>
+                    {% if perms.delivery.add_newsentry %}<span
+                        class="material-symbols-outlined mdi-icon">subtitles</span>
+                    {% else %}<span class="material-symbols-outlined mdi-icon">subtitles_off</span>{% endif %}
+                    {% if perms.delivery.delete_newsentry %}<span
+                        class="material-symbols-outlined mdi-icon">edit</span>
+                    {% else %}<span class="material-symbols-outlined mdi-icon">edit_off</span>{% endif %}
+                    {% if perms.delivery.delete_newscomment %}<span
+                        class="material-symbols-outlined mdi-icon">comment</span>
+                    {% else %}<span class="material-symbols-outlined mdi-icon">comments_disabled</span>{% endif %}
+                </td>
+            </tr>
+            <tr>
+                <td class="centering-row-left"><span class="material-symbols-outlined mdi-icon">package_2</span>Revision
+                </td>
+                <td>
+                    {% if perms.delivery.add_revisionitementry %}<span class="material-symbols-outlined mdi-icon">file_upload</span>
+                    {% else %}<span class="material-symbols-outlined mdi-icon">file_upload_off</span>{% endif %}
+                    {% if perms.delivery.delete_revisionitementry %}<span class="material-symbols-outlined mdi-icon">open_in_new</span>
+                    {% else %}<span class="material-symbols-outlined mdi-icon">open_in_new_off</span>{% endif %}
+                </td>
+            </tr>
             <tr>
                 <td class="centering-row-left"><span class="material-symbols-outlined mdi-icon">person</span>User</td>
                 <td>

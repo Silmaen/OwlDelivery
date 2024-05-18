@@ -83,3 +83,20 @@ def get_revision_info(revision_hash):
         item["flavors"] = f
         current_revision["item_list"].append(item)
     return current_revision
+
+
+def find_revision(data: dict):
+    objs = RevisionItemEntry.objects
+    if "hash" in data.keys():
+        objs = objs.filter(hash=data["hash"])
+    if "branch" in data.keys():
+        objs = objs.filter(branch=data["branch"])
+    if "name" in data.keys():
+        objs = objs.filter(name=data["name"])
+    if "flavor_name" in data.keys():
+        objs = objs.filter(flavor_name=data["flavor_name"])
+    if "date" in data.keys():
+        objs = objs.filter(date=data["date"])
+    if "rev_type" in data.keys():
+        objs = objs.filter(rev_type=data["rev_type"])
+    return objs
