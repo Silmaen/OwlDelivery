@@ -2,13 +2,19 @@
 Package views
 """
 
+from base64 import b64decode
 from pathlib import Path
+from shutil import move
 
 from django.conf import settings
+from django.contrib.auth import authenticate, login
+from django.http import FileResponse, HttpResponseForbidden, HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
+from django.views.decorators.csrf import csrf_exempt
 
 from .Revision_utils import *
-from .forms import NewsCommentForm
+from .db_locking import locker
+from .forms import NewsCommentForm, RevisionItemEntryFullForm
 from .models import NewsEntry
 from .perms_utils import *
 
@@ -162,3 +168,200 @@ def admin(request):
     if can_see_revision_admin(request):
         return redirect("a_revisions")
     return redirect("a_users")
+
+
+def dl_script(request):
+    file = Path(f"{settings.STATICFILES_DIRS}/scripts/api.py")
+    response = FileResponse(open(file, "rb"))
+    response["Content-Disposition"] = 'attachement; filename="api.py"'
+    return response
+
+
+def entry_exists(request):
+    data = request.POST.dict()
+    file_name = ""
+    if len(request.FILES.dict()) > 0:
+        file_name = request.FILES.dict().keys()[0]
+    elif "package.path" in data:
+        file_name = data["package.name"]
+    new_path = (
+        Path(settings.MEDIA_ROOT)
+        / "packages"
+        / data["branch"]
+        / data["hash"]
+        / file_name
+    )
+    if new_path.exists():
+        return True
+    return (
+        RevisionItemEntry.objects.filter(
+            hash=data["hash"],
+            branch=data["branch"],
+            name=data["name"],
+            flavor_name=data["flavor_name"],
+            rev_type=data["rev_type"],
+        ).count()
+        > 0
+    )
+
+
+@csrf_exempt
+def revision_api(request):
+    try:
+        if not request.user.is_authenticated:
+            if "Authorization" in request.headers:
+                try:
+                    key, dec = (
+                        b64decode(request.headers["Authorization"].split()[-1])
+                        .decode("ascii")
+                        .split(":", 1)
+                    )
+                    user = authenticate(request, username=key, password=dec)
+                    if user is None:
+                        return HttpResponseForbidden(
+                            f"""Only authenticated user allowed 
+    Login: {key}, password: {dec} is invalid."""
+                        )
+                    login(request, user)
+                except Exception as err:
+                    return HttpResponseForbidden(
+                        f"""Only authenticated user allowed 
+    Method: {request.method},Headers: {request.headers}
+    ERROR: {err}"""
+                    )
+            if not request.user.is_authenticated:
+                return HttpResponseForbidden(f"""Only authenticated user allowed""")
+        if locker.is_locked():
+            return HttpResponse(
+                f"ERROR: Server is under maintenance, try again later.", status=406
+            )
+        if request.method == "GET":
+            # if get method, simply DL the api script
+            return dl_script(request)
+        if request.method != "POST":
+            return HttpResponse(
+                f"ERROR invalid action.\nMETHOD: {request.method}\nheaders: {request.headers}",
+                status=406,
+            )
+        data = request.POST.dict()
+        if "action" not in data:
+            return HttpResponse(
+                f"ERROR no asked action.\nPOST: {data}\nheaders: {request.headers}",
+                status=406,
+            )
+        action = data["action"]
+        if action == "version":
+            return HttpResponse(f"version: {SiteVersion}\n", status=200)
+        elif action == "pull":
+            return HttpResponse(
+                f"""ERROR PULL function is not yet implemented.""", status=406
+            )
+        elif action == "push":
+            if not request.user.has_perm("delivery.add_revisionitementry"):
+                return HttpResponseForbidden("Please ask the right to delete packages")
+            try:
+                if len(request.FILES.dict()) > 0:
+                    form = RevisionItemEntryFullForm(request.POST, request.FILES)
+                    if form.is_valid():
+                        if entry_exists(request):
+                            return HttpResponse(
+                                f"WARNING: Entry already exists.",
+                                status=201,
+                            )
+                        form.save()
+                        return HttpResponse(
+                            f"GOOD.\nPOST: {data}\nFILES: {request.FILES.dict()}\nheaders: {request.headers}",
+                            status=200,
+                        )
+                    else:
+                        form.full_clean()
+                        return HttpResponse(
+                            f"INVALID FORM.\nPOST: {data}\nFILES: {request.FILES.dict()}\nheaders: {request.headers}",
+                            status=406,
+                        )
+                elif "package.path" in data:
+                    # temp file to destination folder
+                    missing = []
+                    ok = True
+                    for d in [
+                        "hash",
+                        "branch",
+                        "name",
+                        "flavor_name",
+                        "rev_type",
+                        "date",
+                    ]:
+                        if d not in data.keys():
+                            ok = False
+                            missing.append(d)
+                    if not ok:
+                        return HttpResponse(
+                            f"ERROR INVALID REQUEST.\n"
+                            f"POST: {data}\n"
+                            f"ERROR  Missing data: {missing}\n"
+                            f"headers: {request.headers}",
+                            status=406,
+                        )
+                    origin_path = Path((data["package.path"]))
+                    new_path = (
+                        Path(settings.MEDIA_ROOT)
+                        / "packages"
+                        / data["branch"]
+                        / data["hash"]
+                        / data["package.name"]
+                    )
+                    if entry_exists(request):
+                        return HttpResponse(
+                            f"WARNING: Entry already exists.",
+                            status=201,
+                        )
+                    new_path.parent.mkdir(parents=True, exist_ok=True)
+                    move(origin_path, new_path)
+                    entry = RevisionItemEntry.objects.create(
+                        hash=data["hash"],
+                        branch=data["branch"],
+                        name=data["name"],
+                        flavor_name=data["flavor_name"],
+                        rev_type=data["rev_type"],
+                        date=data["date"],
+                        package=str(new_path),
+                    )
+                    entry.save()
+                    return HttpResponse(
+                        f"GOOD.\nPOST: {data}\nheaders: {request.headers}",
+                        status=200,
+                    )
+                else:
+                    return HttpResponse(
+                        f"ERROR  INVALID REQUEST.\n"
+                        f"POST: {data}\n"
+                        f"ERROR NO FILE\n"
+                        f"headers: {request.headers}",
+                        status=406,
+                    )
+            except Exception as err:
+                return HttpResponse(
+                    f"ERROR problem with the data: {err}.\n"
+                    f"POST: {data}\n"
+                    f"FILES: {request.FILES.dict()}\n"
+                    f"headers: {request.headers}\n ",
+                    status=406,
+                )
+        elif action == "delete":
+            if not request.user.has_perm("delivery.delete_revisionitementry"):
+                return HttpResponseForbidden("Please ask the right to delete packages")
+            objs = find_revision(data)
+            if len(objs) == 0:
+                return HttpResponse(f"""ERROR No matching package.""", status=406)
+            if len(objs) > 1:
+                return HttpResponse(
+                    f"""ERROR more than one package match the query.""", status=406
+                )
+            objs[0].delete()
+        else:
+            return HttpResponse(
+                f"ERROR invalid action.\nPOST: {data}\nheaders: {request.headers}",
+                status=406,
+            )
+    except Exception as err:
+        return HttpResponse(f"""ERROR Exception during treatment {err}.""", status=406)
