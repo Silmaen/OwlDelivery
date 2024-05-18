@@ -83,3 +83,46 @@ By default, `admin` will be the login and the password.
 
 After the first initialization, it is strongly recommended to change this
 admin password!
+
+### EMAIL configuration
+
+Define your mail server `EMAIL_HOST` its adress, `EMAIL_PORT` its port.
+`EMAIL_USE_TLS` defines if TLS transaction should be used.
+If `EMAIL_USER` and  `EMAIL_PASSWD` are set, the communiication will use these
+credentials.
+
+### Options
+
+`DEBUG_MODE` is a developer option to display the django error messages. Default
+is `false` meaning production environment.
+
+`ENABLE_STAFF` make available the 'admin' section of django with a bit more
+advanced parameters than the classical admin. Use with cautions.
+
+## Roadmap and versions
+
+* [ ] x.y.z
+    * [ ] allow mailing to user
+        * [ ] tunable notification
+        * [ ] notifications for new releases
+        * [ ] notification for comments, etc.
+    * [ ] allow Egngine API documentation pages
+* [ ] 0.2.0
+    * [ ] push script improvement
+        * [ ] manging version of the script.
+        * [ ] allow auto-update of the local script.
+    * [ ] Revision reorganization
+        * [ ] add notion of TAG (meaning the stable releases)
+        * [ ] display latest stable release, experimental (main) then older releases
+* [X] 0.1.0 -- first release 2024-05-18
+    * [X] user management
+        * [X] allow user login and registration
+        * [X] allow changing permission to users
+        * [X] allow the user to see/edit their informations
+        * [X] allow user to reset their credential (Require a valid setup of mail server)
+    * [X] revision management
+        * [X] Pages to navigate through revisions
+        * [X] Special adress to download push script.
+            * [X] Automated push script
+    * [X] admin sections
+        * [X] can delete revision or revision items
