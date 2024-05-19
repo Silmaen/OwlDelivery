@@ -10,39 +10,39 @@ This server aim to host the delivery packages of the Owl Game engine [Owl Engine
 
 Most parts of the work reside in a docker image can can simply be deployed.
 
-`docker pull registry.argawaen.net/owl-delivery-server`
+`docker pull registry.argawaen.net/servers/owl-delivery-server`
 
 ### Docker compose
 
 It is possible to use the server directly in Docker compose:
 
 ```yaml
-version: 3.8
+version: "3.8"
 services:
   owl-delivery-server:
-    image: registry.argawaen.net/argawaen/owl-delivery-server
+    image: registry.argawaen.net/servers/owl-delivery-server
     container_name: owl-delivery-server
-  volume:
-    - /srv/data/owldeliv:/data       # Persistent volume for package storage, logs, internal database.
-  ports:
-    - 80:80                          # Port of the web UI.
-  environment:
-    - TZ:"Europe/Paris"              # The time zone to use in the container.
-    - PUID:1000                      # UID used for file writing.
-    - PGID:1000                      # GID used for file writing.
-    - DOMAIN_NAME:"example.com"      # The domain of this server (mandatory for correct usage).
-    - ADMIN_NAME:"admin"             # login of the first admin.
-    - ADMIN_PASSWD:"MyBigPassW0rd"   # passwd of the first admin.
-    - EMAIL_HOST:"mail.example.com"  # URL of the mail server.
-    - EMAIL_PORT:587                 # Port of the mail server.
-    - EMAIL_USE_TLS:"True"           # If server uses TLS.
-    - EMAIL_USER:"admin"             # Email user login.
-    - EMAIL_PASSWD:"MyBigPassW0rd"   # Email user password.
-    - DEBUG_MODE:"False"             # Set Django in debug mode.
-    - ENABLE_STAFF:"False"           # Activate the staff section for admin users
-networks:
-  default:
-    name: proxyed_servers
+    restart: unless-stopped
+    cap_add:
+      - NET_ADMIN
+    volumes:
+      - /srv/owldeliv/data:/data       # Persistent volume for package storage, logs, internal database.
+      - /etc/timezone:/etc/timezone:ro # Defines the same timezone as the host.
+    ports:
+      - 80:80                          # Port of the web UI.
+    environment:
+      - PUID=1000                      # UID used for file writing.
+      - PGID=1000                      # GID used for file writing.
+      - DOMAIN_NAME="example.com"      # The domain of this server (mandatory for correct usage).
+      - ADMIN_NAME="admin"             # login of the first admin.
+      - ADMIN_PASSWD="MyBigPassW0rd"   # passwd of the first admin.
+      - EMAIL_HOST="mail.example.com"  # URL of the mail server.
+      - EMAIL_PORT=587                 # Port of the mail server.
+      - EMAIL_USE_TLS="True"           # If server uses TLS.
+      - EMAIL_USER="admin"             # Email user login.
+      - EMAIL_PASSWD="MyBigPassW0rd"   # Email user password.
+      - DEBUG_MODE="False"             # Set Django in debug mode.
+      - ENABLE_STAFF="False"           # Activate the staff section for admin users
 ```
 
 ## Variables details
