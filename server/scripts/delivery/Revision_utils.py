@@ -11,8 +11,20 @@ def get_revision_branches():
         return []
     result = []
     for rev in revs:
+        if rev.branch in result:
+            continue
         result.append(rev.branch)
-    return list(set(result))
+    return result
+
+
+def get_branch_info():
+    branche_names = get_revision_branches()
+    branches = []
+    for branch in branche_names:
+        revs = RevisionItemEntry.objects.filter(branch=branch).order_by("-date")
+        if revs.count() > 0:
+            branches.append({"name": branch, "date": revs[0].date})
+    return branches
 
 
 def get_revision_hashes(branch_filter=""):

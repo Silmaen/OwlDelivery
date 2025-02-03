@@ -380,3 +380,28 @@ def admin_edit_revision_item(request, pk):
             "version": {"number": SiteVersion, "hash": SiteHash},
         },
     )
+
+
+def admin_revision_detail(request, rev_hash):
+    """
+
+    :param request:
+    :return:
+    """
+    if not request.user.is_authenticated:
+        return redirect("/")
+    return render(
+        request,
+        "delivery/admin/revisions.html",
+        {
+            "title": "admin",
+            "page": "admin",
+            "subpage": "revisions",
+            "subpages": extract_subpages(request),
+            "has_menu": True,
+            "has_submenu": True,
+            "staff_active": staff_active,
+            "is_admin": can_see_admin(request),
+            "version": {"number": SiteVersion, "hash": SiteHash},
+        },
+    )
