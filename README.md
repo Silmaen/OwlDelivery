@@ -62,7 +62,7 @@ as owner.
 ### DOMAIN_NAME
 
 The domain of this server. This parameter is mandatory because used in CSRF resolution of POST REQUESTS.
-By default: '127.0.0.1' and 'localhost' are used. It is also important to add the port if not using
+By default, '127.0.0.1' and 'localhost' are used. It is also important to add the port if not using
 standard http or https ports in request.
 
 If you can access to this server by the url `http://10.15.165.12:7856`
@@ -86,9 +86,9 @@ admin password!
 
 ### EMAIL configuration
 
-Define your mail server `EMAIL_HOST` its adress, `EMAIL_PORT` its port.
+Define your mail server `EMAIL_HOST` its address, `EMAIL_PORT` its port.
 `EMAIL_USE_TLS` defines if TLS transaction should be used.
-If `EMAIL_USER` and  `EMAIL_PASSWD` are set, the communiication will use these
+If `EMAIL_USER` and  `EMAIL_PASSWD` are set, the communication will use these
 credentials.
 
 ### Options
@@ -106,23 +106,23 @@ advanced parameters than the classical admin. Use with cautions.
         * [ ] tunable notification
         * [ ] notifications for new releases
         * [ ] notification for comments, etc.
-    * [ ] allow Egngine API documentation pages
-* [ ] 0.2.0
     * [ ] push script improvement
         * [ ] manging version of the script.
         * [ ] allow auto-update of the local script.
-    * [ ] Revision reorganization
-        * [ ] add notion of TAG (meaning the stable releases)
-        * [ ] display latest stable release, experimental (main) then older releases
+* [ ] 0.3.0
+    * [ ] allow Engine API documentation pages
+* [X] 0.2.0 -- release 2025-02-03
+    * [X] Revision reorganization
+        * [X] Use branch filtering
 * [X] 0.1.0 -- first release 2024-05-18
     * [X] user management
         * [X] allow user login and registration
         * [X] allow changing permission to users
-        * [X] allow the user to see/edit their informations
+        * [X] allow the user to see/edit their information
         * [X] allow user to reset their credential (Require a valid setup of mail server)
     * [X] revision management
         * [X] Pages to navigate through revisions
-        * [X] Special adress to download push script.
+        * [X] Special address to download push script.
             * [X] Automated push script
     * [X] admin sections
         * [X] can delete revision or revision items
