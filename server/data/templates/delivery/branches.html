@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'css/folding_box.css' %}"/>
+{% endblock %}
+
+{% block content %}
+
+{% if branch_list %}
+<div class="PackageList">
+    {% for branch in branch_list %}
+    <div class="Package">
+        <div class="PackageHeader clickable"
+             onclick="location.href='{% url 'revisions' branch.name %}'">
+            <div class="PackageName">Branch : </div>
+            <div class="PackageName">{{ branch.name }}</div>
+            <div class="PackageName">{{ branch.date }}</div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+{% else %}
+<div class="Article">
+    <div class="ArticleHeader">
+        <h3>We are new!</h3>
+    </div>
+    <div class="ArticleContent">
+        <p>No branch is yet available on this server.</p>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block script_content %}
+<script src="{% static 'js/folding_box.js' %}"></script>
+{% endblock %}

@@ -92,15 +92,40 @@ def news_details(request, news_id):
     )
 
 
-def revisions(request):
+def branches(request):
     """
 
     :param request:
     :return:
     """
+    branch_list = get_branch_info()
+
+    return render(
+        request,
+        "delivery/branches.html",
+        {
+            "title": "Branches",
+            "page": "revisions",
+            "has_menu": True,
+            "has_submenu": False,
+            "staff_active": staff_active,
+            "is_admin": can_see_admin(request),
+            "branch_list": branch_list,
+            "version": {"number": SiteVersion, "hash": SiteHash},
+        },
+    )
+
+
+def revisions(request, rev_branch: str):
+    """
+
+    :param rev_branch:
+    :param request:
+    :return:
+    """
     current_revision = None
     older_revisions = []
-    branch_filter = ""
+    branch_filter = rev_branch
     # get last hash
     if get_revision_count(branch_filter) > 0:
         hashes = get_revision_hashes(branch_filter)
@@ -117,12 +142,13 @@ def revisions(request):
         request,
         "delivery/revisions.html",
         {
-            "title": "revisions",
+            "title": f"revisions - branch: {rev_branch}",
             "page": "revisions",
             "has_menu": True,
             "has_submenu": False,
             "staff_active": staff_active,
             "is_admin": can_see_admin(request),
+            "branche": rev_branch,
             "current_revision": current_revision,
             "older_revisions": older_revisions,
             "version": {"number": SiteVersion, "hash": SiteHash},
@@ -143,7 +169,7 @@ def revision_detail(request, rev_hash):
         request,
         "delivery/revision_detail.html",
         {
-            "title": "revisions",
+            "title": f"revision - hash: {current_revision['hash']} - branch: {current_revision['branch']}",
             "page": "revisions",
             "has_menu": True,
             "has_submenu": False,
@@ -185,23 +211,23 @@ def entry_exists(request):
     elif "package.path" in data:
         file_name = data["package.name"]
     new_path = (
-        Path(settings.MEDIA_ROOT)
-        / "packages"
-        / data["branch"]
-        / data["hash"]
-        / file_name
+            Path(settings.MEDIA_ROOT)
+            / "packages"
+            / data["branch"]
+            / data["hash"]
+            / file_name
     )
     if new_path.exists():
         return True
     return (
-        RevisionItemEntry.objects.filter(
-            hash=data["hash"],
-            branch=data["branch"],
-            name=data["name"],
-            flavor_name=data["flavor_name"],
-            rev_type=data["rev_type"],
-        ).count()
-        > 0
+            RevisionItemEntry.objects.filter(
+                hash=data["hash"],
+                branch=data["branch"],
+                name=data["name"],
+                flavor_name=data["flavor_name"],
+                rev_type=data["rev_type"],
+            ).count()
+            > 0
     )
 
 
@@ -304,11 +330,11 @@ def revision_api(request):
                         )
                     origin_path = Path((data["package.path"]))
                     new_path = (
-                        Path(settings.MEDIA_ROOT)
-                        / "packages"
-                        / data["branch"]
-                        / data["hash"]
-                        / data["package.name"]
+                            Path(settings.MEDIA_ROOT)
+                            / "packages"
+                            / data["branch"]
+                            / data["hash"]
+                            / data["package.name"]
                     )
                     if entry_exists(request):
                         return HttpResponse(

@@ -7,12 +7,22 @@
 
 {% block content %}
 
+<div class="PackageList">
+    <div class="Package">
+        <div class="PackageHeader clickable" onclick="location.href='{% url 'branches' %}'">
+            <div class="PackageName"><span class="material-symbols-outlined">arrow_back</span></div>
+            <div class="PackageName">Display Branch:</div>
+            <div class="PackageName">{{ branche }}</div>
+        </div>
+    </div>
+</div>
+
 {% if current_revision %}
 <div class="PackageList">
     <div class="Package">
         <div class="PackageHeader clickable"
              onclick="location.href='{% url 'revision_detail' current_revision.hash %}'">
-            <div class="PackageName">Current Revision:</div>
+            <div class="PackageName">Last Revision:</div>
             <div class="PackageName">{{ current_revision.hash }}</div>
             <div class="PackageName">{{ current_revision.date }}</div>
         </div>
