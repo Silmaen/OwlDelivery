@@ -2,11 +2,12 @@
 Package views
 """
 
+import shutil
+import tarfile
+import zipfile
 from base64 import b64decode
-from pathlib import Path
 from shutil import move
 
-from django.conf import settings
 from django.contrib.auth import authenticate, login
 from django.http import FileResponse, HttpResponseForbidden, HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
@@ -98,7 +99,7 @@ def branches(request):
     :param request:
     :return:
     """
-    branch_list = get_branch_info()
+    branch_list = get_branches_info()
 
     return render(
         request,
@@ -148,7 +149,7 @@ def revisions(request, rev_branch: str):
             "has_submenu": False,
             "staff_active": staff_active,
             "is_admin": can_see_admin(request),
-            "branche": rev_branch,
+            "branch": get_branch_info(rev_branch),
             "current_revision": current_revision,
             "older_revisions": older_revisions,
             "version": {"number": SiteVersion, "hash": SiteHash},
@@ -211,23 +212,23 @@ def entry_exists(request):
     elif "package.path" in data:
         file_name = data["package.name"]
     new_path = (
-            Path(settings.MEDIA_ROOT)
-            / "packages"
-            / data["branch"]
-            / data["hash"]
-            / file_name
+        Path(settings.MEDIA_ROOT)
+        / "packages"
+        / data["branch"]
+        / data["hash"]
+        / file_name
     )
     if new_path.exists():
         return True
     return (
-            RevisionItemEntry.objects.filter(
-                hash=data["hash"],
-                branch=data["branch"],
-                name=data["name"],
-                flavor_name=data["flavor_name"],
-                rev_type=data["rev_type"],
-            ).count()
-            > 0
+        RevisionItemEntry.objects.filter(
+            hash=data["hash"],
+            branch=data["branch"],
+            name=data["name"],
+            flavor_name=data["flavor_name"],
+            rev_type=data["rev_type"],
+        ).count()
+        > 0
     )
 
 
@@ -330,11 +331,11 @@ def revision_api(request):
                         )
                     origin_path = Path((data["package.path"]))
                     new_path = (
-                            Path(settings.MEDIA_ROOT)
-                            / "packages"
-                            / data["branch"]
-                            / data["hash"]
-                            / data["package.name"]
+                        Path(settings.MEDIA_ROOT)
+                        / "packages"
+                        / data["branch"]
+                        / data["hash"]
+                        / data["package.name"]
                     )
                     if entry_exists(request):
                         return HttpResponse(
@@ -362,6 +363,74 @@ def revision_api(request):
                         f"ERROR  INVALID REQUEST.\n"
                         f"POST: {data}\n"
                         f"ERROR NO FILE\n"
+                        f"headers: {request.headers}",
+                        status=406,
+                    )
+            except Exception as err:
+                return HttpResponse(
+                    f"ERROR problem with the data: {err}.\n"
+                    f"POST: {data}\n"
+                    f"FILES: {request.FILES.dict()}\n"
+                    f"headers: {request.headers}\n ",
+                    status=406,
+                )
+        elif action == "push_doc":
+            if not request.user.has_perm("delivery.add_revisionitementry"):
+                return HttpResponseForbidden("Please ask the right to delete packages")
+            try:
+                if "package.path" in data:
+                    if "branch" not in data.keys():
+                        return HttpResponse(
+                            f"ERROR INVALID REQUEST.\n"
+                            f"POST: {data}\n"
+                            f"ERROR  Missing branch field\n"
+                            f"headers: {request.headers}",
+                            status=406,
+                        )
+                    origin_path = Path(data["package.path"])
+                    if not origin_path.exists():
+                        return HttpResponse(
+                            f"ERROR  INVALID REQUEST.\n"
+                            f"POST: {data}\n"
+                            f"ERROR NO FILE {origin_path} exists in defined package field.\n"
+                            f"headers: {request.headers}",
+                            status=406,
+                        )
+                    origin_path_name = Path(data["package.name"])
+                    new_path = (
+                        Path(settings.MEDIA_ROOT) / "documentation" / data["branch"]
+                    )
+
+                    if new_path.exists():
+                        if not new_path.is_dir():
+                            new_path.unlink(missing_ok=True)
+                        else:
+                            shutil.rmtree(new_path, ignore_errors=True)
+                    new_path.mkdir(parents=True)
+                    suffixes = "".join(origin_path_name.suffixes)
+                    if suffixes == ".zip":
+                        with zipfile.ZipFile(origin_path, "r") as zip_ref:
+                            zip_ref.extractall(new_path)
+                    elif suffixes in [".tar.gz", ".tgz"]:
+                        with tarfile.open(origin_path, "r:gz") as tar_ref:
+                            tar_ref.extractall(new_path)
+                    else:
+                        return HttpResponse(
+                            f"ERROR  INVALID REQUEST.\n"
+                            f"POST: {data}\n"
+                            f"ERROR FILE {origin_path_name} Format not supported {suffixes}.\n"
+                            f"headers: {request.headers}",
+                            status=406,
+                        )
+                    return HttpResponse(
+                        f"GOOD.\nPOST: {data}\nheaders: {request.headers}",
+                        status=200,
+                    )
+                else:
+                    return HttpResponse(
+                        f"ERROR  INVALID REQUEST.\n"
+                        f"POST: {data}\n"
+                        f"ERROR NO FILE in package field.\n"
                         f"headers: {request.headers}",
                         status=406,
                     )

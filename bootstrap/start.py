@@ -11,6 +11,7 @@ server_path = Path("/server")
 server_config = server_path / "config"
 server_data = Path("/data")
 packages_dir = server_data / "packages"
+documentation_dir = server_data / "documentation"
 server_data_upload = server_data / "_upload"
 server_scripts = server_path / "scripts"
 server_log = server_data / "log"
@@ -110,7 +111,7 @@ def check_user_exist():
                 f"Create group named {group_info['name']} with gid: {group_info['id']}"
             )
             if not exec_cmd(
-                    f"addgroup -g {group_info['id']} {group_info['name']}", True
+                f"addgroup -g {group_info['id']} {group_info['name']}", True
             ):
                 print("ERROR detected during addgroup...", file=stderr)
                 return False
@@ -132,8 +133,8 @@ def check_user_exist():
                     user_info["name"] += "0"
             print(f"Create user named {user_info['name']} with pid: {user_info['id']}")
             if not exec_cmd(
-                    f"adduser -D -H -u {user_info['id']} -G {group_info['name']} {user_info['name']}",
-                    True,
+                f"adduser -D -H -u {user_info['id']} -G {group_info['name']} {user_info['name']}",
+                True,
             ):
                 print("ERROR detected during adduser...", file=stderr)
                 return False
@@ -159,6 +160,7 @@ def correct_permission():
             server_data,
             server_log,
             packages_dir,
+            documentation_dir,
         ]
         for i in range(10):
             folder_list.append(server_data_upload / str(i))
@@ -256,7 +258,7 @@ def fall_back():
     print("End of fallback :( .")
 
 
-def getUserGroup():
+def get_user_group():
     """
     Get the user and group for execution.
     :return: user_name, group_name.
@@ -376,12 +378,12 @@ def start_server():
         print(f"ERROR: no project scripts is configured.", file=stderr)
         return False
     cmd = (
-            "gunicorn scripts.wsgi"
-            + " --bind=0.0.0.0:8000"
-            + " --reload"
-            + " --daemon"
-            + " --log-level info"
-            + " --log-file /data/log/gunicorn.log"
+        "gunicorn scripts.wsgi"
+        + " --bind=0.0.0.0:8000"
+        + " --reload"
+        + " --daemon"
+        + " --log-level info"
+        + " --log-file /data/log/gunicorn.log"
     )
     if not exec_cmd(cmd, True):
         return False

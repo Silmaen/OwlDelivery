@@ -101,16 +101,17 @@ advanced parameters than the classical admin. Use with cautions.
 
 ## Roadmap and versions
 
-* [ ] x.y.z
+* [ ] 0.4.0
+    * [ ] Possible link to OAuth authentication
     * [ ] allow mailing to user
         * [ ] tunable notification
         * [ ] notifications for new releases
         * [ ] notification for comments, etc.
-    * [ ] push script improvement
-        * [ ] manging version of the script.
-        * [ ] allow auto-update of the local script.
 * [ ] 0.3.0
-    * [ ] allow Engine API documentation pages
+    * [X] allow Engine API documentation pages
+    * [ ] Branch display management
+        * [ ] dissociate current release branch from other branches
+        * [ ] allow to hide/see other branches
 * [X] 0.2.0 -- release 2025-02-03
     * [X] Revision reorganization
         * [X] Use branch filtering

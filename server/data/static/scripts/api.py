@@ -21,6 +21,21 @@ class Revision:
         self.date = ""
         self.file = Path()
 
+    def compact(self):
+        import tarfile
+
+        if self.file.is_dir():
+            if verbosity > 0:
+                print(f"Compacting directory {self.file}... ", end="")
+            output_filename = self.file.parent / f"Archive_{self.branch}.tar.gz"
+            with tarfile.open(output_filename, "w:gz") as tar:
+                for item in self.file.iterdir():
+                    # Ajouter chaque élément à l'archive
+                    tar.add(item, arcname=item.relative_to(self.file))
+            self.file = output_filename
+            if verbosity > 0:
+                print("done.")
+
 
 rev = Revision()
 user = ""
@@ -76,7 +91,7 @@ def push():
     try:
         basic = HTTPBasicAuth(user, cred)
         post_data = {
-            "action": "push",
+            "action": ["push", "push_doc"][rev.rev_type == "d"],
             "hash": rev.hash,
             "branch": rev.branch,
             "name": rev.name,
@@ -212,37 +227,67 @@ def parse_args():
     verbosity = args.verbose
     if args.command == "push":
         rev.rev_type = args.type
-        if args.hash:
-            rev.hash = args.hash
-        else:
-            print("ERROR: missing revision hash", file=stderr)
-            exit(1)
-        rev.branch = "main"
         if args.branch:
             rev.branch = args.branch
-        if args.name:
-            rev.name = args.name
         else:
-            print("ERROR: missing revision name", file=stderr)
-            exit(1)
-        if args.flavor_name:
-            rev.flavor_name = args.flavor_name
-        else:
-            print("ERROR: missing revision flavor name", file=stderr)
-            exit(1)
-        if args.date:
-            rev.date = args.date
-        else:
-            print("ERROR: missing revision date", file=stderr)
+            print("ERROR: missing branch code", file=stderr)
             exit(1)
         if args.file:
             rev.file = Path(args.file)
         else:
             print("ERROR: missing revision file", file=stderr)
             exit(1)
+        destination = args.url
+        if destination in ["", None]:
+            print("ERROR: missing destination url", file=stderr)
+            exit(1)
+        if rev.rev_type == "d":  # if documentation
+            if not rev.file.is_dir():
+                print("ERROR: Documentation data must be a directory", file=stderr)
+                exit(1)
+            if not (rev.file / "index.html").exists():
+                print(
+                    "ERROR: Documentation data does not contains index.html file",
+                    file=stderr,
+                )
+                exit(1)
+            # do the compression
+            rev.compact()
+            if not rev.file.is_file():
+                print(
+                    "ERROR: Documentation content should now be an archive file",
+                    file=stderr,
+                )
+                exit(1)
+        else:  # if not documentation
+            if not rev.file.is_file():
+                print(
+                    "ERROR: Package content should now be a file",
+                    file=stderr,
+                )
+                exit(1)
+            if args.hash:
+                rev.hash = args.hash
+            else:
+                print("ERROR: missing revision hash", file=stderr)
+                exit(1)
+            if args.name:
+                rev.name = args.name
+            else:
+                print("ERROR: missing revision name", file=stderr)
+                exit(1)
+            if args.flavor_name:
+                rev.flavor_name = args.flavor_name
+            else:
+                print("ERROR: missing revision flavor name", file=stderr)
+                exit(1)
+            if args.date:
+                rev.date = args.date
+            else:
+                print("ERROR: missing revision date", file=stderr)
+                exit(1)
         user = args.user
         cred = args.passwd
-        destination = args.url
         return "push"
 
     return ""

@@ -2,6 +2,10 @@
 Utility function for revision manipulation
 """
 
+from pathlib import Path
+
+from django.conf import settings
+
 from .models import RevisionItemEntry
 
 
@@ -17,7 +21,35 @@ def get_revision_branches():
     return result
 
 
-def get_branch_info():
+def get_branch_documentation(branch_name):
+    doc_path = Path(settings.MEDIA_ROOT) / "documentation" / branch_name
+    return doc_path.exists()
+
+
+def get_branch_documentation_url(branch_name):
+    doc_path = Path(settings.MEDIA_ROOT) / "documentation" / branch_name
+    if doc_path.exists():
+        return f"{settings.MEDIA_URL}documentation/{branch_name}"
+
+
+def get_branch_info(branch_name):
+    revs = RevisionItemEntry.objects.filter(branch=branch_name).order_by("-date")
+    if revs.count() > 0:
+        return {
+            "name": branch_name,
+            "date": revs[0].date,
+            "doc": get_branch_documentation(branch_name),
+            "doc_url": get_branch_documentation_url(branch_name),
+        }
+    return {
+        "name": branch_name,
+        "date": "never",
+        "doc": get_branch_documentation(branch_name),
+        "doc_url": get_branch_documentation_url(branch_name),
+    }
+
+
+def get_branches_info():
     branche_names = get_revision_branches()
     branches = []
     for branch in branche_names:

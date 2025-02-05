@@ -12,9 +12,17 @@
         <div class="PackageHeader clickable" onclick="location.href='{% url 'branches' %}'">
             <div class="PackageName"><span class="material-symbols-outlined">arrow_back</span></div>
             <div class="PackageName">Display Branch:</div>
-            <div class="PackageName">{{ branche }}</div>
+            <div class="PackageName">{{ branch.name }}</div>
         </div>
     </div>
+    {% if branch.doc %}
+    <div class="Package">
+        <div class="PackageHeader clickable" onclick="location.href='{{ branch.doc_url }}'">
+            <div class="PackageName"><span class="material-symbols-outlined">developer_guide</span></div>
+            <div class="PackageName">Engine API Documentation</div>
+        </div>
+    </div>
+    {% endif %}
 </div>
 
 {% if current_revision %}
