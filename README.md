@@ -107,6 +107,8 @@ advanced parameters than the classical admin. Use with cautions.
         * [ ] tunable notification
         * [ ] notifications for new releases
         * [ ] notification for comments, etc.
+* [X] 0.3.1 -- release 2025-02-05
+    *  [X] Hotfix: correct API problem with file suffixes
 * [X] 0.3.0 -- release 2025-02-05
     * [X] allow Engine API documentation pages
     * [X] Branch display management

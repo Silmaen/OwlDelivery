@@ -27,7 +27,7 @@ class Revision:
         if self.file.is_dir():
             if verbosity > 0:
                 print(f"Compacting directory {self.file}... ", end="")
-            output_filename = self.file.parent / f"Archive_{self.branch}.tar.gz"
+            output_filename = self.file.parent / f"Archive_{self.branch}.tgz"
             with tarfile.open(output_filename, "w:gz") as tar:
                 for item in self.file.iterdir():
                     # Ajouter chaque élément à l'archive
