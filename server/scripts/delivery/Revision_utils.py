@@ -74,6 +74,7 @@ def get_visible_branches_info():
                 "date": branch.date,
                 "doc": get_branch_documentation(branch.name),
                 "doc_url": get_branch_documentation_url(branch.name),
+                "stable": branch.stable,
             }
         )
     return res

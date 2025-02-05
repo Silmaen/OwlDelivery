@@ -7,9 +7,27 @@
 
 {% block content %}
 
-{% if branch_list %}
+{% if latest or dev_branch_list or old_stable_branch_list %}
+<!-- First the latest stable -->
+{% if latest  %}
 <div class="PackageList">
-    {% for branch in branch_list %}
+    <h2>Latest Stable Branch</h2>
+    <div class="Package">
+        <div class="PackageHeader clickable"
+             onclick="location.href='{% url 'revisions' latest.name %}'">
+            <div class="PackageName">Branch : </div>
+            <div class="PackageName">{{ latest.name }}</div>
+            <div class="PackageName">{{ latest.date }}</div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Then the development branches (not stable) -->
+{% if dev_branch_list  %}
+<div class="PackageList">
+    <h2>Dev Branches</h2>
+    {% for branch in dev_branch_list %}
     <div class="Package">
         <div class="PackageHeader clickable"
              onclick="location.href='{% url 'revisions' branch.name %}'">
@@ -20,6 +38,24 @@
     </div>
     {% endfor %}
 </div>
+{% endif %}
+
+<!-- finally old stable -->
+{% if old_stable_branch_list %}
+<div class="PackageList">
+    <h2>Old Stable Branches</h2>
+    {% for branch in old_stable_branch_list %}
+    <div class="Package">
+        <div class="PackageHeader clickable"
+             onclick="location.href='{% url 'revisions' branch.name %}'">
+            <div class="PackageName">Branch : </div>
+            <div class="PackageName">{{ branch.name }}</div>
+            <div class="PackageName">{{ branch.date }}</div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
 
 {% else %}
 <div class="Article">

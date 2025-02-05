@@ -107,11 +107,11 @@ advanced parameters than the classical admin. Use with cautions.
         * [ ] tunable notification
         * [ ] notifications for new releases
         * [ ] notification for comments, etc.
-* [ ] 0.3.0
+* [X] 0.3.0 -- release 2025-02-05
     * [X] allow Engine API documentation pages
-    * [ ] Branch display management
-        * [ ] dissociate current release branch from other branches
-        * [ ] allow to hide/see other branches
+    * [X] Branch display management
+        * [X] dissociate current release branch from other branches
+        * [X] allow to hide/see other branches
 * [X] 0.2.0 -- release 2025-02-03
     * [X] Revision reorganization
         * [X] Use branch filtering
