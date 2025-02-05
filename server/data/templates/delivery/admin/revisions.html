@@ -6,8 +6,8 @@
 {% endblock %}
 
 {% block content %}
-{% for branch_name,branch in revisions.items %}
 <div class="PackageList">
+{% for branch_name,branch in revisions.items %}
     <div class="Package folding_box" id="Branch_{{branch_name}}">
         <div class="PackageHeader folding_box_header" onclick="toggleContent('Branch_{{branch_name}}')">
             <div class="PackageName">Branch: {{branch_name}}</div>
@@ -52,8 +52,8 @@
             {% endfor %}
         </div>
     </div>
-</div>
 {% endfor %}
+</div>
 {% endblock %}
 
 {% block script_content %}

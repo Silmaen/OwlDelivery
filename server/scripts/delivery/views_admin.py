@@ -6,10 +6,11 @@ from .Revision_utils import (
     get_revision_branches,
     get_revision_hashes,
     get_revision_info,
+    get_all_branches_info,
 )
 from .db_locking import locker
-from .forms import NewsEntryForm, RevisionItemEntryForm
-from .models import NewsEntry, NewsComment, RevisionItemEntry
+from .forms import NewsEntryForm, RevisionItemEntryForm, BranchEntryForm
+from .models import NewsEntry, NewsComment, RevisionItemEntry, BranchEntry
 from .perms_utils import *
 from .views import SiteVersion, SiteHash
 
@@ -24,6 +25,12 @@ subpages = [
         "name": "revisions",
         "url": "a_revisions",
         "display_name": "Revisions",
+        "permission": can_see_revision_admin,
+    },
+    {
+        "name": "branches",
+        "url": "a_branches",
+        "display_name": "Branches",
         "permission": can_see_revision_admin,
     },
     {
@@ -52,7 +59,7 @@ def admin_users(request):
     :return:
     """
     if not can_see_user_admin(request):
-        return redirect("/")
+        return redirect("HTTP_REFERER", "/")
     if locker.is_locked():
         return redirect("maintenance")
     entries = User.objects.all()
@@ -101,7 +108,7 @@ def admin_modif_user(request, pk):
     :return:
     """
     if not request.user.is_authenticated:
-        return redirect("/")
+        return redirect("HTTP_REFERER", "/")
     if not request.user.has_perm("auth.delete_user"):
         return redirect(request.META.get("HTTP_REFERER", "a_news"))
     if locker.is_locked():
@@ -171,7 +178,7 @@ def admin_news(request):
     :return:
     """
     if not can_see_news_admin(request):
-        return redirect("/")
+        return redirect("HTTP_REFERER", "/")
     news_list = NewsEntry.objects.order_by("-date")
     modified = False
     if request.method == "POST" and request.user.has_perm("delivery.add_newsentry"):
@@ -246,7 +253,7 @@ def admin_modif_news(request, news_id):
     :return:
     """
     if not request.user.is_authenticated:
-        return redirect("/")
+        return redirect("HTTP_REFERER", "/")
     if not request.user.has_perm("delivery.delete_newsentry"):
         return redirect(request.META.get("HTTP_REFERER", "a_news"))
     if request.method == "POST":
@@ -268,7 +275,7 @@ def admin_modif_comment(request, comment_id):
     :return:
     """
     if not request.user.is_authenticated:
-        return redirect("/")
+        return redirect("HTTP_REFERER", "/")
     if not request.user.has_perm("delivery.delete_newscomment"):
         return redirect(request.META.get("HTTP_REFERER", "a_news"))
     if request.method == "POST":
@@ -285,9 +292,9 @@ def admin_modif_comment(request, comment_id):
 
 def admin_revisions_page(request, page):
     if not request.user.is_authenticated:
-        return redirect("/")
+        return redirect("HTTP_REFERER", "/")
     if not can_see_revision_admin(request):
-        return redirect("/")
+        return redirect("HTTP_REFERER", "/")
     revisions = {}
     for branch in get_revision_branches():
         revisions[branch] = []
@@ -320,9 +327,58 @@ def admin_revisions(request):
     return admin_revisions_page(request, 0)
 
 
-def admin_modif_revision(request, rev_hash):
+def admin_branches(request):
     if not request.user.is_authenticated:
         return redirect("/")
+    if not can_see_revision_admin(request):
+        return redirect("/")
+
+    add = ""
+    if request.method == "POST":
+        if request.user.has_perm("delivery.delete_revisionitementry"):
+            data = request.POST.dict()
+            add = "No save due to errors"
+            if "name" in data.keys():
+                branch = BranchEntry.objects.filter(name=data["name"])
+                if branch.count() > 0:
+                    form_input = BranchEntryForm(request.POST, instance=branch[0])
+                    if form_input.is_valid():
+                        form_input.save(commit=True)
+                        add = "Saved!"
+        else:
+            add = "Not Authorized to do that!"
+
+    branch_form = get_all_branches_info()
+    branches = []
+    for b in branch_form:
+        branches.append(
+            {
+                "name": b.name,
+                "form": BranchEntryForm(instance=b),
+            }
+        )
+    return render(
+        request,
+        "delivery/admin/branches.html",
+        {
+            "title": "admin",
+            "page": "admin",
+            "subpage": "branches",
+            "subpages": extract_subpages(request),
+            "has_menu": True,
+            "has_submenu": True,
+            "staff_active": staff_active,
+            "is_admin": can_see_admin(request),
+            "branches": branches,
+            "version": {"number": SiteVersion, "hash": SiteHash},
+            "debug": add,
+        },
+    )
+
+
+def admin_modif_revision(request, rev_hash):
+    if not request.user.is_authenticated:
+        return redirect("HTTP_REFERER", "/")
     if not request.user.has_perm("delivery.delete_revisionitementry"):
         return redirect(request.META.get("HTTP_REFERER", "a_news"))
     if request.method != "POST":
@@ -338,7 +394,7 @@ def admin_modif_revision(request, rev_hash):
 
 def admin_modif_revision_item(request, pk):
     if not request.user.is_authenticated:
-        return redirect("/")
+        return redirect("HTTP_REFERER", "/")
     if not request.user.has_perm("delivery.delete_revisionitementry"):
         return redirect(request.META.get("HTTP_REFERER", "a_news"))
     if request.method != "POST":
@@ -389,7 +445,7 @@ def admin_revision_detail(request, rev_hash):
     :return:
     """
     if not request.user.is_authenticated:
-        return redirect("/")
+        return redirect("HTTP_REFERER", "/")
     return render(
         request,
         "delivery/admin/revisions.html",

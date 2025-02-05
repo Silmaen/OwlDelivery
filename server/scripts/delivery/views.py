@@ -99,7 +99,7 @@ def branches(request):
     :param request:
     :return:
     """
-    branch_list = get_branches_info()
+    branch_list = get_visible_branches_info()
 
     return render(
         request,

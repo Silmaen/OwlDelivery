@@ -5,7 +5,7 @@ Administration page
 from django.contrib import admin
 from markdownx.admin import MarkdownxModelAdmin
 
-from delivery.models import *
+from .models import *
 
 
 # --------------------- The news -------------------------------------
@@ -107,3 +107,28 @@ class RevisionItemEntryAdmin(admin.ModelAdmin):
 
 
 admin.site.register(RevisionItemEntry, RevisionItemEntryAdmin)
+
+
+class BranchEntryAdmin(admin.ModelAdmin):
+    """
+    Admin model for Branch entry.
+    """
+
+    list_display = ("name", "date", "visible", "stable")
+    list_filter = ("date", "visible", "stable")
+    ordering = ("-date",)
+    # Configuration of edit page
+    fieldsets = (
+        # Fieldset 1 : name & date
+        (
+            "Name & date",
+            {
+                "fields": ("name", "date"),
+            },
+        ),
+        # Fieldset 2 : attributes
+        ("Branch info", {"fields": ("visible", "stable")}),
+    )
+
+
+admin.site.register(BranchEntry, BranchEntryAdmin)

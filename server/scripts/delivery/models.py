@@ -187,3 +187,26 @@ class RevisionItemEntry(models.Model):
             return "engine"
         elif self.rev_type == "a":
             return "application"
+
+    def save(self, *args, **kargs):
+        super().save(*args, **kargs)
+        branch_entry, created = BranchEntry.objects.get_or_create(name=self.branch)
+        branch_entry.date = timezone.now()
+        branch_entry.save()
+
+
+class BranchEntry(models.Model):
+    name = models.CharField(
+        max_length=50, default="main", verbose_name="Branch name", unique=True
+    )
+    visible = models.BooleanField(default=True, verbose_name="Visible")
+    stable = models.BooleanField(default=False, verbose_name="Stable Release")
+    date = models.DateTimeField(default=timezone.now, verbose_name="date of build")
+
+    class Meta:
+        """
+        Metadata for the revision item.
+        """
+
+        verbose_name = "Branch of Revision"
+        ordering = ["-date"]
