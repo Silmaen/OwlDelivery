@@ -425,11 +425,11 @@ def revision_api(request):
                         else:
                             shutil.rmtree(new_path, ignore_errors=True)
                     new_path.mkdir(parents=True)
-                    suffixes = "".join(origin_path_name.suffixes)
+                    suffixes = origin_path_name.suffix
                     if suffixes == ".zip":
                         with zipfile.ZipFile(origin_path, "r") as zip_ref:
                             zip_ref.extractall(new_path)
-                    elif suffixes in [".tar.gz", ".tgz"]:
+                    elif suffixes in [".tgz"]:
                         with tarfile.open(origin_path, "r:gz") as tar_ref:
                             tar_ref.extractall(new_path)
                     else:
