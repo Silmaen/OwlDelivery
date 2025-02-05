@@ -6,7 +6,7 @@ from pathlib import Path
 
 from django.conf import settings
 
-from .models import RevisionItemEntry
+from .models import RevisionItemEntry, BranchEntry
 
 
 def get_revision_branches():
@@ -33,7 +33,7 @@ def get_branch_documentation_url(branch_name):
 
 
 def get_branch_info(branch_name):
-    revs = RevisionItemEntry.objects.filter(branch=branch_name).order_by("-date")
+    revs = BranchEntry.objects.filter(name=branch_name).order_by("-date")
     if revs.count() > 0:
         return {
             "name": branch_name,
@@ -49,14 +49,34 @@ def get_branch_info(branch_name):
     }
 
 
-def get_branches_info():
-    branche_names = get_revision_branches()
-    branches = []
-    for branch in branche_names:
-        revs = RevisionItemEntry.objects.filter(branch=branch).order_by("-date")
-        if revs.count() > 0:
-            branches.append({"name": branch, "date": revs[0].date})
+def get_all_branches_info():
+    branches = BranchEntry.objects.order_by("-date")
     return branches
+
+
+def get_all_branches():
+    branches = BranchEntry.objects.order_by("-date")
+    return branches
+
+
+def get_visible_branches():
+    branches = BranchEntry.objects.filter(visible=True).order_by("-date")
+    return branches
+
+
+def get_visible_branches_info():
+    branches = get_visible_branches()
+    res = []
+    for branch in branches:
+        res.append(
+            {
+                "name": branch.name,
+                "date": branch.date,
+                "doc": get_branch_documentation(branch.name),
+                "doc_url": get_branch_documentation_url(branch.name),
+            }
+        )
+    return res
 
 
 def get_revision_hashes(branch_filter=""):

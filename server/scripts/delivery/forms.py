@@ -72,3 +72,22 @@ class RevisionItemEntryFullForm(forms.ModelForm):
             "rev_type",
             "package",
         )
+
+
+class BranchEntryForm(forms.ModelForm):
+    """
+    Form for Revision entry.
+    """
+
+    class Meta:
+        """
+        Meta information
+        """
+
+        model = BranchEntry
+        fields = (
+            "name",
+            "date",
+            "visible",
+            "stable",
+        )

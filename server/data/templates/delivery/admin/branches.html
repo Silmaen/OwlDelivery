@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'css/folding_box.css' %}"/>
+{% endblock %}
+
+{% block content %}
+<div class="PackageList">
+    {% for branch in branches %}
+    <div class="Package folding_box" id="Branch_{{branch.name}}">
+        <div class="PackageHeader folding_box_header" onclick="toggleContent('Branch_{{branch.name}}')">
+            <div class="PackageName">Branch: {{branch.name}}</div>
+        </div>
+        <div class="folding_box_content">
+            <form method="post" class="PackageForm">
+                {% csrf_token %}
+                {{ branch.form.as_p }}
+                {% if perms.delivery.delete_revisionitementry %}
+                <button type="submit" class="button">
+                    <span class="material-symbols-outlined mdi-icon">send</span>
+                    Submit
+                </button>
+                {% endif %}
+            </form>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+<div class="PackageList">
+    {{ debug }}
+</div>
+{% endblock %}
+
+{% block script_content %}
+<script src="{% static 'js/folding_box.js' %}"></script>
+{% endblock %}
