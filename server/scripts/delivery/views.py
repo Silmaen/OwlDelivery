@@ -101,6 +101,22 @@ def branches(request):
     """
     branch_list = get_visible_branches_info()
 
+    latest_stable = None
+    for b in branch_list:
+        if not b["stable"]:
+            continue
+        latest_stable = b
+        break
+    old_stable_branch_list = []
+    dev_branch_list = []
+    for b in branch_list:
+        if b["name"] == latest_stable["name"]:
+            continue
+        if b["stable"]:
+            old_stable_branch_list.append(b)
+        else:
+            dev_branch_list.append(b)
+
     return render(
         request,
         "delivery/branches.html",
@@ -111,8 +127,10 @@ def branches(request):
             "has_submenu": False,
             "staff_active": staff_active,
             "is_admin": can_see_admin(request),
-            "branch_list": branch_list,
+            "dev_branch_list": dev_branch_list,
+            "old_stable_branch_list": old_stable_branch_list,
             "version": {"number": SiteVersion, "hash": SiteHash},
+            "latest": latest_stable,
         },
     )
 
