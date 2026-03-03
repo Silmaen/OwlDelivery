@@ -1,75 +1,55 @@
 {% extends 'base.html' %}
-{% load static %}
-
-{% block extra_head %}
-<link rel="stylesheet" href="{% static 'css/folding_box.css' %}"/>
-{% endblock %}
 
 {% block content %}
-
 {% if latest or dev_branch_list or old_stable_branch_list %}
-<!-- First the latest stable -->
-{% if latest  %}
-<div class="PackageList">
-    <h2>Latest Stable Branch</h2>
-    <div class="Package">
-        <div class="PackageHeader clickable"
-             onclick="location.href='{% url 'revisions' latest.name %}'">
-            <div class="PackageName">Branch : </div>
-            <div class="PackageName">{{ latest.name }}</div>
-            <div class="PackageName">{{ latest.date }}</div>
-        </div>
+
+{% if latest %}
+<div class="pkg-list mb-6">
+    <h2 class="pkg-list__heading">Latest Stable Branch</h2>
+    <div class="pkg-item">
+        <a class="pkg-item__header" href="{% url 'revisions' latest.name %}">
+            <span class="badge badge--primary">Stable</span>
+            <span class="pkg-item__value">{{ latest.name }}</span>
+            <span class="pkg-item__date">{{ latest.date }}</span>
+        </a>
     </div>
 </div>
 {% endif %}
 
-<!-- Then the development branches (not stable) -->
-{% if dev_branch_list  %}
-<div class="PackageList">
-    <h2>Dev Branches</h2>
+{% if dev_branch_list %}
+<div class="pkg-list mb-6">
+    <h2 class="pkg-list__heading">Dev Branches</h2>
     {% for branch in dev_branch_list %}
-    <div class="Package">
-        <div class="PackageHeader clickable"
-             onclick="location.href='{% url 'revisions' branch.name %}'">
-            <div class="PackageName">Branch : </div>
-            <div class="PackageName">{{ branch.name }}</div>
-            <div class="PackageName">{{ branch.date }}</div>
-        </div>
+    <div class="pkg-item">
+        <a class="pkg-item__header" href="{% url 'revisions' branch.name %}">
+            <span class="badge badge--neutral">Dev</span>
+            <span class="pkg-item__value">{{ branch.name }}</span>
+            <span class="pkg-item__date">{{ branch.date }}</span>
+        </a>
     </div>
     {% endfor %}
 </div>
 {% endif %}
 
-<!-- finally old stable -->
 {% if old_stable_branch_list %}
-<div class="PackageList">
-    <h2>Old Stable Branches</h2>
+<div class="pkg-list mb-6">
+    <h2 class="pkg-list__heading">Old Stable Branches</h2>
     {% for branch in old_stable_branch_list %}
-    <div class="Package">
-        <div class="PackageHeader clickable"
-             onclick="location.href='{% url 'revisions' branch.name %}'">
-            <div class="PackageName">Branch : </div>
-            <div class="PackageName">{{ branch.name }}</div>
-            <div class="PackageName">{{ branch.date }}</div>
-        </div>
+    <div class="pkg-item">
+        <a class="pkg-item__header" href="{% url 'revisions' branch.name %}">
+            <span class="badge badge--neutral">Stable</span>
+            <span class="pkg-item__value">{{ branch.name }}</span>
+            <span class="pkg-item__date">{{ branch.date }}</span>
+        </a>
     </div>
     {% endfor %}
 </div>
 {% endif %}
 
 {% else %}
-<div class="Article">
-    <div class="ArticleHeader">
-        <h3>We are new!</h3>
-    </div>
-    <div class="ArticleContent">
-        <p>No branch is yet available on this server.</p>
-    </div>
+<div class="empty-state">
+    <h3>We are new!</h3>
+    <p>No branch is yet available on this server.</p>
 </div>
 {% endif %}
-
-{% endblock %}
-
-{% block script_content %}
-<script src="{% static 'js/folding_box.js' %}"></script>
 {% endblock %}

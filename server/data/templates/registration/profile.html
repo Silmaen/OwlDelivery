@@ -1,89 +1,82 @@
 {% extends 'registration/base_registration.html' %}
-{%block mainsection %}
-<div class="Article user_form">
-    <div class="ArticleHeader">
-        <h4 class="centering"><span class="material-symbols-outlined mdi-icon">account_circle</span>{{ user }}</h4>
+
+{% block mainsection %}
+<div class="auth-card card">
+    <div class="card__header">
+        <h2>
+            <span class="material-symbols-outlined icon">account_circle</span>
+            {{ user }}
+        </h2>
     </div>
-    <div class="ArticleContent user_form">
+    <div class="card__body">
         <p>Here are your account information.</p>
-        <table class="centering-row">
-            <tr>
-                <td class="centering-row-left"><span class="material-symbols-outlined mdi-icon">account_circle</span>
-                    Username:
-                </td>
-                <td>{{user.username}}</td>
-            </tr>
-            <tr>
-                <td class="centering-row-left"><span class="material-symbols-outlined mdi-icon">person</span> First
-                    name:
-                </td>
-                <td>{{user.first_name}}</td>
-            </tr>
-            <tr>
-                <td class="centering-row-left"><span class="material-symbols-outlined mdi-icon">group</span> Last name:
-                </td>
-                <td>{{user.last_name}}</td>
-            </tr>
-            <tr>
-                <td class="centering-row-left"><span class="material-symbols-outlined mdi-icon">mail</span> Mail:</td>
-                <td>{{user.email}}</td>
-            </tr>
-            <tr>
-                <td class="centering-row-left"><span class="material-symbols-outlined mdi-icon">history</span> Last
-                    connexion:
-                </td>
-                <td>{{user.last_login}}</td>
-            </tr>
-            <tr>
-                <td>Possible actions:</td>
-                <td></td>
-            </tr>
-            <tr>
-                <td class="centering-row-left"><span class="material-symbols-outlined mdi-icon">newspaper</span>News
-                </td>
-                <td>
-                    {% if perms.delivery.add_newsentry %}<span
-                        class="material-symbols-outlined mdi-icon">subtitles</span>
-                    {% else %}<span class="material-symbols-outlined mdi-icon">subtitles_off</span>{% endif %}
-                    {% if perms.delivery.delete_newsentry %}<span
-                        class="material-symbols-outlined mdi-icon">edit</span>
-                    {% else %}<span class="material-symbols-outlined mdi-icon">edit_off</span>{% endif %}
-                    {% if perms.delivery.delete_newscomment %}<span
-                        class="material-symbols-outlined mdi-icon">comment</span>
-                    {% else %}<span class="material-symbols-outlined mdi-icon">comments_disabled</span>{% endif %}
-                </td>
-            </tr>
-            <tr>
-                <td class="centering-row-left"><span class="material-symbols-outlined mdi-icon">package_2</span>Revision
-                </td>
-                <td>
-                    {% if perms.delivery.add_revisionitementry %}<span class="material-symbols-outlined mdi-icon">file_upload</span>
-                    {% else %}<span class="material-symbols-outlined mdi-icon">file_upload_off</span>{% endif %}
-                    {% if perms.delivery.delete_revisionitementry %}<span class="material-symbols-outlined mdi-icon">open_in_new</span>
-                    {% else %}<span class="material-symbols-outlined mdi-icon">open_in_new_off</span>{% endif %}
-                </td>
-            </tr>
-            <tr>
-                <td class="centering-row-left"><span class="material-symbols-outlined mdi-icon">person</span>User</td>
-                <td>
-                    {% if perms.auth.view_user %}<span class="material-symbols-outlined mdi-icon">visibility</span>
-                    {% else %}<span class="material-symbols-outlined mdi-icon">visibility_off</span>{% endif %}
-                    {% if perms.auth.delete_user %}<span class="material-symbols-outlined mdi-icon">edit</span>
-                    {% else %}<span class="material-symbols-outlined mdi-icon">edit_off</span>{% endif %}
-                </td>
-            </tr>
-        </table>
-        <a class="button" href="{% url 'password' %}"><span class="material-symbols-outlined mdi-icon">password</span>
-            Change
-            passwd</a>
-        <a class="button" href="{% url 'profile_edit' %}"><span class="material-symbols-outlined mdi-icon">manage_accounts</span>
-            Edit profile</a>
+
+        <dl class="dl-grid mb-6">
+            <dt><span class="material-symbols-outlined icon--sm">account_circle</span> Username</dt>
+            <dd>{{ user.username }}</dd>
+
+            <dt><span class="material-symbols-outlined icon--sm">person</span> First name</dt>
+            <dd>{{ user.first_name }}</dd>
+
+            <dt><span class="material-symbols-outlined icon--sm">group</span> Last name</dt>
+            <dd>{{ user.last_name }}</dd>
+
+            <dt><span class="material-symbols-outlined icon--sm">mail</span> Email</dt>
+            <dd>{{ user.email }}</dd>
+
+            <dt><span class="material-symbols-outlined icon--sm">history</span> Last connexion</dt>
+            <dd>{{ user.last_login }}</dd>
+        </dl>
+
+        <h4 class="mb-2">Permissions</h4>
+        <dl class="dl-grid mb-6">
+            <dt><span class="material-symbols-outlined icon--sm">newspaper</span> News</dt>
+            <dd>
+                {% if perms.delivery.add_newsentry %}<span class="material-symbols-outlined perm icon--sm">subtitles</span>
+                {% else %}<span class="material-symbols-outlined noperm icon--sm">subtitles_off</span>{% endif %}
+                {% if perms.delivery.delete_newsentry %}<span class="material-symbols-outlined perm icon--sm">edit</span>
+                {% else %}<span class="material-symbols-outlined noperm icon--sm">edit_off</span>{% endif %}
+                {% if perms.delivery.delete_newscomment %}<span class="material-symbols-outlined perm icon--sm">comment</span>
+                {% else %}<span class="material-symbols-outlined noperm icon--sm">comments_disabled</span>{% endif %}
+            </dd>
+
+            <dt><span class="material-symbols-outlined icon--sm">package_2</span> Revision</dt>
+            <dd>
+                {% if perms.delivery.add_revisionitementry %}<span class="material-symbols-outlined perm icon--sm">file_upload</span>
+                {% else %}<span class="material-symbols-outlined noperm icon--sm">file_upload_off</span>{% endif %}
+                {% if perms.delivery.delete_revisionitementry %}<span class="material-symbols-outlined perm icon--sm">open_in_new</span>
+                {% else %}<span class="material-symbols-outlined noperm icon--sm">open_in_new_off</span>{% endif %}
+            </dd>
+
+            <dt><span class="material-symbols-outlined icon--sm">person</span> User</dt>
+            <dd>
+                {% if perms.auth.view_user %}<span class="material-symbols-outlined perm icon--sm">visibility</span>
+                {% else %}<span class="material-symbols-outlined noperm icon--sm">visibility_off</span>{% endif %}
+                {% if perms.auth.delete_user %}<span class="material-symbols-outlined perm icon--sm">edit</span>
+                {% else %}<span class="material-symbols-outlined noperm icon--sm">edit_off</span>{% endif %}
+            </dd>
+        </dl>
+
+        <div class="flex-row gap-4 flex-wrap">
+            <a class="btn" href="{% url 'password' %}">
+                <span class="material-symbols-outlined icon">password</span>
+                Change passwd
+            </a>
+            <a class="btn" href="{% url 'profile_edit' %}">
+                <span class="material-symbols-outlined icon">manage_accounts</span>
+                Edit profile
+            </a>
+        </div>
     </div>
-    <div class="ArticleFooter">
-        <a class="button" href="{% url 'index' %}">
-            <span class="material-symbols-outlined mdi-icon">arrow_circle_left</span>
-            Back
-        </a>
+    <div class="card__footer">
+        <div class="card__footer-start">
+            <a class="btn btn--ghost btn--sm" href="{% url 'index' %}">
+                <span class="material-symbols-outlined icon">arrow_circle_left</span>
+                Back
+            </a>
+        </div>
+        <div class="card__footer-center"></div>
+        <div class="card__footer-end"></div>
     </div>
 </div>
 {% endblock %}

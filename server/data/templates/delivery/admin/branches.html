@@ -1,37 +1,34 @@
 {% extends 'base.html' %}
-{% load static %}
-
-{% block extra_head %}
-<link rel="stylesheet" href="{% static 'css/folding_box.css' %}"/>
-{% endblock %}
 
 {% block content %}
-<div class="PackageList">
+<div class="pkg-list mb-6">
     {% for branch in branches %}
-    <div class="Package folding_box" id="Branch_{{branch.name}}">
-        <div class="PackageHeader folding_box_header" onclick="toggleContent('Branch_{{branch.name}}')">
-            <div class="PackageName">Branch: {{branch.name}}</div>
-        </div>
-        <div class="folding_box_content">
-            <form method="post" class="PackageForm">
+    <div class="pkg-item accordion" id="Branch_{{ branch.name }}">
+        <button class="accordion__trigger" aria-expanded="false">
+            <span class="material-symbols-outlined icon">account_tree</span>
+            Branch: {{ branch.name }}
+            <span class="material-symbols-outlined accordion__chevron">expand_more</span>
+        </button>
+        <div class="accordion__panel">
+            <form method="post" class="w-full">
                 {% csrf_token %}
                 {{ branch.form.as_p }}
                 {% if perms.delivery.delete_revisionitementry %}
-                <button type="submit" class="button">
-                    <span class="material-symbols-outlined mdi-icon">send</span>
-                    Submit
-                </button>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn--primary">
+                        <span class="material-symbols-outlined icon">send</span>
+                        Submit
+                    </button>
+                </div>
                 {% endif %}
             </form>
         </div>
     </div>
     {% endfor %}
 </div>
-<div class="PackageList">
-    {{ debug }}
+{% if debug %}
+<div class="pkg-list">
+    <pre>{{ debug }}</pre>
 </div>
-{% endblock %}
-
-{% block script_content %}
-<script src="{% static 'js/folding_box.js' %}"></script>
+{% endif %}
 {% endblock %}

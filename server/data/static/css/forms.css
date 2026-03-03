@@ -1,0 +1,214 @@
+/* ========================================
+   Forms — Groups, Inputs, Markdownx
+   ======================================== */
+
+/* --- Form group --- */
+.form-group {
+  margin-bottom: var(--sp-4);
+}
+
+.form-group__label {
+  display: block;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-neutral-100);
+  margin-bottom: var(--sp-1);
+}
+
+.form-group__input,
+input[type="text"].form-group__input,
+input[type="email"].form-group__input,
+input[type="password"].form-group__input,
+input[type="number"].form-group__input,
+input[type="date"].form-group__input,
+input[type="datetime-local"].form-group__input,
+textarea.form-group__input,
+select.form-group__input {
+  display: block;
+  width: 100%;
+  padding: var(--sp-2) var(--sp-3);
+  font-size: var(--text-base);
+  color: var(--color-neutral-100);
+  background: var(--color-neutral-800);
+  border: 1px solid var(--color-neutral-500);
+  border-radius: var(--radius-md);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.form-group__input:focus,
+textarea.form-group__input:focus,
+select.form-group__input:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px rgba(190, 133, 9, 0.25);
+  outline: none;
+}
+
+.form-group__input::placeholder {
+  color: var(--color-neutral-400);
+}
+
+textarea.form-group__input {
+  min-height: 120px;
+  resize: vertical;
+}
+
+select.form-group__input {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%239092a2' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right var(--sp-3) center;
+  padding-right: var(--sp-8);
+}
+
+/* Checkbox / radio inline */
+.form-group--check {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.form-group--check .form-group__label {
+  margin-bottom: 0;
+}
+
+.form-group--check input[type="checkbox"],
+.form-group--check input[type="radio"] {
+  accent-color: var(--color-primary);
+  width: 1.1em;
+  height: 1.1em;
+}
+
+/* Help text */
+.form-group__help {
+  font-size: var(--text-xs);
+  color: var(--color-neutral-300);
+  margin-top: var(--sp-1);
+}
+
+/* Error */
+.form-group__error {
+  font-size: var(--text-xs);
+  color: var(--color-danger);
+  margin-top: var(--sp-1);
+}
+
+/* --- Form actions row --- */
+.form-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  margin-top: var(--sp-4);
+  flex-wrap: wrap;
+}
+
+/* --- Markdownx widget --- */
+.markdownx {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.markdownx textarea {
+  width: 100%;
+  min-height: 160px;
+  padding: var(--sp-3);
+  font-size: var(--text-base);
+  color: var(--color-neutral-100);
+  background: var(--color-neutral-800);
+  border: 1px solid var(--color-neutral-500);
+  border-radius: var(--radius-md);
+  resize: vertical;
+  transition: border-color var(--transition-fast);
+}
+
+.markdownx textarea:focus {
+  border-color: var(--color-primary);
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(190, 133, 9, 0.25);
+}
+
+.markdownx-preview {
+  padding: var(--sp-3);
+  background: var(--color-neutral-400);
+  border-radius: var(--radius-md);
+  color: var(--color-neutral-100);
+  min-height: 80px;
+}
+
+@media (min-width: 1024px) {
+  .markdownx {
+    flex-direction: row;
+  }
+
+  .markdownx textarea {
+    width: 50%;
+  }
+
+  .markdownx-preview {
+    width: 50%;
+  }
+}
+
+/* --- Django form compat: style as_p rendering --- */
+form p {
+  margin-bottom: var(--sp-3);
+}
+
+form p label {
+  display: block;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-neutral-100);
+  margin-bottom: var(--sp-1);
+}
+
+form p input[type="text"],
+form p input[type="email"],
+form p input[type="password"],
+form p input[type="number"],
+form p input[type="date"],
+form p input[type="datetime-local"],
+form p textarea,
+form p select {
+  display: block;
+  width: 100%;
+  padding: var(--sp-2) var(--sp-3);
+  font-size: var(--text-base);
+  color: var(--color-neutral-100);
+  background: var(--color-neutral-800);
+  border: 1px solid var(--color-neutral-500);
+  border-radius: var(--radius-md);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+form p input:focus,
+form p textarea:focus,
+form p select:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px rgba(190, 133, 9, 0.25);
+  outline: none;
+}
+
+form p .helptext {
+  display: block;
+  font-size: var(--text-xs);
+  color: var(--color-neutral-300);
+  margin-top: var(--sp-1);
+}
+
+form p .helptext ul {
+  padding-left: var(--sp-4);
+  list-style: disc;
+}
+
+/* Errorlist (Django) */
+.errorlist {
+  list-style: none;
+  padding: 0;
+  margin: var(--sp-1) 0 0;
+}
+
+.errorlist li {
+  font-size: var(--text-xs);
+  color: var(--color-danger);
+}

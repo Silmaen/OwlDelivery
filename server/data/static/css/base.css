@@ -1,0 +1,136 @@
+/* ========================================
+   Base — Typography, links, global elements
+   ======================================== */
+
+body {
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+  line-height: var(--leading-normal);
+  color: var(--color-neutral-100);
+  background-color: var(--color-neutral-700);
+}
+
+/* --- Headings --- */
+h1, h2, h3, h4, h5, h6 {
+  color: var(--color-primary);
+  font-weight: 600;
+  line-height: var(--leading-tight);
+  text-transform: uppercase;
+}
+
+h1 { font-size: var(--text-2xl); }
+h2 { font-size: var(--text-xl); }
+h3 { font-size: var(--text-lg); }
+h4 { font-size: var(--text-base); }
+h5 { font-size: var(--text-sm); }
+h6 { font-size: var(--text-xs); }
+
+/* --- Body text --- */
+p {
+  margin-bottom: var(--sp-4);
+}
+
+p:last-child {
+  margin-bottom: 0;
+}
+
+strong { font-weight: 600; }
+
+small { font-size: var(--text-sm); }
+
+/* --- Links --- */
+a {
+  color: var(--color-neutral-100);
+  transition: color var(--transition-fast);
+}
+
+a:hover,
+a:focus-visible {
+  color: var(--color-primary-light);
+}
+
+/* --- Code --- */
+code, pre {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+}
+
+pre {
+  background: var(--color-neutral-800);
+  padding: var(--sp-4);
+  border-radius: var(--radius-md);
+  overflow-x: auto;
+}
+
+code {
+  background: var(--color-neutral-600);
+  padding: var(--sp-1) var(--sp-2);
+  border-radius: var(--radius-sm);
+}
+
+pre code {
+  background: none;
+  padding: 0;
+}
+
+/* --- Horizontal rule --- */
+hr {
+  border: none;
+  height: 1px;
+  background: var(--color-neutral-500);
+  margin: var(--sp-6) 0;
+}
+
+/* --- Lists (inside content) --- */
+.card__body ul,
+.card__body ol {
+  padding-left: var(--sp-6);
+  margin-bottom: var(--sp-4);
+}
+
+.card__body ul { list-style: disc; }
+.card__body ol { list-style: decimal; }
+
+.card__body li + li {
+  margin-top: var(--sp-1);
+}
+
+/* --- Images --- */
+img {
+  height: auto;
+}
+
+/* --- Selection --- */
+::selection {
+  background: var(--color-primary);
+  color: var(--color-neutral-950);
+}
+
+/* --- Focus visible --- */
+:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* --- Scrollbar (Webkit) --- */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-neutral-800);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-neutral-500);
+  border-radius: var(--radius-full);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-neutral-400);
+}
