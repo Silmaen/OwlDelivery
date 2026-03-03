@@ -133,8 +133,6 @@ TIME_FORMAT = "H:i"
 
 USE_I18N = True
 
-USE_L10N = False
-
 USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
@@ -169,7 +167,6 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # email settings
 
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
-os.environ.get("EMAIL_HOST", "")
 EMAIL_HOST = os.environ.get("EMAIL_HOST", "")
 EMAIL_PORT = int(os.environ.get("EMAIL_PORT", "587"))
 EMAIL_USE_TLS = os.environ.get("EMAIL_USE_TLS", "True") == "True"
