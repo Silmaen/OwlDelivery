@@ -2,7 +2,7 @@
 Forms for user.
 """
 
-from django.contrib.auth.forms import UserCreationForm, UserChangeForm
+from django.contrib.auth.forms import UserChangeForm, UserCreationForm
 
 
 class CustomUserCreationForm(UserCreationForm):
@@ -21,7 +21,7 @@ class CustomUserCreationForm(UserCreationForm):
         """
         Save function.
         """
-        user = super(CustomUserCreationForm, self).save(commit=False)
+        user = super().save(commit=False)
         user.first_name = self.cleaned_data["first_name"]
         user.last_name = self.cleaned_data["last_name"]
         user.email = self.cleaned_data["email"]

@@ -126,12 +126,13 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = "en-us"
 
-TIME_ZONE = "CET"
-DATETIME_FORMAT = "Y/m/d H:i"
-DATE_FORMAT = "Y/m/d"
+TIME_ZONE = os.environ.get("TZ", "CET")
+DATETIME_FORMAT = "d/m/Y H:i"
+DATE_FORMAT = "d/m/Y"
 TIME_FORMAT = "H:i"
 
 USE_I18N = True
+FORMAT_MODULE_PATH = ["scripts.formats"]
 
 USE_TZ = True
 

@@ -1,6 +1,7 @@
 """
 Simple locking system for the database
 """
+
 from datetime import datetime
 from pathlib import Path
 

@@ -1,0 +1,29 @@
+[project]
+name = "owl-delivery"
+version = "0.1.0"
+description = "Django web application for hosting Owl Game Engine packages"
+requires-python = ">=3.12"
+
+[tool.poetry]
+name = "owl-delivery"
+version = "0.1.0"
+description = "Django web application for hosting Owl Game Engine packages"
+authors = []
+package-mode = false
+
+[tool.poetry.group.dev.dependencies]
+ruff = "^0.11"
+
+[tool.ruff]
+line-length = 120
+target-version = "py313"
+exclude = ["server/data/static/scripts/api.py", "*/migrations/*"]
+
+[tool.ruff.lint]
+select = [
+    "F",   # pyflakes — wildcard imports, unused imports
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "I",   # isort — import sorting
+    "UP",  # pyupgrade — modern super(), f-strings, isinstance, etc.
+]

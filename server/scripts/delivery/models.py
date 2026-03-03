@@ -7,9 +7,9 @@ from django.utils.text import Truncator
 from markdownx.models import MarkdownxField
 from markdownx.utils import markdownify
 
-truncation = 200  # Length of truncate text.
-comment_truncation = 100  # Length of truncated comment.
-nb_last_comments = 3  # Truncate mode number of comments to display.
+TRUNCATION = 200  # Length of truncate text.
+COMMENT_TRUNCATION = 100  # Length of truncated comment.
+NB_LAST_COMMENTS = 3  # Truncate mode number of comments to display.
 
 
 class NewsEntry(models.Model):
@@ -19,9 +19,7 @@ class NewsEntry(models.Model):
 
     title = models.CharField(max_length=100, verbose_name="News title")
     slug = models.SlugField(max_length=100, verbose_name="News slug")
-    author = models.CharField(
-        max_length=50, default="admin", verbose_name="The news author"
-    )
+    author = models.CharField(max_length=50, default="admin", verbose_name="The news author")
     date = models.DateTimeField(default=timezone.now, verbose_name="News date")
     content = MarkdownxField(blank=True, default="", verbose_name="Content of the news")
 
@@ -38,9 +36,7 @@ class NewsEntry(models.Model):
         Truncate render of markdown content.
         :return: Html output.
         """
-        return Truncator(markdownify(str(self.content))).chars(
-            truncation, truncate="...", html=True
-        )
+        return Truncator(markdownify(str(self.content))).chars(TRUNCATION, truncate="...", html=True)
 
     def content_all_md(self):
         """
@@ -58,10 +54,10 @@ class NewsEntry(models.Model):
 
     def get_comments(self):
         """
-        Get the `nb_last_comments` last comments.
-        :return: The `nb_last_comments` last comments.
+        Get the `NB_LAST_COMMENTS` last comments.
+        :return: The `NB_LAST_COMMENTS` last comments.
         """
-        return self.get_all_active_comments()[:nb_last_comments]
+        return self.get_all_active_comments()[:NB_LAST_COMMENTS]
 
     def get_all_active_comments(self):
         """
@@ -98,9 +94,7 @@ class NewsComment(models.Model):
         on_delete=models.CASCADE,
         verbose_name="Comment author",
     )
-    content = MarkdownxField(
-        blank=True, default="", verbose_name="Markdown content of the comment"
-    )
+    content = MarkdownxField(blank=True, default="", verbose_name="Markdown content of the comment")
     date = models.DateTimeField(default=timezone.now, verbose_name="Comment date")
     active = models.BooleanField(default=False)
 
@@ -109,9 +103,7 @@ class NewsComment(models.Model):
         Truncated render of markdown content.
         :return: Html output.
         """
-        return Truncator(markdownify(str(self.content))).chars(
-            comment_truncation, truncate="...", html=True
-        )
+        return Truncator(markdownify(str(self.content))).chars(COMMENT_TRUNCATION, truncate="...", html=True)
 
     def content_all_md(self):
         """
@@ -136,7 +128,7 @@ def get_upload_to(instance, filename):
     return f"packages/{instance.branch}/{instance.hash}/{filename}"
 
 
-RevType = (("d", "doc"), ("e", "engine"), ("a", "application"))
+REV_TYPE_CHOICES = (("d", "doc"), ("e", "engine"), ("a", "application"))
 
 
 class RevisionItemEntry(models.Model):
@@ -145,17 +137,11 @@ class RevisionItemEntry(models.Model):
     """
 
     hash = models.CharField(max_length=12, verbose_name="Revision hash")
-    branch = models.CharField(
-        max_length=50, default="main", verbose_name="Revision branch"
-    )
+    branch = models.CharField(max_length=50, default="main", verbose_name="Revision branch")
     name = models.CharField(max_length=50, verbose_name="Revision name", default="")
-    flavor_name = models.CharField(
-        max_length=50, verbose_name="Revision's flavor name", default=""
-    )
+    flavor_name = models.CharField(max_length=50, verbose_name="Revision's flavor name", default="")
     date = models.DateTimeField(default=timezone.now, verbose_name="date of build")
-    rev_type = models.CharField(
-        max_length=1, choices=RevType, verbose_name="Type of item"
-    )
+    rev_type = models.CharField(max_length=1, choices=REV_TYPE_CHOICES, verbose_name="Type of item")
     package = models.FileField(upload_to=get_upload_to, verbose_name="Package file")
 
     class Meta:
@@ -172,7 +158,7 @@ class RevisionItemEntry(models.Model):
         :return:
         """
         if not Path(self.package.path).exists():
-            return f"(void)"
+            return "(void)"
         raw_size = Path(self.package.path).stat().st_size
         for unite in ["", "K", "M", "G", "T"]:
             if raw_size < 1024.0:
@@ -196,9 +182,7 @@ class RevisionItemEntry(models.Model):
 
 
 class BranchEntry(models.Model):
-    name = models.CharField(
-        max_length=50, default="main", verbose_name="Branch name", unique=True
-    )
+    name = models.CharField(max_length=50, default="main", verbose_name="Branch name", unique=True)
     visible = models.BooleanField(default=True, verbose_name="Visible")
     stable = models.BooleanField(default=False, verbose_name="Stable Release")
     date = models.DateTimeField(default=timezone.now, verbose_name="date of build")

@@ -6,25 +6,35 @@ import shutil
 import tarfile
 import zipfile
 from base64 import b64decode
+from pathlib import Path
 from shutil import move
 
+from django.conf import settings
 from django.contrib.auth import authenticate, login
-from django.http import FileResponse, HttpResponseForbidden, HttpResponse
-from django.shortcuts import render, redirect, get_object_or_404
+from django.http import FileResponse, HttpResponse, HttpResponseForbidden
+from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.csrf import csrf_exempt
 
-from .Revision_utils import *
 from .db_locking import locker
 from .forms import NewsCommentForm, RevisionItemEntryFullForm
-from .models import NewsEntry
-from .perms_utils import *
+from .models import NewsEntry, RevisionItemEntry
+from .perms_utils import can_see_admin, can_see_news_admin, can_see_revision_admin, is_comment_moderator
+from .revision_utils import (
+    find_revision,
+    get_branch_info,
+    get_revision_count,
+    get_revision_date,
+    get_revision_hashes,
+    get_revision_info,
+    get_visible_branches_info,
+)
 
 root = Path(__file__).resolve().parent.parent.parent
 with open(root / "VERSION") as fp:
     lines = fp.readlines()
-SiteVersion = lines[0].strip()
-SiteHash = lines[1].strip()
-staff_active = settings.ENABLE_STAFF
+SITE_VERSION = lines[0].strip()
+SITE_HASH = lines[1].strip()
+STAFF_ACTIVE = settings.ENABLE_STAFF
 
 
 def news(request):
@@ -43,9 +53,9 @@ def news(request):
             "has_menu": True,
             "has_submenu": False,
             "news_list": news_list,
-            "staff_active": staff_active,
+            "staff_active": STAFF_ACTIVE,
             "is_admin": can_see_admin(request),
-            "version": {"number": SiteVersion, "hash": SiteHash},
+            "version": {"number": SITE_VERSION, "hash": SITE_HASH},
         },
     )
 
@@ -86,9 +96,9 @@ def news_details(request, news_id):
             "news_item": news_item,
             "comment_form": comment_form,
             "new_comment": new_comment,
-            "staff_active": staff_active,
+            "staff_active": STAFF_ACTIVE,
             "is_admin": can_see_admin(request),
-            "version": {"number": SiteVersion, "hash": SiteHash},
+            "version": {"number": SITE_VERSION, "hash": SITE_HASH},
         },
     )
 
@@ -125,11 +135,11 @@ def branches(request):
             "page": "revisions",
             "has_menu": True,
             "has_submenu": False,
-            "staff_active": staff_active,
+            "staff_active": STAFF_ACTIVE,
             "is_admin": can_see_admin(request),
             "dev_branch_list": dev_branch_list,
             "old_stable_branch_list": old_stable_branch_list,
-            "version": {"number": SiteVersion, "hash": SiteHash},
+            "version": {"number": SITE_VERSION, "hash": SITE_HASH},
             "latest": latest_stable,
         },
     )
@@ -153,9 +163,7 @@ def revisions(request, rev_branch: str):
             "date": get_revision_date(hashes[0]),
         }
         for rev_hash in hashes[1:]:
-            older_revisions.append(
-                {"hash": rev_hash, "date": get_revision_date(rev_hash)}
-            )
+            older_revisions.append({"hash": rev_hash, "date": get_revision_date(rev_hash)})
 
     return render(
         request,
@@ -165,12 +173,12 @@ def revisions(request, rev_branch: str):
             "page": "revisions",
             "has_menu": True,
             "has_submenu": False,
-            "staff_active": staff_active,
+            "staff_active": STAFF_ACTIVE,
             "is_admin": can_see_admin(request),
             "branch": get_branch_info(rev_branch),
             "current_revision": current_revision,
             "older_revisions": older_revisions,
-            "version": {"number": SiteVersion, "hash": SiteHash},
+            "version": {"number": SITE_VERSION, "hash": SITE_HASH},
         },
     )
 
@@ -192,10 +200,10 @@ def revision_detail(request, rev_hash):
             "page": "revisions",
             "has_menu": True,
             "has_submenu": False,
-            "staff_active": staff_active,
+            "staff_active": STAFF_ACTIVE,
             "is_admin": can_see_admin(request),
             "revision": current_revision,
-            "version": {"number": SiteVersion, "hash": SiteHash},
+            "version": {"number": SITE_VERSION, "hash": SITE_HASH},
         },
     )
 
@@ -216,7 +224,7 @@ def admin(request):
 
 
 def dl_script(request):
-    file = Path(f"{settings.STATICFILES_DIRS}/scripts/api.py")
+    file = Path(settings.STATICFILES_DIRS[0]) / "scripts" / "api.py"
     response = FileResponse(open(file, "rb"))
     response["Content-Disposition"] = 'attachement; filename="api.py"'
     return response
@@ -229,13 +237,7 @@ def entry_exists(request):
         file_name = request.FILES.dict().keys()[0]
     elif "package.path" in data:
         file_name = data["package.name"]
-    new_path = (
-        Path(settings.MEDIA_ROOT)
-        / "packages"
-        / data["branch"]
-        / data["hash"]
-        / file_name
-    )
+    new_path = Path(settings.MEDIA_ROOT) / "packages" / data["branch"] / data["hash"] / file_name
     if new_path.exists():
         return True
     return (
@@ -256,30 +258,23 @@ def revision_api(request):
         if not request.user.is_authenticated:
             if "Authorization" in request.headers:
                 try:
-                    key, dec = (
-                        b64decode(request.headers["Authorization"].split()[-1])
-                        .decode("ascii")
-                        .split(":", 1)
-                    )
+                    key, dec = b64decode(request.headers["Authorization"].split()[-1]).decode("ascii").split(":", 1)
                     user = authenticate(request, username=key, password=dec)
                     if user is None:
                         return HttpResponseForbidden(
-                            f"""Only authenticated user allowed 
-    Login: {key}, password: {dec} is invalid."""
+                            f"Only authenticated user allowed\nLogin: {key}, password: {dec} is invalid."
                         )
                     login(request, user)
                 except Exception as err:
                     return HttpResponseForbidden(
-                        f"""Only authenticated user allowed 
-    Method: {request.method},Headers: {request.headers}
-    ERROR: {err}"""
+                        f"Only authenticated user allowed\n"
+                        f"Method: {request.method},Headers: {request.headers}\n"
+                        f"ERROR: {err}"
                     )
             if not request.user.is_authenticated:
-                return HttpResponseForbidden(f"""Only authenticated user allowed""")
+                return HttpResponseForbidden("""Only authenticated user allowed""")
         if locker.is_locked():
-            return HttpResponse(
-                f"ERROR: Server is under maintenance, try again later.", status=406
-            )
+            return HttpResponse("ERROR: Server is under maintenance, try again later.", status=406)
         if request.method == "GET":
             # if get method, simply DL the api script
             return dl_script(request)
@@ -296,11 +291,9 @@ def revision_api(request):
             )
         action = data["action"]
         if action == "version":
-            return HttpResponse(f"version: {SiteVersion}\n", status=200)
+            return HttpResponse(f"version: {SITE_VERSION}\n", status=200)
         elif action == "pull":
-            return HttpResponse(
-                f"""ERROR PULL function is not yet implemented.""", status=406
-            )
+            return HttpResponse("""ERROR PULL function is not yet implemented.""", status=406)
         elif action == "push":
             if not request.user.has_perm("delivery.add_revisionitementry"):
                 return HttpResponseForbidden("Please ask the right to delete packages")
@@ -310,7 +303,7 @@ def revision_api(request):
                     if form.is_valid():
                         if entry_exists(request):
                             return HttpResponse(
-                                f"WARNING: Entry already exists.",
+                                "WARNING: Entry already exists.",
                                 status=201,
                             )
                         form.save()
@@ -347,17 +340,13 @@ def revision_api(request):
                             f"headers: {request.headers}",
                             status=406,
                         )
-                    origin_path = Path((data["package.path"]))
+                    origin_path = Path(data["package.path"])
                     new_path = (
-                        Path(settings.MEDIA_ROOT)
-                        / "packages"
-                        / data["branch"]
-                        / data["hash"]
-                        / data["package.name"]
+                        Path(settings.MEDIA_ROOT) / "packages" / data["branch"] / data["hash"] / data["package.name"]
                     )
                     if entry_exists(request):
                         return HttpResponse(
-                            f"WARNING: Entry already exists.",
+                            "WARNING: Entry already exists.",
                             status=201,
                         )
                     new_path.parent.mkdir(parents=True, exist_ok=True)
@@ -378,10 +367,7 @@ def revision_api(request):
                     )
                 else:
                     return HttpResponse(
-                        f"ERROR  INVALID REQUEST.\n"
-                        f"POST: {data}\n"
-                        f"ERROR NO FILE\n"
-                        f"headers: {request.headers}",
+                        f"ERROR  INVALID REQUEST.\nPOST: {data}\nERROR NO FILE\nheaders: {request.headers}",
                         status=406,
                     )
             except Exception as err:
@@ -415,9 +401,7 @@ def revision_api(request):
                             status=406,
                         )
                     origin_path_name = Path(data["package.name"])
-                    new_path = (
-                        Path(settings.MEDIA_ROOT) / "documentation" / data["branch"]
-                    )
+                    new_path = Path(settings.MEDIA_ROOT) / "documentation" / data["branch"]
 
                     if new_path.exists():
                         if not new_path.is_dir():
@@ -465,11 +449,9 @@ def revision_api(request):
                 return HttpResponseForbidden("Please ask the right to delete packages")
             objs = find_revision(data)
             if len(objs) == 0:
-                return HttpResponse(f"""ERROR No matching package.""", status=406)
+                return HttpResponse("""ERROR No matching package.""", status=406)
             if len(objs) > 1:
-                return HttpResponse(
-                    f"""ERROR more than one package match the query.""", status=406
-                )
+                return HttpResponse("""ERROR more than one package match the query.""", status=406)
             objs[0].delete()
         else:
             return HttpResponse(

@@ -1,20 +1,26 @@
 from django.conf import settings
 from django.contrib.auth.models import Permission, User
-from django.shortcuts import render, redirect
+from django.shortcuts import redirect, render
 
-from .Revision_utils import (
+from .db_locking import locker
+from .forms import BranchEntryForm, NewsEntryForm, RevisionItemEntryForm
+from .models import BranchEntry, NewsComment, NewsEntry, RevisionItemEntry
+from .perms_utils import (
+    can_see_admin,
+    can_see_news_admin,
+    can_see_revision_admin,
+    can_see_user_admin,
+    is_comment_moderator,
+)
+from .revision_utils import (
+    get_all_branches_info,
     get_revision_branches,
     get_revision_hashes,
     get_revision_info,
-    get_all_branches_info,
 )
-from .db_locking import locker
-from .forms import NewsEntryForm, RevisionItemEntryForm, BranchEntryForm
-from .models import NewsEntry, NewsComment, RevisionItemEntry, BranchEntry
-from .perms_utils import *
-from .views import SiteVersion, SiteHash
+from .views import SITE_HASH, SITE_VERSION
 
-subpages = [
+SUBPAGES = [
     {
         "name": "news",
         "url": "a_news",
@@ -40,13 +46,13 @@ subpages = [
         "permission": can_see_user_admin,
     },
 ]
-staff_active = settings.ENABLE_STAFF
-revision_per_page = 15
+STAFF_ACTIVE = settings.ENABLE_STAFF
+REVISION_PER_PAGE = 15
 
 
 def extract_subpages(request):
     res = []
-    for sub in subpages:
+    for sub in SUBPAGES:
         if sub["permission"](request):
             res.append(sub)
     return res
@@ -75,9 +81,7 @@ def admin_users(request):
                 "can_delete_news": entry.has_perm("delivery.delete_newsentry"),
                 "can_delete_comment": entry.has_perm("delivery.delete_newscomment"),
                 "can_add_revision": entry.has_perm("delivery.add_revisionitementry"),
-                "can_delete_revision": entry.has_perm(
-                    "delivery.delete_revisionitementry"
-                ),
+                "can_delete_revision": entry.has_perm("delivery.delete_revisionitementry"),
                 "can_view_user": entry.has_perm("auth.view_user"),
                 "can_delete_user": entry.has_perm("auth.delete_user"),
             }
@@ -92,9 +96,9 @@ def admin_users(request):
             "subpages": extract_subpages(request),
             "has_menu": True,
             "has_submenu": True,
-            "staff_active": staff_active,
+            "staff_active": STAFF_ACTIVE,
             "is_admin": can_see_admin(request),
-            "version": {"number": SiteVersion, "hash": SiteHash},
+            "version": {"number": SITE_VERSION, "hash": SITE_HASH},
             "users": p_users,
         },
     )
@@ -204,8 +208,8 @@ def admin_news(request):
             "news_list": news_list,
             "news_form": news_form,
             "new_news": modified,
-            "staff_active": staff_active,
-            "version": {"number": SiteVersion, "hash": SiteHash},
+            "staff_active": STAFF_ACTIVE,
+            "version": {"number": SITE_VERSION, "hash": SITE_HASH},
         },
     )
 
@@ -239,8 +243,8 @@ def admin_news_detail(request, news_id):
             "news_item": news_item,
             "news_form": news_form,
             "new_news": modified,
-            "staff_active": staff_active,
-            "version": {"number": SiteVersion, "hash": SiteHash},
+            "staff_active": STAFF_ACTIVE,
+            "version": {"number": SITE_VERSION, "hash": SITE_HASH},
         },
     )
 
@@ -260,9 +264,7 @@ def admin_modif_news(request, news_id):
         news = NewsEntry.objects.get(pk=news_id)
         if "action" not in request.POST:
             return redirect(request.META.get("HTTP_REFERER", "a_news"))
-        if request.POST["action"] == "delete" and request.user.has_perm(
-            "delivery.delete_newsentry"
-        ):
+        if request.POST["action"] == "delete" and request.user.has_perm("delivery.delete_newsentry"):
             news.delete()
     return redirect(request.META.get("HTTP_REFERER", "a_news"))
 
@@ -310,10 +312,10 @@ def admin_revisions_page(request, page):
             "subpages": extract_subpages(request),
             "has_menu": True,
             "has_submenu": True,
-            "staff_active": staff_active,
+            "staff_active": STAFF_ACTIVE,
             "is_admin": can_see_admin(request),
             "revisions": revisions,
-            "version": {"number": SiteVersion, "hash": SiteHash},
+            "version": {"number": SITE_VERSION, "hash": SITE_HASH},
         },
     )
 
@@ -367,10 +369,10 @@ def admin_branches(request):
             "subpages": extract_subpages(request),
             "has_menu": True,
             "has_submenu": True,
-            "staff_active": staff_active,
+            "staff_active": STAFF_ACTIVE,
             "is_admin": can_see_admin(request),
             "branches": branches,
-            "version": {"number": SiteVersion, "hash": SiteHash},
+            "version": {"number": SITE_VERSION, "hash": SITE_HASH},
             "debug": add,
         },
     )
@@ -411,9 +413,7 @@ def admin_edit_revision_item(request, pk):
     rev = RevisionItemEntry.objects.get(pk=pk)
     modified = False
     rev_form = RevisionItemEntryForm(instance=rev)
-    if request.method == "POST" and request.user.has_perm(
-        "delivery.delete_revisionitementry"
-    ):
+    if request.method == "POST" and request.user.has_perm("delivery.delete_revisionitementry"):
         rev_form = RevisionItemEntryForm(data=request.POST, instance=rev)
         if rev_form.is_valid():
             rev_form.save()
@@ -428,12 +428,12 @@ def admin_edit_revision_item(request, pk):
             "subpages": extract_subpages(request),
             "has_menu": True,
             "has_submenu": True,
-            "staff_active": staff_active,
+            "staff_active": STAFF_ACTIVE,
             "is_admin": can_see_admin(request),
             "revision": rev,
             "rev_form": rev_form,
             "new_revision": modified,
-            "version": {"number": SiteVersion, "hash": SiteHash},
+            "version": {"number": SITE_VERSION, "hash": SITE_HASH},
         },
     )
 
@@ -456,8 +456,8 @@ def admin_revision_detail(request, rev_hash):
             "subpages": extract_subpages(request),
             "has_menu": True,
             "has_submenu": True,
-            "staff_active": staff_active,
+            "staff_active": STAFF_ACTIVE,
             "is_admin": can_see_admin(request),
-            "version": {"number": SiteVersion, "hash": SiteHash},
+            "version": {"number": SITE_VERSION, "hash": SITE_HASH},
         },
     )

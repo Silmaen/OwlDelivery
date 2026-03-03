@@ -4,7 +4,7 @@ forms for delivery
 
 from markdownx.forms import forms
 
-from .models import *
+from .models import BranchEntry, NewsComment, NewsEntry, RevisionItemEntry
 
 
 class NewsEntryForm(forms.ModelForm):
