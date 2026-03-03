@@ -382,16 +382,18 @@ def revision_api(request):
             if not request.user.has_perm("delivery.add_revisionitementry"):
                 return HttpResponseForbidden("Please ask the right to delete packages")
             try:
+                if "branch" not in data:
+                    return HttpResponse(
+                        f"ERROR INVALID REQUEST.\n"
+                        f"POST: {data}\n"
+                        f"ERROR  Missing branch field\n"
+                        f"headers: {request.headers}",
+                        status=406,
+                    )
+                # Determine file origin: Nginx upload module or direct upload
                 if "package.path" in data:
-                    if "branch" not in data.keys():
-                        return HttpResponse(
-                            f"ERROR INVALID REQUEST.\n"
-                            f"POST: {data}\n"
-                            f"ERROR  Missing branch field\n"
-                            f"headers: {request.headers}",
-                            status=406,
-                        )
                     origin_path = Path(data["package.path"])
+                    origin_name = Path(data["package.name"])
                     if not origin_path.exists():
                         return HttpResponse(
                             f"ERROR  INVALID REQUEST.\n"
@@ -400,34 +402,15 @@ def revision_api(request):
                             f"headers: {request.headers}",
                             status=406,
                         )
-                    origin_path_name = Path(data["package.name"])
-                    new_path = Path(settings.MEDIA_ROOT) / "documentation" / data["branch"]
-
-                    if new_path.exists():
-                        if not new_path.is_dir():
-                            new_path.unlink(missing_ok=True)
-                        else:
-                            shutil.rmtree(new_path, ignore_errors=True)
-                    new_path.mkdir(parents=True)
-                    suffixes = origin_path_name.suffix
-                    if suffixes == ".zip":
-                        with zipfile.ZipFile(origin_path, "r") as zip_ref:
-                            zip_ref.extractall(new_path)
-                    elif suffixes in [".tgz"]:
-                        with tarfile.open(origin_path, "r:gz") as tar_ref:
-                            tar_ref.extractall(new_path)
-                    else:
-                        return HttpResponse(
-                            f"ERROR  INVALID REQUEST.\n"
-                            f"POST: {data}\n"
-                            f"ERROR FILE {origin_path_name} Format not supported {suffixes}.\n"
-                            f"headers: {request.headers}",
-                            status=406,
-                        )
-                    return HttpResponse(
-                        f"GOOD.\nPOST: {data}\nheaders: {request.headers}",
-                        status=200,
-                    )
+                elif "package" in request.FILES:
+                    uploaded = request.FILES["package"]
+                    upload_dir = Path(settings.MEDIA_ROOT) / "_upload"
+                    upload_dir.mkdir(parents=True, exist_ok=True)
+                    origin_path = upload_dir / uploaded.name
+                    origin_name = Path(uploaded.name)
+                    with open(origin_path, "wb") as f:
+                        for chunk in uploaded.chunks():
+                            f.write(chunk)
                 else:
                     return HttpResponse(
                         f"ERROR  INVALID REQUEST.\n"
@@ -436,6 +419,32 @@ def revision_api(request):
                         f"headers: {request.headers}",
                         status=406,
                     )
+                new_path = Path(settings.MEDIA_ROOT) / "documentation" / data["branch"]
+                if new_path.exists():
+                    if not new_path.is_dir():
+                        new_path.unlink(missing_ok=True)
+                    else:
+                        shutil.rmtree(new_path, ignore_errors=True)
+                new_path.mkdir(parents=True)
+                suffix = origin_name.suffix
+                if suffix == ".zip":
+                    with zipfile.ZipFile(origin_path, "r") as zip_ref:
+                        zip_ref.extractall(new_path)
+                elif suffix == ".tgz":
+                    with tarfile.open(origin_path, "r:gz") as tar_ref:
+                        tar_ref.extractall(new_path)
+                else:
+                    return HttpResponse(
+                        f"ERROR  INVALID REQUEST.\n"
+                        f"POST: {data}\n"
+                        f"ERROR FILE {origin_name} Format not supported {suffix}.\n"
+                        f"headers: {request.headers}",
+                        status=406,
+                    )
+                return HttpResponse(
+                    f"GOOD.\nPOST: {data}\nheaders: {request.headers}",
+                    status=200,
+                )
             except Exception as err:
                 return HttpResponse(
                     f"ERROR problem with the data: {err}.\n"

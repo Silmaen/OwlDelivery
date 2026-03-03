@@ -87,6 +87,17 @@ def create_callback(encoder):
     return callback
 
 
+def get_log_dir():
+    """Get the log directory, creating it if necessary."""
+    log_dir = Path(__file__).resolve().parent / "log"
+    log_dir.mkdir(parents=True, exist_ok=True)
+    return log_dir
+
+
+# Size threshold (100 MB) above which files are sent via /upload (nginx upload module)
+LARGE_FILE_THRESHOLD = 100 * 1024 * 1024
+
+
 def push():
     try:
         basic = HTTPBasicAuth(user, cred)
@@ -105,7 +116,7 @@ def push():
             ),
         }
         encoder = MultipartEncoder(fields=post_data)
-        if rev.file.stat().st_size < 1:
+        if rev.file.stat().st_size < LARGE_FILE_THRESHOLD:
             monitor = MultipartEncoderMonitor(encoder)
             headers = {"Content-Type": monitor.content_type}
             resp = http_post(
@@ -133,12 +144,13 @@ def push():
             print(f"response: {resp.content.decode('utf8')}", file=stderr)
             return
         if resp.status_code != 200:
+            log_file = get_log_dir() / "error.log"
             print(
-                f"ERROR connecting to server: {destination}: {resp.status_code}: {resp.reason}, see error.log",
+                f"ERROR connecting to server: {destination}: {resp.status_code}: {resp.reason}, see {log_file}",
                 file=stderr,
             )
-            with open("error.log", "ab") as fp:
-                fp.write(f"\n---- ERROR: {datetime.now()} ---- \n".encode("utf8"))
+            with open(log_file, "ab") as fp:
+                fp.write(f"\n---- ERROR: {datetime.now()} ---- \n".encode())
                 fp.write(resp.content)
             return
     except Exception as err:
