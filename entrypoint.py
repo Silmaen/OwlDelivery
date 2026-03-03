@@ -336,11 +336,14 @@ def dump_migrations(src: Path, dest: Path):
     :return:
     """
     dest.mkdir(parents=True, exist_ok=True)
+    os.chown(dest, user_info["id"], group_info["id"])
     for file in src.glob("**/migrations/*.py"):
         if file.is_file():
             destination = dest / file.relative_to(src)
             destination.parent.mkdir(parents=True, exist_ok=True)
+            os.chown(destination.parent, user_info["id"], group_info["id"])
             shutil.copy2(file, destination)
+            os.chown(destination, user_info["id"], group_info["id"])
 
 
 def do_migrations():
