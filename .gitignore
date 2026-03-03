@@ -162,3 +162,4 @@ cython_debug/
 # Data for the server.
 server/VERSION
 sample_data/*
+docker_data/

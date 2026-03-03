@@ -28,17 +28,24 @@ DEBUG = os.environ.get("DEBUG_MODE", "True") == "True"
 #
 ALLOWED_HOSTS = ["*"]
 CSRF_TRUSTED_ORIGINS = ["http://127.0.0.1", "http://localhost"]
-if "DOMAIN_NAME" in os.environ:
-    CSRF_TRUSTED_ORIGINS = [
+if "DOMAIN_NAME" in os.environ and os.environ["DOMAIN_NAME"]:
+    CSRF_TRUSTED_ORIGINS += [
+        f"http://{os.environ['DOMAIN_NAME']}",
+        f"https://{os.environ['DOMAIN_NAME']}",
         f"http://*.{os.environ['DOMAIN_NAME']}",
         f"https://*.{os.environ['DOMAIN_NAME']}",
+    ]
+if "PORT" in os.environ and os.environ["PORT"]:
+    CSRF_TRUSTED_ORIGINS += [
+        f"http://127.0.0.1:{os.environ['PORT']}",
+        f"http://localhost:{os.environ['PORT']}",
     ]
 
 # the logging system
 
 PACKAGE_LOGING = {
     "level": "TRACE",
-    "file": "/data/log/debugging.log",
+    "file": "/app/data/log/debugging.log",
     "console": True,
 }
 # Application definition
@@ -50,6 +57,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "markdownx",
     "delivery.apps.DeliveryConfig",
     "connector.apps.ConnectorConfig",
 ]
@@ -90,10 +98,10 @@ WSGI_APPLICATION = "scripts.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.sqlite3",
-        "NAME": "/data/delivery.db",
+        "NAME": "/app/data/delivery.db",
     }
 }
-DATABASES_LOCK_PATH = "/data/delivery.lock"
+DATABASES_LOCK_PATH = "/app/data/delivery.lock"
 
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
@@ -135,10 +143,11 @@ USE_TZ = True
 # Les static
 STATIC_URL = "/static/"
 STATICFILES_DIRS = [SITE_DIR / "data" / "static"]
+STATIC_ROOT = "/app/staticfiles/"
 
 # Les medias
 MEDIA_URL = "/media/"
-MEDIA_ROOT = "/data"
+MEDIA_ROOT = "/app/data"
 
 # Login redirection
 LOGIN_REDIRECT_URL = "/"

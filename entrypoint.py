@@ -7,15 +7,14 @@ import shutil
 from pathlib import Path
 from sys import stderr
 
-server_path = Path("/server")
+server_path = Path("/app/server")
 server_config = server_path / "config"
-server_data = Path("/data")
+server_data = Path("/app/data")
 packages_dir = server_data / "packages"
 documentation_dir = server_data / "documentation"
 server_data_upload = server_data / "_upload"
 server_scripts = server_path / "scripts"
 server_log = server_data / "log"
-fallback_run = False
 migrations_dir = server_data / "migrations"
 
 config = {
@@ -241,11 +240,7 @@ def fall_back():
     """
     If something goes wrong fall back to console
     """
-    global fallback_run
     print("Falling back.")
-    if fallback_run:
-        return
-    fallback_run = True
     shell = Path("/bin/bash")
     if not shell.exists():
         shell = Path("/bin/sh")
@@ -254,7 +249,6 @@ def fall_back():
         exec_cmd(str(shell), True)
     except Exception as err:
         print(f"ERROR Executing shell fallback : {err}.", file=stderr)
-    fallback_run = False
     print("End of fallback :( .")
 
 
@@ -306,7 +300,7 @@ def check_admin_user():
         print("Check if an admin user already exists.")
         import sqlite3
 
-        con = sqlite3.connect("/data/delivery.db")
+        con = sqlite3.connect("/app/data/delivery.db")
         cur = con.cursor()
         res = cur.execute("SELECT * FROM auth_user WHERE is_superuser=1")
         ls_admin = res.fetchall()
@@ -315,7 +309,16 @@ def check_admin_user():
             print(f"One admin already exists.")
         else:
             print(f"Create new admin user named {config['admin_name']}.")
-            cmd = f'python3 manage.py shell -c "from django.contrib.auth import get_user_model; User=get_user_model(); User.objects.create_superuser(\'{config["admin_name"]}\',\'admin@foo.bar\',\'{config["admin_passwd"]}\')"'
+            cmd = (
+                f'python3 manage.py shell -c "'
+                f"from django.contrib.auth import get_user_model; "
+                f"User=get_user_model(); "
+                f"User.objects.create_superuser("
+                f"'{config['admin_name']}',"
+                f"'admin@foo.bar',"
+                f"'{config['admin_passwd']}')"
+                f'"'
+            )
             print(f"Executing: '{cmd}'")
             return exec_cmd(cmd)
     except Exception as err:
@@ -357,7 +360,52 @@ def do_migrations():
         return False
     print("Saving migrations")
     dump_migrations(server_path, migrations_dir)
+    fix_absolute_media_paths()
     print("Migrations OK.")
+    return True
+
+
+def fix_absolute_media_paths():
+    """
+    Fix legacy absolute paths in FileField columns.
+    Old MEDIA_ROOT was /data, so Django stored names like /data/packages/...
+    They need to be relative: packages/...
+    """
+    import sqlite3
+
+    db_path = server_data / "delivery.db"
+    if not db_path.exists():
+        return
+    print("Checking for legacy absolute media paths in database")
+    con = sqlite3.connect(str(db_path))
+    cur = con.cursor()
+    try:
+        cur.execute(
+            "UPDATE delivery_revisionitementry SET package = SUBSTR(package, 7) "
+            "WHERE package LIKE '/data/%'"
+        )
+        updated = cur.rowcount
+        if updated > 0:
+            con.commit()
+            print(f"Fixed {updated} legacy absolute paths in delivery_revisionitementry")
+        else:
+            print("No legacy paths to fix.")
+    except Exception as err:
+        print(f"WARNING: could not fix legacy paths: {err}", file=stderr)
+    finally:
+        con.close()
+
+
+def collect_static():
+    """
+    Collect static files for Django
+    """
+    print("Collecting static files")
+    os.chdir(server_scripts)
+    if not exec_cmd("python3 manage.py collectstatic --noinput", True):
+        print("ERROR: Error collecting static files.", file=stderr)
+        return False
+    print("Static files collected.")
     return True
 
 
@@ -365,12 +413,10 @@ def start_server():
     """
     Start of the Server
     """
-    import time
-
     print("Starting server")
     os.chdir(server_scripts)
     print("Starting Nginx:")
-    if not exec_cmd("/usr/sbin/nginx -c /server/config/nginx.conf", True):
+    if not exec_cmd(f"/usr/sbin/nginx -c /app/server/config/nginx.conf", True):
         fall_back()
     print("Starting Gunicorn:")
     os.chdir(server_scripts)
@@ -379,17 +425,19 @@ def start_server():
         return False
     cmd = (
         "gunicorn scripts.wsgi"
-        + " --bind=0.0.0.0:8000"
-        + " --reload"
-        + " --daemon"
-        + " --log-level info"
-        + " --log-file /data/log/gunicorn.log"
+        " --bind=0.0.0.0:8000"
+        " --reload"
+        " --log-level info"
+        " --log-file /app/data/log/gunicorn.log"
     )
-    if not exec_cmd(cmd, True):
-        return False
-    print("Server Successfully started")
-    while True:
-        time.sleep(100)  # wait 100 seconds
+    print(f"Executing: '{cmd}'")
+    os.execvp("gunicorn", [
+        "gunicorn", "scripts.wsgi",
+        "--bind=0.0.0.0:8000",
+        "--reload",
+        "--log-level", "info",
+        "--log-file", "/app/data/log/gunicorn.log",
+    ])
     return True
 
 
@@ -409,6 +457,9 @@ def main():
             fall_back()
             return
         if not do_migrations():
+            fall_back()
+            return
+        if not collect_static():
             fall_back()
             return
         if not check_admin_user():

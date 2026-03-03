@@ -59,7 +59,7 @@ def admin_users(request):
     :return:
     """
     if not can_see_user_admin(request):
-        return redirect("HTTP_REFERER", "/")
+        return redirect("/")
     if locker.is_locked():
         return redirect("maintenance")
     entries = User.objects.all()
@@ -108,7 +108,7 @@ def admin_modif_user(request, pk):
     :return:
     """
     if not request.user.is_authenticated:
-        return redirect("HTTP_REFERER", "/")
+        return redirect("/")
     if not request.user.has_perm("auth.delete_user"):
         return redirect(request.META.get("HTTP_REFERER", "a_news"))
     if locker.is_locked():
@@ -178,7 +178,7 @@ def admin_news(request):
     :return:
     """
     if not can_see_news_admin(request):
-        return redirect("HTTP_REFERER", "/")
+        return redirect("/")
     news_list = NewsEntry.objects.order_by("-date")
     modified = False
     if request.method == "POST" and request.user.has_perm("delivery.add_newsentry"):
@@ -253,7 +253,7 @@ def admin_modif_news(request, news_id):
     :return:
     """
     if not request.user.is_authenticated:
-        return redirect("HTTP_REFERER", "/")
+        return redirect("/")
     if not request.user.has_perm("delivery.delete_newsentry"):
         return redirect(request.META.get("HTTP_REFERER", "a_news"))
     if request.method == "POST":
@@ -275,7 +275,7 @@ def admin_modif_comment(request, comment_id):
     :return:
     """
     if not request.user.is_authenticated:
-        return redirect("HTTP_REFERER", "/")
+        return redirect("/")
     if not request.user.has_perm("delivery.delete_newscomment"):
         return redirect(request.META.get("HTTP_REFERER", "a_news"))
     if request.method == "POST":
@@ -292,9 +292,9 @@ def admin_modif_comment(request, comment_id):
 
 def admin_revisions_page(request, page):
     if not request.user.is_authenticated:
-        return redirect("HTTP_REFERER", "/")
+        return redirect("/")
     if not can_see_revision_admin(request):
-        return redirect("HTTP_REFERER", "/")
+        return redirect("/")
     revisions = {}
     for branch in get_revision_branches():
         revisions[branch] = []
@@ -378,7 +378,7 @@ def admin_branches(request):
 
 def admin_modif_revision(request, rev_hash):
     if not request.user.is_authenticated:
-        return redirect("HTTP_REFERER", "/")
+        return redirect("/")
     if not request.user.has_perm("delivery.delete_revisionitementry"):
         return redirect(request.META.get("HTTP_REFERER", "a_news"))
     if request.method != "POST":
@@ -394,7 +394,7 @@ def admin_modif_revision(request, rev_hash):
 
 def admin_modif_revision_item(request, pk):
     if not request.user.is_authenticated:
-        return redirect("HTTP_REFERER", "/")
+        return redirect("/")
     if not request.user.has_perm("delivery.delete_revisionitementry"):
         return redirect(request.META.get("HTTP_REFERER", "a_news"))
     if request.method != "POST":
@@ -445,7 +445,7 @@ def admin_revision_detail(request, rev_hash):
     :return:
     """
     if not request.user.is_authenticated:
-        return redirect("HTTP_REFERER", "/")
+        return redirect("/")
     return render(
         request,
         "delivery/admin/revisions.html",
