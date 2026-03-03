@@ -1,0 +1,10 @@
+services:
+  web:
+    build: .
+    ports:
+      - "${PORT:-8080}:80"
+    env_file:
+      - .env
+    restart: unless-stopped
+    volumes:
+      - ${PATH_DATA:-./docker_data/data}:/app/data

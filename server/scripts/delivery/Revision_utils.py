@@ -140,7 +140,7 @@ def get_revision_info(revision_hash):
             f.append(
                 {
                     "name": rev.flavor_name,
-                    "url": str(rev.package.path).replace("/data/", "/media/"),
+                    "url": rev.package.url,
                     "size": rev.get_pretty_size_display(),
                     "pk": rev.pk,
                 }
