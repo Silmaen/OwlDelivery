@@ -146,55 +146,39 @@ def check_user_exist():
 
 def correct_permission():
     """
-    Check and correct the data permission
+    Check and correct the data permission.
+    Ensures all required directories exist and everything under /app/data
+    belongs to the configured PUID/PGID.
     """
-    import pwd
-    import grp
-    import os
-
     try:
+        # Ensure all required directories exist
         folder_list = [
-            server_config,
-            server_scripts,
             server_data,
             server_log,
             packages_dir,
             documentation_dir,
+            migrations_dir,
         ]
         for i in range(10):
             folder_list.append(server_data_upload / str(i))
-        # check permission
         for folder in folder_list:
             folder.mkdir(parents=True, exist_ok=True)
-            try:
-                uid = pwd.getpwnam(folder.owner()).pw_uid
-                gid = grp.getgrnam(folder.group()).gr_gid
-            except Exception as err:
-                print(f"WARNING: in folder {folder}: {err}")
-                uid = -1
-                gid = -1
-            if uid != user_info["id"] or gid != group_info["id"]:
-                for root, dirs, files in os.walk(folder):
-                    for sub_folder in dirs:
-                        os.chown(
-                            os.path.join(root, sub_folder),
-                            user_info["id"],
-                            group_info["id"],
-                        )
-                    for file in files:
-                        os.chown(
-                            os.path.join(root, file), user_info["id"], group_info["id"]
-                        )
-                os.chown(folder, user_info["id"], group_info["id"])
-                print(
-                    f"Changing permission of {folder} to {user_info['name']}({user_info['id']}):{group_info['name']}({group_info['id']})"
-                )
+
+        # Recursively chown everything under /app/data
+        uid = user_info["id"]
+        gid = group_info["id"]
+        for root, dirs, files in os.walk(server_data):
+            for d in dirs:
+                os.chown(os.path.join(root, d), uid, gid)
+            for f in files:
+                os.chown(os.path.join(root, f), uid, gid)
+        os.chown(server_data, uid, gid)
+        print(
+            f"Permissions set on {server_data} to "
+            f"{user_info['name']}({uid}):{group_info['name']}({gid})"
+        )
     except Exception as err:
         print(f"ERROR: unable to change permission: {err}", file=stderr)
-        return False
-    # test execution
-    if not exec_cmd("whoami"):
-        print(f"ERROR: while exec of `whoami`", file=stderr)
         return False
     print(f"Everything is OK with permissions.")
     return True
@@ -336,14 +320,11 @@ def dump_migrations(src: Path, dest: Path):
     :return:
     """
     dest.mkdir(parents=True, exist_ok=True)
-    os.chown(dest, user_info["id"], group_info["id"])
     for file in src.glob("**/migrations/*.py"):
         if file.is_file():
             destination = dest / file.relative_to(src)
             destination.parent.mkdir(parents=True, exist_ok=True)
-            os.chown(destination.parent, user_info["id"], group_info["id"])
             shutil.copy2(file, destination)
-            os.chown(destination, user_info["id"], group_info["id"])
 
 
 def do_migrations():
@@ -460,6 +441,9 @@ def main():
             fall_back()
             return
         if not do_migrations():
+            fall_back()
+            return
+        if not correct_permission():
             fall_back()
             return
         if not collect_static():
