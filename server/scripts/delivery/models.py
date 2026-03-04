@@ -160,7 +160,7 @@ class RevisionItemEntry(models.Model):
         if not Path(self.package.path).exists():
             return "(void)"
         raw_size = Path(self.package.path).stat().st_size
-        for unite in ["", "K", "M", "G", "T"]:
+        for unite in ["B", "KB", "MB", "GB", "TB"]:
             if raw_size < 1024.0:
                 break
             raw_size /= 1024.0
@@ -174,8 +174,8 @@ class RevisionItemEntry(models.Model):
         elif self.rev_type == "a":
             return "application"
 
-    def save(self, *args, **kargs):
-        super().save(*args, **kargs)
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
         branch_entry, created = BranchEntry.objects.get_or_create(name=self.branch)
         branch_entry.date = timezone.now()
         branch_entry.save()

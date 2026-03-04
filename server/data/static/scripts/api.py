@@ -2,13 +2,22 @@
 Script for using server API
 """
 
+import sys
 from datetime import datetime
 from pathlib import Path
 from sys import stderr
 
-from requests import post as http_post
-from requests.auth import HTTPBasicAuth
-from requests_toolbelt import MultipartEncoder, MultipartEncoderMonitor
+try:
+    from requests import post as http_post
+    from requests.auth import HTTPBasicAuth
+    from requests_toolbelt import MultipartEncoder, MultipartEncoderMonitor
+except ImportError as e:
+    print(
+        f"ERROR: Missing required Python package: {e}\n"
+        f"Install with: pip install requests requests-toolbelt",
+        file=stderr,
+    )
+    sys.exit(2)
 
 
 class Revision:
@@ -99,6 +108,10 @@ LARGE_FILE_THRESHOLD = 100 * 1024 * 1024
 
 
 def push():
+    """
+    Push a package or documentation to the server.
+    :return: 0 on success, 1 on error.
+    """
     try:
         basic = HTTPBasicAuth(user, cred)
         post_data = {
@@ -142,7 +155,7 @@ def push():
                 file=stderr,
             )
             print(f"response: {resp.content.decode('utf8')}", file=stderr)
-            return
+            return 0
         if resp.status_code != 200:
             log_file = get_log_dir() / "error.log"
             print(
@@ -152,13 +165,14 @@ def push():
             with open(log_file, "ab") as fp:
                 fp.write(f"\n---- ERROR: {datetime.now()} ---- \n".encode())
                 fp.write(resp.content)
-            return
+            return 1
+        return 0
     except Exception as err:
         print(
             f"ERROR Exception during server push: {destination}: {err}",
             file=stderr,
         )
-    return
+        return 1
 
 
 def parse_args():
@@ -243,26 +257,26 @@ def parse_args():
             rev.branch = args.branch
         else:
             print("ERROR: missing branch code", file=stderr)
-            exit(1)
+            sys.exit(1)
         if args.file:
             rev.file = Path(args.file)
         else:
             print("ERROR: missing revision file", file=stderr)
-            exit(1)
+            sys.exit(1)
         destination = args.url
         if destination in ["", None]:
             print("ERROR: missing destination url", file=stderr)
-            exit(1)
+            sys.exit(1)
         if rev.rev_type == "d":  # if documentation
             if not rev.file.is_dir():
                 print("ERROR: Documentation data must be a directory", file=stderr)
-                exit(1)
+                sys.exit(1)
             if not (rev.file / "index.html").exists():
                 print(
                     "ERROR: Documentation data does not contains index.html file",
                     file=stderr,
                 )
-                exit(1)
+                sys.exit(1)
             # do the compression
             rev.compact()
             if not rev.file.is_file():
@@ -270,36 +284,42 @@ def parse_args():
                     "ERROR: Documentation content should now be an archive file",
                     file=stderr,
                 )
-                exit(1)
+                sys.exit(1)
         else:  # if not documentation
             if not rev.file.is_file():
                 print(
                     "ERROR: Package content should now be a file",
                     file=stderr,
                 )
-                exit(1)
+                sys.exit(1)
             if args.hash:
                 rev.hash = args.hash
             else:
                 print("ERROR: missing revision hash", file=stderr)
-                exit(1)
+                sys.exit(1)
             if args.name:
                 rev.name = args.name
             else:
                 print("ERROR: missing revision name", file=stderr)
-                exit(1)
+                sys.exit(1)
             if args.flavor_name:
                 rev.flavor_name = args.flavor_name
             else:
                 print("ERROR: missing revision flavor name", file=stderr)
-                exit(1)
+                sys.exit(1)
             if args.date:
                 rev.date = args.date
             else:
                 print("ERROR: missing revision date", file=stderr)
-                exit(1)
+                sys.exit(1)
         user = args.user
+        if user in ["", None]:
+            print("ERROR: missing user", file=stderr)
+            sys.exit(1)
         cred = args.passwd
+        if cred in ["", None]:
+            print("ERROR: missing password", file=stderr)
+            sys.exit(1)
         return "push"
 
     return ""
@@ -308,7 +328,8 @@ def parse_args():
 def main():
     cmd = parse_args()
     if cmd == "push":
-        push()
+        sys.exit(push())
+    sys.exit(1)
 
 
 if __name__ == "__main__":

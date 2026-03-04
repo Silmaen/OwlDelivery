@@ -113,14 +113,13 @@ def branches(request):
 
     latest_stable = None
     for b in branch_list:
-        if not b["stable"]:
-            continue
-        latest_stable = b
-        break
+        if b["stable"]:
+            latest_stable = b
+            break
     old_stable_branch_list = []
     dev_branch_list = []
     for b in branch_list:
-        if b["name"] == latest_stable["name"]:
+        if latest_stable and b["name"] == latest_stable["name"]:
             continue
         if b["stable"]:
             old_stable_branch_list.append(b)
@@ -226,7 +225,7 @@ def admin(request):
 def dl_script(request):
     file = Path(settings.STATICFILES_DIRS[0]) / "scripts" / "api.py"
     response = FileResponse(open(file, "rb"))
-    response["Content-Disposition"] = 'attachement; filename="api.py"'
+    response["Content-Disposition"] = 'attachment; filename="api.py"'
     return response
 
 
@@ -234,7 +233,7 @@ def entry_exists(request):
     data = request.POST.dict()
     file_name = ""
     if len(request.FILES.dict()) > 0:
-        file_name = request.FILES.dict().keys()[0]
+        file_name = next(iter(request.FILES.dict()))
     elif "package.path" in data:
         file_name = data["package.name"]
     new_path = Path(settings.MEDIA_ROOT) / "packages" / data["branch"] / data["hash"] / file_name
@@ -261,16 +260,10 @@ def revision_api(request):
                     key, dec = b64decode(request.headers["Authorization"].split()[-1]).decode("ascii").split(":", 1)
                     user = authenticate(request, username=key, password=dec)
                     if user is None:
-                        return HttpResponseForbidden(
-                            f"Only authenticated user allowed\nLogin: {key}, password: {dec} is invalid."
-                        )
+                        return HttpResponseForbidden("Invalid credentials.")
                     login(request, user)
-                except Exception as err:
-                    return HttpResponseForbidden(
-                        f"Only authenticated user allowed\n"
-                        f"Method: {request.method},Headers: {request.headers}\n"
-                        f"ERROR: {err}"
-                    )
+                except Exception:
+                    return HttpResponseForbidden("Invalid credentials.")
             if not request.user.is_authenticated:
                 return HttpResponseForbidden("""Only authenticated user allowed""")
         if locker.is_locked():
@@ -296,7 +289,7 @@ def revision_api(request):
             return HttpResponse("""ERROR PULL function is not yet implemented.""", status=406)
         elif action == "push":
             if not request.user.has_perm("delivery.add_revisionitementry"):
-                return HttpResponseForbidden("Please ask the right to delete packages")
+                return HttpResponseForbidden("Insufficient permissions to upload packages.")
             try:
                 if len(request.FILES.dict()) > 0:
                     form = RevisionItemEntryFullForm(request.POST, request.FILES)
@@ -351,16 +344,15 @@ def revision_api(request):
                         )
                     new_path.parent.mkdir(parents=True, exist_ok=True)
                     move(origin_path, new_path)
-                    entry = RevisionItemEntry.objects.create(
+                    RevisionItemEntry.objects.create(
                         hash=data["hash"],
                         branch=data["branch"],
                         name=data["name"],
                         flavor_name=data["flavor_name"],
                         rev_type=data["rev_type"],
                         date=data["date"],
-                        package=str(new_path),
+                        package=str(new_path.relative_to(settings.MEDIA_ROOT)),
                     )
-                    entry.save()
                     return HttpResponse(
                         f"GOOD.\nPOST: {data}\nheaders: {request.headers}",
                         status=200,
@@ -380,7 +372,7 @@ def revision_api(request):
                 )
         elif action == "push_doc":
             if not request.user.has_perm("delivery.add_revisionitementry"):
-                return HttpResponseForbidden("Please ask the right to delete packages")
+                return HttpResponseForbidden("Insufficient permissions to upload packages.")
             try:
                 if "branch" not in data:
                     return HttpResponse(
@@ -432,7 +424,7 @@ def revision_api(request):
                         zip_ref.extractall(new_path)
                 elif suffix == ".tgz":
                     with tarfile.open(origin_path, "r:gz") as tar_ref:
-                        tar_ref.extractall(new_path)
+                        tar_ref.extractall(new_path, filter="data")
                 else:
                     return HttpResponse(
                         f"ERROR  INVALID REQUEST.\n"
@@ -462,6 +454,7 @@ def revision_api(request):
             if len(objs) > 1:
                 return HttpResponse("""ERROR more than one package match the query.""", status=406)
             objs[0].delete()
+            return HttpResponse("GOOD. Deleted.", status=200)
         else:
             return HttpResponse(
                 f"ERROR invalid action.\nPOST: {data}\nheaders: {request.headers}",

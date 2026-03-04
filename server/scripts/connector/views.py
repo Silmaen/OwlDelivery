@@ -34,7 +34,7 @@ def register(request):
         return render(
             request,
             "registration/register.html",
-            {**settings.base_info, "form": CustomUserCreationForm},
+            {**settings.base_info, "form": CustomUserCreationForm()},
         )
 
 
@@ -42,6 +42,8 @@ def profile_edit(request):
     """
     User wants to edit its profile.
     """
+    if not request.user.is_authenticated:
+        return redirect("login")
     if request.method == "POST":
         form = CustomUserChangeForm(request.POST, instance=request.user)
         if form.is_valid():

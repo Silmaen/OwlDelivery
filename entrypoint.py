@@ -235,7 +235,7 @@ def get_user_group():
         group_name = str(grp.getgrgid(config["pgid"]).gr_name)
     except Exception as err:
         print(
-            f"ERROR no user or group with uid={config['puid']} gid={config['puid']}: {err}.",
+            f"ERROR no user or group with uid={config['puid']} gid={config['pgid']}: {err}.",
             file=stderr,
         )
         print("Fallback to root", file=stderr)

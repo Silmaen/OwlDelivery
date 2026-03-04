@@ -67,7 +67,7 @@ def admin_users(request):
     if not can_see_user_admin(request):
         return redirect("/")
     if locker.is_locked():
-        return redirect("maintenance")
+        return redirect("/")
     entries = User.objects.all()
     p_users = []
     for entry in entries:
@@ -116,7 +116,7 @@ def admin_modif_user(request, pk):
     if not request.user.has_perm("auth.delete_user"):
         return redirect(request.META.get("HTTP_REFERER", "a_news"))
     if locker.is_locked():
-        return redirect("maintenance")
+        return redirect("/")
     if request.method == "POST":
         user = User.objects.get(pk=pk)
         if "action" not in request.POST:
@@ -388,7 +388,7 @@ def admin_modif_revision(request, rev_hash):
     if "action" not in request.POST:
         return redirect(request.META.get("HTTP_REFERER", "a_news"))
     revs = RevisionItemEntry.objects.filter(hash=rev_hash)
-    if request.POST["action"] == "delete" and is_comment_moderator(request):
+    if request.POST["action"] == "delete":
         for rev in revs:
             rev.delete()
     return redirect(request.META.get("HTTP_REFERER", "a_news"))
@@ -404,7 +404,7 @@ def admin_modif_revision_item(request, pk):
     if "action" not in request.POST:
         return redirect(request.META.get("HTTP_REFERER", "a_news"))
     rev_item = RevisionItemEntry.objects.get(pk=pk)
-    if request.POST["action"] == "delete" and is_comment_moderator(request):
+    if request.POST["action"] == "delete":
         rev_item.delete()
     return redirect(request.META.get("HTTP_REFERER", "a_news"))
 
