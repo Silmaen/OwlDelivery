@@ -387,7 +387,8 @@ def start_server():
     if not (server_scripts / "scripts" / "wsgi.py").exists():
         print("ERROR: no project scripts is configured.", file=stderr)
         return False
-    cmd = "gunicorn scripts.wsgi --bind=0.0.0.0:8000 --reload --log-level info --log-file /app/data/log/gunicorn.log"
+    workers = os.environ.get("GUNICORN_WORKERS", "4")
+    cmd = f"gunicorn scripts.wsgi --bind=0.0.0.0:8000 --workers {workers} --timeout 1200 --reload --log-level info --log-file /app/data/log/gunicorn.log"
     print(f"Executing: '{cmd}'")
     os.execvp(
         "gunicorn",
@@ -395,6 +396,10 @@ def start_server():
             "gunicorn",
             "scripts.wsgi",
             "--bind=0.0.0.0:8000",
+            "--workers",
+            workers,
+            "--timeout",
+            "1200",
             "--reload",
             "--log-level",
             "info",
