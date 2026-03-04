@@ -1,36 +1,50 @@
 {% extends 'registration/base_registration.html' %}
 
-{%block mainsection %}
-<div class="Article user_form">
-    <div class="ArticleHeader">
-        <h4>Login</h4>
+{% block mainsection %}
+<div class="auth-card card">
+    <div class="card__header">
+        <h2>Login</h2>
     </div>
-    <div class="ArticleContent centering-col">
+    <div class="card__body">
         <p>Please login to get full access.</p>
-        <form class="centering-col" method="post">
+        <form method="post">
             {% csrf_token %}
-            {{ form.as_p }}
-            <button id="submit" class="button"><span class="material-symbols-outlined mdi-icon">login</span>Login
-            </button>
+            {% for field in form %}
+            {% include "includes/form_field.html" %}
+            {% endfor %}
+            <div class="form-actions">
+                <button type="submit" class="btn btn--primary">
+                    <span class="material-symbols-outlined icon">login</span>
+                    Login
+                </button>
+            </div>
         </form>
         {% if has_email %}
-        <div class="centering-row">
-            <div>Lost credentials?</div>
-            <a class="button" href="{% url 'password_reset' %}"><span
-                    class="material-symbols-outlined mdi-icon">lock_reset</span>Reset</a>
+        <div class="flex-row gap-4 mt-4">
+            <span>Lost credentials?</span>
+            <a class="btn btn--sm" href="{% url 'password_reset' %}">
+                <span class="material-symbols-outlined icon">lock_reset</span>
+                Reset
+            </a>
         </div>
         {% endif %}
-        <div class="centering-row">
-            <div>Request credentials?</div>
-            <a class="button" href="{% url 'register' %}"><span
-                    class="material-symbols-outlined mdi-icon">person_add</span>Register</a>
+        <div class="flex-row gap-4 mt-4">
+            <span>Request credentials?</span>
+            <a class="btn btn--sm" href="{% url 'register' %}">
+                <span class="material-symbols-outlined icon">person_add</span>
+                Register
+            </a>
         </div>
     </div>
-    <div class="ArticleFooter">
-        <a class="button" href="{% url 'index' %}">
-            <span class="material-symbols-outlined mdi-icon">arrow_circle_left</span>
-            Back
-        </a>
+    <div class="card__footer">
+        <div class="card__footer-start">
+            <a class="btn btn--ghost btn--sm" href="{% url 'index' %}">
+                <span class="material-symbols-outlined icon">arrow_circle_left</span>
+                Back
+            </a>
+        </div>
+        <div class="card__footer-center"></div>
+        <div class="card__footer-end"></div>
     </div>
 </div>
 {% endblock %}

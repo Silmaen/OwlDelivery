@@ -1,13 +1,33 @@
-"""
-Fichier définissant les urls
-"""
+"""URL configuration for the delivery app."""
 
 from django.conf import settings as main_settings
 from django.conf.urls.static import static
 from django.urls import path
 
-from .views import *
-from .views_admin import *
+from .views import (
+    admin,
+    branches,
+    dl_script,
+    news,
+    news_details,
+    revision_api,
+    revision_detail,
+    revisions,
+)
+from .views_admin import (
+    admin_branches,
+    admin_edit_revision_item,
+    admin_modif_comment,
+    admin_modif_news,
+    admin_modif_revision,
+    admin_modif_revision_item,
+    admin_modif_user,
+    admin_news,
+    admin_news_detail,
+    admin_revisions,
+    admin_revisions_page,
+    admin_users,
+)
 
 urlpatterns = [
     path("", news, name="index"),
@@ -22,9 +42,7 @@ urlpatterns = [
     path("admin/news", admin_news, name="a_news"),
     path("admin/news/<int:news_id>", admin_news_detail, name="a_news_detail"),
     path("admin/mnews/<int:news_id>", admin_modif_news, name="a_modif_news"),
-    path(
-        "admin/mcomment/<int:comment_id>", admin_modif_comment, name="a_modif_comment"
-    ),
+    path("admin/mcomment/<int:comment_id>", admin_modif_comment, name="a_modif_comment"),
     path("admin/revisions", admin_revisions, name="a_revisions"),
     path("admin/branches", admin_branches, name="a_branches"),
     path("admin/revisions/<int:page>", admin_revisions_page, name="a_revisions_page"),

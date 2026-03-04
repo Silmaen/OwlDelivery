@@ -1,0 +1,230 @@
+/* ========================================
+   Pages — Package list, Comment list,
+   Error pages, Auth pages
+   ======================================== */
+
+/* ============================================
+   PACKAGE LIST (branches, revisions)
+   ============================================ */
+.pkg-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  width: 100%;
+  max-width: 960px;
+  margin-inline: auto;
+}
+
+.pkg-list__heading {
+  margin-bottom: var(--sp-2);
+}
+
+/* --- Package item --- */
+.pkg-item {
+  background: var(--color-neutral-600);
+  border-radius: var(--radius-md);
+  border-left: 3px solid var(--color-primary);
+  overflow: hidden;
+  transition: box-shadow var(--transition-fast);
+}
+
+.pkg-item:hover {
+  box-shadow: var(--shadow-md);
+}
+
+.pkg-item__header {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
+  color: var(--color-neutral-100);
+  font-weight: 600;
+  transition: background var(--transition-fast);
+}
+
+a.pkg-item__header {
+  text-decoration: none;
+}
+
+a.pkg-item__header:hover,
+button.pkg-item__header:hover {
+  background: rgba(190, 133, 9, 0.1);
+  color: var(--color-primary-light);
+}
+
+.pkg-item__label {
+  font-size: var(--text-sm);
+  color: var(--color-neutral-300);
+}
+
+.pkg-item__value {
+  font-size: var(--text-base);
+}
+
+.pkg-item__date {
+  margin-left: auto;
+  font-size: var(--text-sm);
+  color: var(--color-neutral-300);
+}
+
+/* Pkg-item as accordion (revision detail) */
+.pkg-item .accordion__trigger {
+  background: var(--color-neutral-600);
+  font-size: var(--text-base);
+  border-left: none;
+}
+
+.pkg-item .accordion__trigger:hover {
+  background: rgba(190, 133, 9, 0.1);
+}
+
+/* --- Flavor grid (revision detail downloads) --- */
+.flavor-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: var(--sp-3);
+  padding: var(--sp-3);
+}
+
+.flavor-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  padding: var(--sp-3);
+  background: var(--color-neutral-800);
+  border-radius: var(--radius-md);
+  color: var(--color-neutral-100);
+  transition: background var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+a.flavor-card:hover {
+  background: var(--color-primary-dark);
+  color: var(--color-primary-light);
+  box-shadow: var(--shadow-sm);
+}
+
+.flavor-card__name {
+  font-weight: 600;
+  font-size: var(--text-sm);
+}
+
+.flavor-card__size {
+  font-size: var(--text-xs);
+  color: var(--color-neutral-300);
+}
+
+/* ============================================
+   COMMENT LIST
+   ============================================ */
+.comment-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding: var(--sp-4);
+  background: var(--color-neutral-400);
+  border-radius: var(--radius-md);
+  margin-top: var(--sp-4);
+}
+
+.comment-item {
+  padding: var(--sp-3) 0;
+  border-top: 1px solid var(--color-neutral-500);
+}
+
+.comment-item:first-child {
+  border-top: none;
+  padding-top: 0;
+}
+
+.comment-item__meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-2);
+  font-size: var(--text-sm);
+  color: var(--color-neutral-300);
+}
+
+.comment-item__author {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+}
+
+.comment-item__date {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+}
+
+.comment-item__body {
+  font-size: var(--text-sm);
+  color: var(--color-neutral-100);
+}
+
+/* --- Comment submission area --- */
+.comment-submit {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 720px;
+  margin: var(--sp-4) auto 0;
+}
+
+.comment-submit form {
+  width: 100%;
+  padding: var(--sp-4);
+}
+
+/* ============================================
+   AUTH PAGES (card-based)
+   ============================================ */
+.auth-card {
+  width: 100%;
+  max-width: 480px;
+  margin: var(--sp-4) auto;
+}
+
+/* ============================================
+   ERROR PAGES
+   ============================================ */
+.error-page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: var(--sp-16) var(--sp-4);
+  min-height: 40vh;
+}
+
+.error-page__code {
+  font-family: var(--font-mono);
+  font-size: var(--text-4xl);
+  font-weight: 700;
+  color: var(--color-primary);
+  line-height: 1;
+  margin-bottom: var(--sp-4);
+}
+
+.error-page__message {
+  font-size: var(--text-lg);
+  color: var(--color-neutral-200);
+  margin-bottom: var(--sp-8);
+}
+
+/* ============================================
+   EMPTY STATE
+   ============================================ */
+.empty-state {
+  text-align: center;
+  padding: var(--sp-8);
+  color: var(--color-neutral-300);
+}
+
+.empty-state h3 {
+  margin-bottom: var(--sp-2);
+}

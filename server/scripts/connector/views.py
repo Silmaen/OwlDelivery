@@ -1,12 +1,12 @@
-"""Fichier main.users.users_view.py les vues users."""
+"""Vues utilisateur."""
 
 from django.conf import settings as glob_settings
 from django.contrib.auth import login
-from django.contrib.auth.views import PasswordResetView, LoginView
-from django.shortcuts import render, redirect, reverse
+from django.contrib.auth.views import LoginView, PasswordResetView
+from django.shortcuts import redirect, render, reverse
 
 from . import settings
-from .forms import CustomUserCreationForm, CustomUserChangeForm
+from .forms import CustomUserChangeForm, CustomUserCreationForm
 
 
 def profile(request):
@@ -29,14 +29,12 @@ def register(request):
             user = form.save()
             login(request, user)
             return redirect(reverse("index"))
-        return render(
-            request, "registration/register.html", {**settings.base_info, "form": form}
-        )
+        return render(request, "registration/register.html", {**settings.base_info, "form": form})
     else:
         return render(
             request,
             "registration/register.html",
-            {**settings.base_info, "form": CustomUserCreationForm},
+            {**settings.base_info, "form": CustomUserCreationForm()},
         )
 
 
@@ -44,6 +42,8 @@ def profile_edit(request):
     """
     User wants to edit its profile.
     """
+    if not request.user.is_authenticated:
+        return redirect("login")
     if request.method == "POST":
         form = CustomUserChangeForm(request.POST, instance=request.user)
         if form.is_valid():

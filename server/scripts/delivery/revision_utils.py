@@ -6,7 +6,7 @@ from pathlib import Path
 
 from django.conf import settings
 
-from .models import RevisionItemEntry, BranchEntry
+from .models import BranchEntry, RevisionItemEntry
 
 
 def get_revision_branches():

@@ -1,56 +1,49 @@
 {% extends 'registration/base_registration.html' %}
 
-{%block mainsection %}
-<div class="Article user_form">
-    <div class="ArticleHeader">
-        <h4>New user</h4>
+{% block mainsection %}
+<div class="auth-card card">
+    <div class="card__header">
+        <h2>New user</h2>
     </div>
-    <div class="ArticleContent user_form">
+    <div class="card__body">
         <p>Please fill this form to be registered.</p>
-        {% if form.errors %}
-        {% for field in form %}
-        {% for error in field.errors %}
-        <div class="alert alert-danger">
-            <strong>{{ error|escape }}</strong>
-        </div>
-        {% endfor %}
-        {% endfor %}
+        {% if form.non_field_errors %}
         {% for error in form.non_field_errors %}
-        <div class="alert alert-danger">
-            <strong>{{ error|escape }}</strong>
-        </div>
+        <div class="alert alert--danger">{{ error|escape }}</div>
         {% endfor %}
         {% endif %}
-        {% if profile_form.errors %}
-        {% for field in profile_form %}
-        {% for error in field.errors %}
-        <div class="alert alert-danger">
-            <strong>{{ error|escape }}</strong>
-        </div>
-        {% endfor %}
-        {% endfor %}
+        {% if profile_form.non_field_errors %}
         {% for error in profile_form.non_field_errors %}
-        <div class="alert alert-danger">
-            <strong>{{ error|escape }}</strong>
-        </div>
+        <div class="alert alert--danger">{{ error|escape }}</div>
         {% endfor %}
         {% endif %}
         <form method="post">
-
             {% csrf_token %}
-            {{ form.as_p }}
-            {{ profile_form.as_p }}
-            <button id="submit" class="button">
-                <span class="material-symbols-outlined mdi-icon">person_add</span>
-                Register
-            </button>
+            {% for field in form %}
+            {% include "includes/form_field.html" %}
+            {% endfor %}
+            {% if profile_form %}
+            {% for field in profile_form %}
+            {% include "includes/form_field.html" %}
+            {% endfor %}
+            {% endif %}
+            <div class="form-actions">
+                <button type="submit" class="btn btn--primary">
+                    <span class="material-symbols-outlined icon">person_add</span>
+                    Register
+                </button>
+            </div>
         </form>
     </div>
-    <div class="ArticleFooter">
-        <a class="button" href="{% url 'login' %}">
-            <span class="material-symbols-outlined mdi-icon">arrow_circle_left</span>
-            Back
-        </a>
+    <div class="card__footer">
+        <div class="card__footer-start">
+            <a class="btn btn--ghost btn--sm" href="{% url 'login' %}">
+                <span class="material-symbols-outlined icon">arrow_circle_left</span>
+                Back
+            </a>
+        </div>
+        <div class="card__footer-center"></div>
+        <div class="card__footer-end"></div>
     </div>
 </div>
 {% endblock %}

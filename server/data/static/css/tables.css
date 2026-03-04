@@ -1,0 +1,91 @@
+/* ========================================
+   Tables — Data tables, responsive wrapper
+   ======================================== */
+
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.data-table {
+  width: 100%;
+  font-size: var(--text-sm);
+  text-align: left;
+}
+
+.data-table th {
+  padding: var(--sp-2) var(--sp-3);
+  font-weight: 600;
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-primary);
+  background: var(--color-neutral-800);
+  border-bottom: 2px solid var(--color-neutral-600);
+  white-space: nowrap;
+}
+
+.data-table td {
+  padding: var(--sp-2) var(--sp-3);
+  color: var(--color-neutral-100);
+  border-bottom: 1px solid var(--color-neutral-600);
+  vertical-align: middle;
+}
+
+/* Alternating rows */
+.data-table tbody tr:nth-child(even) {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+/* Hover */
+.data-table tbody tr:hover {
+  background: rgba(190, 133, 9, 0.08);
+}
+
+/* Clickable row */
+.data-table tbody tr.data-table__row--clickable {
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+.data-table tbody tr.data-table__row--clickable:hover {
+  background: rgba(190, 133, 9, 0.12);
+}
+
+/* Center-aligned cells */
+.data-table .cell--center {
+  text-align: center;
+}
+
+/* Actions cell */
+.data-table .cell--actions {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.data-table .cell--actions form {
+  display: inline-flex;
+}
+
+/* --- Definition list (profile-style) --- */
+.dl-grid {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--sp-2) var(--sp-4);
+  align-items: center;
+}
+
+.dl-grid dt {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-size: var(--text-sm);
+  color: var(--color-neutral-300);
+  white-space: nowrap;
+}
+
+.dl-grid dd {
+  font-size: var(--text-sm);
+  color: var(--color-neutral-100);
+}

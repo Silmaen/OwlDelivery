@@ -4,7 +4,9 @@ forms for delivery
 
 from markdownx.forms import forms
 
-from .models import *
+from .models import BranchEntry, NewsComment, NewsEntry, RevisionItemEntry
+
+INPUT_CSS = {"class": "form-group__input"}
 
 
 class NewsEntryForm(forms.ModelForm):
@@ -22,6 +24,9 @@ class NewsEntryForm(forms.ModelForm):
             "title",
             "content",
         )
+        widgets = {
+            "title": forms.TextInput(attrs=INPUT_CSS),
+        }
 
 
 class NewsCommentForm(forms.ModelForm):
@@ -50,6 +55,14 @@ class RevisionItemEntryForm(forms.ModelForm):
 
         model = RevisionItemEntry
         fields = ("hash", "branch", "name", "flavor_name", "date", "rev_type")
+        widgets = {
+            "hash": forms.TextInput(attrs=INPUT_CSS),
+            "branch": forms.TextInput(attrs=INPUT_CSS),
+            "name": forms.TextInput(attrs=INPUT_CSS),
+            "flavor_name": forms.TextInput(attrs=INPUT_CSS),
+            "date": forms.DateTimeInput(attrs=INPUT_CSS),
+            "rev_type": forms.Select(attrs=INPUT_CSS),
+        }
 
 
 class RevisionItemEntryFullForm(forms.ModelForm):
@@ -72,6 +85,15 @@ class RevisionItemEntryFullForm(forms.ModelForm):
             "rev_type",
             "package",
         )
+        widgets = {
+            "hash": forms.TextInput(attrs=INPUT_CSS),
+            "branch": forms.TextInput(attrs=INPUT_CSS),
+            "name": forms.TextInput(attrs=INPUT_CSS),
+            "flavor_name": forms.TextInput(attrs=INPUT_CSS),
+            "date": forms.DateTimeInput(attrs=INPUT_CSS),
+            "rev_type": forms.Select(attrs=INPUT_CSS),
+            "package": forms.ClearableFileInput(attrs=INPUT_CSS),
+        }
 
 
 class BranchEntryForm(forms.ModelForm):
@@ -91,3 +113,9 @@ class BranchEntryForm(forms.ModelForm):
             "visible",
             "stable",
         )
+        widgets = {
+            "name": forms.TextInput(attrs=INPUT_CSS),
+            "date": forms.DateTimeInput(attrs=INPUT_CSS),
+            "visible": forms.CheckboxInput(attrs={"class": "form-group__input"}),
+            "stable": forms.CheckboxInput(attrs={"class": "form-group__input"}),
+        }

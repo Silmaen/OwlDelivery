@@ -1,131 +1,159 @@
 # OwlDelivery
 
-Webserver For Owl Delivery and documentation
+Django web application for hosting delivery packages and documentation for the [Owl Game Engine](https://github.com/Silmaen/Owl). Runs in Docker with Nginx (reverse proxy + large file upload) and Gunicorn.
 
-This server aim to host the delivery packages of the Owl Game engine [Owl Engine](https://github.com/Silmaen/Owl).
+## Quick Start
 
-## Docker
-
-### Docker image
-
-Most parts of the work reside in a docker image can can simply be deployed.
-
-`docker pull registry.argawaen.net/servers/owl-delivery-server`
-
-### Docker compose
-
-It is possible to use the server directly in Docker compose:
-
-```yaml
-version: "3.8"
-services:
-  owl-delivery-server:
-    image: registry.argawaen.net/servers/owl-delivery-server
-    container_name: owl-delivery-server
-    restart: unless-stopped
-    cap_add:
-      - NET_ADMIN
-    volumes:
-      - /srv/owldeliv/data:/data       # Persistent volume for package storage, logs, internal database.
-      - /etc/timezone:/etc/timezone:ro # Defines the same timezone as the host.
-    ports:
-      - 80:80                          # Port of the web UI.
-    environment:
-      - PUID=1000                      # UID used for file writing.
-      - PGID=1000                      # GID used for file writing.
-      - DOMAIN_NAME="example.com"      # The domain of this server (mandatory for correct usage).
-      - ADMIN_NAME="admin"             # login of the first admin.
-      - ADMIN_PASSWD="MyBigPassW0rd"   # passwd of the first admin.
-      - EMAIL_HOST="mail.example.com"  # URL of the mail server.
-      - EMAIL_PORT=587                 # Port of the mail server.
-      - EMAIL_USE_TLS="True"           # If server uses TLS.
-      - EMAIL_USER="admin"             # Email user login.
-      - EMAIL_PASSWD="MyBigPassW0rd"   # Email user password.
-      - DEBUG_MODE="False"             # Set Django in debug mode.
-      - ENABLE_STAFF="False"           # Activate the staff section for admin users
+```bash
+cp .env.sample .env     # configure environment
+docker compose build    # build image
+docker compose up       # run (Ctrl+C to stop)
 ```
 
-## Variables details
+The application is then available at `http://localhost:8080` (or the port configured in `.env`).
 
-### TZ
+## Stack
 
-Define he time zone to use in the container. You can directly define your Time zone by setting this variable.
+- **Python 3.13** on Alpine Linux
+- **Django 6.x** with SQLite
+- **Gunicorn** (WSGI server, port 8000 internal)
+- **Nginx** (port 80 internal, reverse proxy + upload module for large files up to 8GB)
+- **django-markdownx** for Markdown editing
 
-Another trick to use the host's defined times zone is to not set this variable and set
-`/etc/timezone:/etc/timezone:ro` as a volume (works only if the host is unix-like).
+## Environment Variables
 
-### PUID, PGID
+Copy `.env.sample` and adjust values. All variables are passed via the `env_file` directive in `docker-compose.yml`.
 
-Defines user and group ids number used in server run. Thus, all files uploaded will have these ids
-as owner.
+### Core
 
-### DOMAIN_NAME
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `PUID` | `1000` | Unix user ID for file ownership |
+| `PGID` | `1000` | Unix group ID for file ownership |
+| `PORT` | `8080` | Host port mapped to the container |
+| `PATH_DATA` | `./docker_data/data` | Host path for the persistent data volume |
+| `DOMAIN_NAME` | `example.com` | Domain used for CSRF trusted origins (see below) |
+| `TZ` | `Europe/Paris` | Container timezone |
 
-The domain of this server. This parameter is mandatory because used in CSRF resolution of POST REQUESTS.
-By default, '127.0.0.1' and 'localhost' are used. It is also important to add the port if not using
-standard http or https ports in request.
+### Admin
 
-If you can access to this server by the url `http://10.15.165.12:7856`
-then use `DOMAIN_NAME:"10.15.165.12:7856"`.
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `ADMIN_NAME` | `admin` | Initial superuser login (ignored if an admin already exists) |
+| `ADMIN_PASSWD` | `admin` | Initial superuser password |
 
-If you can access to this server by the url
-`https://any.deliv.home.lan:785` then use `DOMAIN_NAME:"home.lan:785"` or
-`DOMAIN_NAME:"deliv.home.lan:785"`
+After the first run, it is strongly recommended to change this password.
 
-### ADMIN_NAME, ADMIN_PASSWD
+### Email (SMTP)
 
-Define the first admin user login and password. If an admin user already
-exists in the database these parameters are ignored. The only purpose is
-to have an admin defined at the first run of a fresh new instance with no
-data.
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `EMAIL_HOST` | *(empty)* | SMTP server address |
+| `EMAIL_PORT` | `587` | SMTP server port |
+| `EMAIL_USE_TLS` | `True` | Use TLS for SMTP |
+| `EMAIL_HOST_USER` | *(empty)* | SMTP login |
+| `EMAIL_HOST_PASSWORD` | *(empty)* | SMTP password |
 
-By default, `admin` will be the login and the password.
-
-After the first initialization, it is strongly recommended to change this
-admin password!
-
-### EMAIL configuration
-
-Define your mail server `EMAIL_HOST` its address, `EMAIL_PORT` its port.
-`EMAIL_USE_TLS` defines if TLS transaction should be used.
-If `EMAIL_USER` and  `EMAIL_PASSWD` are set, the communication will use these
-credentials.
+Email is required for password reset functionality.
 
 ### Options
 
-`DEBUG_MODE` is a developer option to display the django error messages. Default
-is `false` meaning production environment.
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `DEBUG_MODE` | `False` | Enable Django debug mode (development only) |
+| `ENABLE_STAFF` | `False` | Enable the advanced admin section for staff users |
 
-`ENABLE_STAFF` make available the 'admin' section of django with a bit more
-advanced parameters than the classical admin. Use with cautions.
+### DOMAIN_NAME Details
 
-## Roadmap and versions
+This variable is **mandatory** for CSRF resolution on POST requests. `127.0.0.1` and `localhost` are always trusted.
 
-* [ ] 0.4.0
-    * [ ] Possible link to OAuth authentication
-    * [ ] allow mailing to user
-        * [ ] tunable notification
-        * [ ] notifications for new releases
-        * [ ] notification for comments, etc.
-* [X] 0.3.1 -- release 2025-02-05
-    *  [X] Hotfix: correct API problem with file suffixes
-* [X] 0.3.0 -- release 2025-02-05
-    * [X] allow Engine API documentation pages
-    * [X] Branch display management
-        * [X] dissociate current release branch from other branches
-        * [X] allow to hide/see other branches
-* [X] 0.2.0 -- release 2025-02-03
-    * [X] Revision reorganization
-        * [X] Use branch filtering
-* [X] 0.1.0 -- first release 2024-05-18
-    * [X] user management
-        * [X] allow user login and registration
-        * [X] allow changing permission to users
-        * [X] allow the user to see/edit their information
-        * [X] allow user to reset their credential (Require a valid setup of mail server)
-    * [X] revision management
-        * [X] Pages to navigate through revisions
-        * [X] Special address to download push script.
-            * [X] Automated push script
-    * [X] admin sections
-        * [X] can delete revision or revision items
+Include the port if it is not the standard HTTP/HTTPS port:
+
+- Access via `http://10.15.165.12:7856` → `DOMAIN_NAME=10.15.165.12:7856`
+- Access via `https://deliv.home.lan:785` → `DOMAIN_NAME=deliv.home.lan:785`
+- Access via `https://delivery.example.com` → `DOMAIN_NAME=delivery.example.com`
+
+## Client Script (api.py)
+
+A Python script is served at `GET /api` for CI systems and developers to publish releases and documentation.
+
+```bash
+# Download the script
+curl -o api.py http://your-server/api
+
+# Push a package
+python api.py push --server http://your-server --user admin --passwd secret \
+    --name MyPackage --hash abc123 --branch main --date 2025-01-01 \
+    --rev_type Release --flavor_name default --file package.zip
+
+# Push documentation
+python api.py push_doc --server http://your-server --user admin --passwd secret \
+    --branch main --file docs.tgz
+```
+
+**Client dependencies**: `requests`, `requests_toolbelt` (install with `pip install requests requests_toolbelt`).
+
+**Exit codes**: `0` = success, `1` = server/network error, `2` = missing Python dependency.
+
+Files under 100 MB are uploaded directly to `/api`; larger files use the Nginx upload module at `/upload`.
+
+## API Endpoint (`/api`)
+
+POST with HTTP Basic Auth or session authentication. Actions:
+
+| Action | Description |
+|--------|-------------|
+| `version` | Get server version |
+| `push` | Upload a package file |
+| `push_doc` | Upload documentation archive (.zip/.tgz), extracted per branch |
+| `delete` | Delete a revision item |
+
+GET returns the client script (`api.py`).
+
+## Project Structure
+
+```
+OwlDelivery/
+├── docker-compose.yml          # Service definition
+├── Dockerfile                  # Multi-stage build (alpine/git + python:3.13-alpine)
+├── entrypoint.py               # Container init (user/perms/migrations/server start)
+├── requirements.txt            # Python deps (django, pillow, gunicorn, markdownx, markdown)
+├── pyproject.toml              # Dev deps (ruff via Poetry)
+├── .env.sample                 # Environment template
+├── VERSION                     # Version number
+├── server/
+│   ├── config/
+│   │   ├── nginx.conf                  # Main Nginx config
+│   │   └── http.d/Django_server.conf   # Server block (static/media/upload/proxy)
+│   ├── data/
+│   │   ├── static/                     # CSS, JS, images, client script
+│   │   └── templates/                  # HTML templates
+│   └── scripts/                        # Django project root
+│       ├── manage.py
+│       ├── scripts/                    # Django settings module
+│       ├── delivery/                   # Main app: packages, news, branches, API
+│       └── connector/                  # User auth & profiles
+```
+
+## Roadmap
+
+- [ ] 0.5.0
+    - [ ] OAuth authentication support
+    - [ ] Email notifications
+        - [ ] Tunable notification preferences
+        - [ ] New release notifications
+        - [ ] Comment notifications
+- [x] 0.4.0 — 2026-03-04
+    - [x] Modernize the UI
+    - [x] Modernize the backend
+- [x] 0.3.1 — 2025-02-05
+    - [x] Hotfix: correct API problem with file suffixes
+- [x] 0.3.0 — 2025-02-05
+    - [x] Engine API documentation pages
+    - [x] Branch display management (stable vs dev, visibility toggle)
+- [x] 0.2.0 — 2025-02-03
+    - [x] Revision reorganization with branch filtering
+- [x] 0.1.0 — 2024-05-18
+    - [x] User management (login, registration, permissions, profile, password reset)
+    - [x] Revision management (browsing, push script, automated upload)
+    - [x] Admin sections (delete revisions/items)

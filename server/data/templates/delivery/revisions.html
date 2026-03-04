@@ -1,54 +1,48 @@
 {% extends 'base.html' %}
-{% load static %}
-
-{% block extra_head %}
-<link rel="stylesheet" href="{% static 'css/folding_box.css' %}"/>
-{% endblock %}
 
 {% block content %}
-
-<div class="PackageList">
-    <div class="Package">
-        <div class="PackageHeader clickable" onclick="location.href='{% url 'branches' %}'">
-            <div class="PackageName"><span class="material-symbols-outlined">arrow_back</span></div>
-            <div class="PackageName">Display Branch:</div>
-            <div class="PackageName">{{ branch.name }}</div>
-        </div>
+<div class="pkg-list mb-6">
+    <div class="pkg-item">
+        <a class="pkg-item__header" href="{% url 'branches' %}">
+            <span class="material-symbols-outlined icon">arrow_back</span>
+            <span class="pkg-item__label">Branch:</span>
+            <span class="pkg-item__value">{{ branch.name }}</span>
+        </a>
     </div>
     {% if branch.doc %}
-    <div class="Package">
-        <div class="PackageHeader clickable" onclick="location.href='{{ branch.doc_url }}'">
-            <div class="PackageName"><span class="material-symbols-outlined">developer_guide</span></div>
-            <div class="PackageName">Engine API Documentation</div>
-        </div>
+    <div class="pkg-item">
+        <a class="pkg-item__header" href="{{ branch.doc_url }}">
+            <span class="material-symbols-outlined icon">developer_guide</span>
+            <span class="pkg-item__value">Engine API Documentation</span>
+        </a>
     </div>
     {% endif %}
 </div>
 
 {% if current_revision %}
-<div class="PackageList">
-    <div class="Package">
-        <div class="PackageHeader clickable"
-             onclick="location.href='{% url 'revision_detail' current_revision.hash %}'">
-            <div class="PackageName">Last Revision:</div>
-            <div class="PackageName">{{ current_revision.hash }}</div>
-            <div class="PackageName">{{ current_revision.date }}</div>
-        </div>
+<div class="pkg-list mb-6">
+    <h2 class="pkg-list__heading">Current Revision</h2>
+    <div class="pkg-item">
+        <a class="pkg-item__header" href="{% url 'revision_detail' current_revision.hash %}">
+            <span class="pkg-item__value">{{ current_revision.hash }}</span>
+            <span class="pkg-item__date">{{ current_revision.date }}</span>
+        </a>
     </div>
 </div>
 
 {% if older_revisions %}
-
-<div class="PackageList">
-    <div class="Package folding_box" id="Older_Revision">
-        <div class="PackageHeader folding_box_header" onclick="toggleContent('Older_Revision')">
-            <div class="PackageName">Older revision</div>
-        </div>
-        <div class="PackageFlavors folding_box_content">
+<div class="pkg-list">
+    <div class="pkg-item accordion" id="older_revisions">
+        <button class="accordion__trigger" aria-expanded="false">
+            Older revisions
+            <span class="material-symbols-outlined accordion__chevron">expand_more</span>
+        </button>
+        <div class="accordion__panel">
             {% for revision in older_revisions %}
-            <div class="PackageFlavor clickable" onclick="location.href='{% url 'revision_detail' revision.hash %}'">
-                {{ revision.hash }} - {{ revision.date }}
-            </div>
+            <a class="flex-row gap-4 justify-between" href="{% url 'revision_detail' revision.hash %}" style="padding:var(--sp-2) 0;border-bottom:1px solid var(--color-neutral-500)">
+                <span>{{ revision.hash }}</span>
+                <span class="text-muted">{{ revision.date }}</span>
+            </a>
             {% endfor %}
         </div>
     </div>
@@ -56,18 +50,9 @@
 {% endif %}
 
 {% else %}
-<div class="Article">
-    <div class="ArticleHeader">
-        <h3>We are new!</h3>
-    </div>
-    <div class="ArticleContent">
-        <p>No revision are yet available on this server.</p>
-    </div>
+<div class="empty-state">
+    <h3>We are new!</h3>
+    <p>No revisions are yet available on this server.</p>
 </div>
 {% endif %}
-
-{% endblock %}
-
-{% block script_content %}
-<script src="{% static 'js/folding_box.js' %}"></script>
 {% endblock %}

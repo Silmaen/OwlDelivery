@@ -3,7 +3,7 @@ COPY .git /repo/.git
 WORKDIR /repo
 RUN git rev-parse --short HEAD > /git-rev.txt
 
-FROM python:3.12-alpine
+FROM python:3.13-alpine
 
 ENV PYTHONUNBUFFERED=1
 EXPOSE 80

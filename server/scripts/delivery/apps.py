@@ -1,6 +1,7 @@
 """
 Site Base App.
 """
+
 from django.apps import AppConfig
 
 

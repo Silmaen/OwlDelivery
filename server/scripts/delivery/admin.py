@@ -3,10 +3,10 @@ Administration page
 """
 
 from django.contrib import admin
+from django.utils.text import Truncator
 from markdownx.admin import MarkdownxModelAdmin
 
-from .models import *
-
+from .models import BranchEntry, NewsComment, NewsEntry, RevisionItemEntry
 
 # --------------------- The news -------------------------------------
 
@@ -42,7 +42,7 @@ class NewsEntryAdmin(MarkdownxModelAdmin):
 
     def save_model(self, request, obj, form, change):
         obj.author = request.user
-        super(NewsEntryAdmin, self).save_model(request, obj, form, change)
+        super().save_model(request, obj, form, change)
 
     def content_overview(self, article):
         """
@@ -69,7 +69,7 @@ class NewsCommentAdmin(MarkdownxModelAdmin):
 
     def save_model(self, request, obj, form, change):
         obj.author = request.user
-        super(NewsCommentAdmin, self).save_model(request, obj, form, change)
+        super().save_model(request, obj, form, change)
 
 
 admin.site.register(NewsEntry, NewsEntryAdmin)

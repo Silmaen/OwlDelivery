@@ -2,8 +2,13 @@
 """
 Main entry point for the docker image
 """
+
+import grp
 import os
+import pwd
 import shutil
+import sqlite3
+import subprocess
 from pathlib import Path
 from sys import stderr
 
@@ -68,7 +73,8 @@ def check_env():
             file=stderr,
         )
         print(
-            "         If you are not using the standard http or https port, don't forget to add it e.g. '127.0.0.1:8080'.",
+            "         If you are not using the standard http or https port, "
+            "don't forget to add it e.g. '127.0.0.1:8080'.",
             file=stderr,
         )
     if not result:
@@ -86,9 +92,6 @@ def check_user_exist():
     """
     Check and create user & group as required
     """
-    import pwd
-    import grp
-
     global user_info, group_info
     try:
         # check group info and name
@@ -96,9 +99,7 @@ def check_user_exist():
         if group_info["id"] in [it.gr_gid for it in grp.getgrall()]:
             # a group with the needed Id already exists -> using its name
             group_info["name"] = str(grp.getgrgid(group_info["id"]).gr_name)
-            print(
-                f"Group {group_info['id']} already exist with name: {group_info['name']}"
-            )
+            print(f"Group {group_info['id']} already exist with name: {group_info['name']}")
         else:
             if group_info["name"] in [str(it.gr_name) for it in grp.getgrall()]:
                 # a group with the default name already exists -> adapt the name
@@ -106,12 +107,8 @@ def check_user_exist():
                 while group_info["name"] in [str(it.gr_name) for it in grp.getgrall()]:
                     print(f"Group named {group_info['name']} already exist...")
                     group_info["name"] += "0"
-            print(
-                f"Create group named {group_info['name']} with gid: {group_info['id']}"
-            )
-            if not exec_cmd(
-                f"addgroup -g {group_info['id']} {group_info['name']}", True
-            ):
+            print(f"Create group named {group_info['name']} with gid: {group_info['id']}")
+            if not exec_cmd(f"addgroup -g {group_info['id']} {group_info['name']}", True):
                 print("ERROR detected during addgroup...", file=stderr)
                 return False
 
@@ -120,9 +117,7 @@ def check_user_exist():
         if user_info["id"] in [it.pw_uid for it in pwd.getpwall()]:
             # a user with the needed id already exists, use its name
             user_info["name"] = str(pwd.getpwuid(user_info["id"]).pw_name)
-            print(
-                f"User {user_info['id']} already exist with name: {user_info['name']}"
-            )
+            print(f"User {user_info['id']} already exist with name: {user_info['name']}")
         else:
             if user_info["name"] in [str(it.pw_name) for it in pwd.getpwall()]:
                 # a user with the default name already exists -> adapt the name
@@ -140,7 +135,7 @@ def check_user_exist():
     except Exception as err:
         print(f"ERROR: unable to check user: {err}", file=stderr)
         return False
-    print(f"Everything is OK with user.")
+    print("Everything is OK with user.")
     return True
 
 
@@ -173,14 +168,11 @@ def correct_permission():
             for f in files:
                 os.chown(os.path.join(root, f), uid, gid)
         os.chown(server_data, uid, gid)
-        print(
-            f"Permissions set on {server_data} to "
-            f"{user_info['name']}({uid}):{group_info['name']}({gid})"
-        )
+        print(f"Permissions set on {server_data} to {user_info['name']}({uid}):{group_info['name']}({gid})")
     except Exception as err:
         print(f"ERROR: unable to change permission: {err}", file=stderr)
         return False
-    print(f"Everything is OK with permissions.")
+    print("Everything is OK with permissions.")
     return True
 
 
@@ -191,7 +183,6 @@ def exec_cmd(cmd: str, as_root=False):
     :param as_root: if must be run as root.
     :return:
     """
-    import subprocess
 
     def demote():
         """
@@ -202,8 +193,6 @@ def exec_cmd(cmd: str, as_root=False):
             """
             Define the user id.
             """
-            import os
-
             os.setgid(group_info["id"])
             os.setuid(user_info["id"])
 
@@ -241,17 +230,15 @@ def get_user_group():
     Get the user and group for execution.
     :return: user_name, group_name.
     """
-    import pwd, grp
-
     try:
         user_name = str(pwd.getpwuid(config["puid"]).pw_name)
         group_name = str(grp.getgrgid(config["pgid"]).gr_name)
     except Exception as err:
         print(
-            f"ERROR no user or group with uid={config['puid']} gid={config['puid']}: {err}.",
+            f"ERROR no user or group with uid={config['puid']} gid={config['pgid']}: {err}.",
             file=stderr,
         )
-        print(f"Fallback to root", file=stderr)
+        print("Fallback to root", file=stderr)
         user_name = "root"
         group_name = "root"
     return user_name, group_name
@@ -282,15 +269,13 @@ def check_admin_user():
     try:
         # create log folder if not exists
         print("Check if an admin user already exists.")
-        import sqlite3
-
         con = sqlite3.connect("/app/data/delivery.db")
         cur = con.cursor()
         res = cur.execute("SELECT * FROM auth_user WHERE is_superuser=1")
         ls_admin = res.fetchall()
         admin_exist = len(ls_admin) > 0
         if admin_exist:
-            print(f"One admin already exists.")
+            print("One admin already exists.")
         else:
             print(f"Create new admin user named {config['admin_name']}.")
             cmd = (
@@ -355,8 +340,6 @@ def fix_absolute_media_paths():
     Old MEDIA_ROOT was /data, so Django stored names like /data/packages/...
     They need to be relative: packages/...
     """
-    import sqlite3
-
     db_path = server_data / "delivery.db"
     if not db_path.exists():
         return
@@ -364,10 +347,7 @@ def fix_absolute_media_paths():
     con = sqlite3.connect(str(db_path))
     cur = con.cursor()
     try:
-        cur.execute(
-            "UPDATE delivery_revisionitementry SET package = SUBSTR(package, 7) "
-            "WHERE package LIKE '/data/%'"
-        )
+        cur.execute("UPDATE delivery_revisionitementry SET package = SUBSTR(package, 7) WHERE package LIKE '/data/%'")
         updated = cur.rowcount
         if updated > 0:
             con.commit()
@@ -400,28 +380,28 @@ def start_server():
     print("Starting server")
     os.chdir(server_scripts)
     print("Starting Nginx:")
-    if not exec_cmd(f"/usr/sbin/nginx -c /app/server/config/nginx.conf", True):
+    if not exec_cmd("/usr/sbin/nginx -c /app/server/config/nginx.conf", True):
         fall_back()
     print("Starting Gunicorn:")
     os.chdir(server_scripts)
     if not (server_scripts / "scripts" / "wsgi.py").exists():
-        print(f"ERROR: no project scripts is configured.", file=stderr)
+        print("ERROR: no project scripts is configured.", file=stderr)
         return False
-    cmd = (
-        "gunicorn scripts.wsgi"
-        " --bind=0.0.0.0:8000"
-        " --reload"
-        " --log-level info"
-        " --log-file /app/data/log/gunicorn.log"
-    )
+    cmd = "gunicorn scripts.wsgi --bind=0.0.0.0:8000 --reload --log-level info --log-file /app/data/log/gunicorn.log"
     print(f"Executing: '{cmd}'")
-    os.execvp("gunicorn", [
-        "gunicorn", "scripts.wsgi",
-        "--bind=0.0.0.0:8000",
-        "--reload",
-        "--log-level", "info",
-        "--log-file", "/app/data/log/gunicorn.log",
-    ])
+    os.execvp(
+        "gunicorn",
+        [
+            "gunicorn",
+            "scripts.wsgi",
+            "--bind=0.0.0.0:8000",
+            "--reload",
+            "--log-level",
+            "info",
+            "--log-file",
+            "/app/data/log/gunicorn.log",
+        ],
+    )
     return True
 
 

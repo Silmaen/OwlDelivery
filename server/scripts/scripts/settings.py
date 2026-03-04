@@ -24,7 +24,7 @@ SITE_DIR = BASE_DIR.parent
 SECRET_KEY = "django-insecure-=mnlaqamlk--(f7q19^w(6q0cfx6q&t@_^78r=9cyqwn9ux(t*"
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get("DEBUG_MODE", "True") == "True"
+DEBUG = os.environ.get("DEBUG_MODE", "False") == "True"
 #
 ALLOWED_HOSTS = ["*"]
 CSRF_TRUSTED_ORIGINS = ["http://127.0.0.1", "http://localhost"]
@@ -43,7 +43,7 @@ if "PORT" in os.environ and os.environ["PORT"]:
 
 # the logging system
 
-PACKAGE_LOGING = {
+PACKAGE_LOGGING = {
     "level": "TRACE",
     "file": "/app/data/log/debugging.log",
     "console": True,
@@ -126,14 +126,13 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = "en-us"
 
-TIME_ZONE = "CET"
-DATETIME_FORMAT = "Y/m/d H:i"
-DATE_FORMAT = "Y/m/d"
+TIME_ZONE = os.environ.get("TZ", "CET")
+DATETIME_FORMAT = "d/m/Y H:i"
+DATE_FORMAT = "d/m/Y"
 TIME_FORMAT = "H:i"
 
 USE_I18N = True
-
-USE_L10N = False
+FORMAT_MODULE_PATH = ["scripts.formats"]
 
 USE_TZ = True
 
@@ -169,7 +168,6 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # email settings
 
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
-os.environ.get("EMAIL_HOST", "")
 EMAIL_HOST = os.environ.get("EMAIL_HOST", "")
 EMAIL_PORT = int(os.environ.get("EMAIL_PORT", "587"))
 EMAIL_USE_TLS = os.environ.get("EMAIL_USE_TLS", "True") == "True"

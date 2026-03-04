@@ -1,113 +1,102 @@
 {% extends 'base.html' %}
-{% load static %}
-
-{% block extra_head %}
-<link rel="stylesheet" href="{% static 'css/folding_box.css' %}"/>
-{% endblock %}
 
 {% block content %}
-
-{%block mainsection %}
-<div class="Article Article_detail">
-    <div class="ArticleHeader">
-        <a href="{% url 'index' %}"><h1>{{ news_item.title }}</h1></a>
+<article class="card mb-4">
+    <div class="card__header">
+        <a href="{% url 'index' %}"><h2>{{ news_item.title }}</h2></a>
     </div>
-    <div class="ArticleContent">
+    <div class="card__body">
         {{ news_item.content_all_md|safe }}
     </div>
-    <div class="ArticleFooter">
-        <div class="ArticleAuthor">
-            <span class="material-symbols-outlined mdi-icon">account_circle</span>
+    <div class="card__footer">
+        <div class="card__footer-start">
+            <span class="material-symbols-outlined icon--sm">account_circle</span>
             {{ news_item.author }}
         </div>
-        <div class="ArticleComments">
-            <span class="material-symbols-outlined mdi-icon">comment</span>
+        <div class="card__footer-center">
+            <span class="material-symbols-outlined icon--sm">comment</span>
             {{ news_item.nb_comments }}
         </div>
-        <div class="ArticleDate">
-            <span class="material-symbols-outlined mdi-icon">acute</span>
-            {{ news_item.date }}
+        <div class="card__footer-end">
+            <span class="material-symbols-outlined icon--sm">schedule</span>
+            <time>{{ news_item.date }}</time>
         </div>
     </div>
     {% if news_item.nb_comments > 0 %}
-    <div class="Comments">
+    <div class="comment-list">
         {% for cc in news_item.get_all_active_comments %}
-        <div class="comment">
-            <div class="c_head">
-                <div class="c_author ">
-                    <span class="material-symbols-outlined mdi-icon">account_circle</span>
-                    {{cc.author}}
+        <div class="comment-item">
+            <div class="comment-item__meta">
+                <div class="comment-item__author">
+                    <span class="material-symbols-outlined icon--sm">account_circle</span>
+                    {{ cc.author }}
                 </div>
-                <div class="c_date">
-                    <span class="material-symbols-outlined mdi-icon">acute</span>
-                    {{cc.date}}
+                <div class="comment-item__date">
+                    <span class="material-symbols-outlined icon--sm">schedule</span>
+                    <time>{{ cc.date }}</time>
                 </div>
             </div>
-            <div class="c_body">
-                {{cc.content_all_md| safe}}
-            </div>
+            <div class="comment-item__body">{{ cc.content_all_md|safe }}</div>
         </div>
-        {% endfor%}
+        {% endfor %}
     </div>
     {% endif %}
-</div>
-{%endblock%}
+</article>
+{% endblock %}
 
-{%block additionnalsection %}
+{% block additionnalsection %}
 {% if user.is_authenticated %}
-<section class="bottom-section">
-    <div class="comment-subbing folding_box" id="comment_sub">
+<div class="comment-submit">
+    <div class="accordion" id="comment_sub">
         {% if new_comment %}
         {% if new_comment.related_news != news_item %}
-        <div class="alert alert-fail" role="alert">
-            <span class="material-symbols-outlined mdi-icon">error</span>
+        <div class="alert alert--danger">
+            <span class="material-symbols-outlined icon">error</span>
             Problem in comment and cannot be saved.
         </div>
         {% else %}
         {% if new_comment.active %}
-        <div class="alert alert-success" role="alert">
-            <span class="material-symbols-outlined mdi-icon">download_done</span>
+        <div class="alert alert--success">
+            <span class="material-symbols-outlined icon">download_done</span>
             You are moderator so the comment is directly visible.
         </div>
         {% else %}
-        <div class="alert alert-success" role="alert">
-            <span class="material-symbols-outlined mdi-icon">approval_delegation</span>
+        <div class="alert alert--success">
+            <span class="material-symbols-outlined icon">approval_delegation</span>
             Your comment submission has been registered, it will be visible after moderation.
         </div>
         {% endif %}
         {% endif %}
         {% else %}
-        <div class="folding_box_header centering-row" onclick="toggleContent('comment_sub')">
-            <h4>
-                <span class="material-symbols-outlined mdi-icon">add_comment</span>
-                Add a comment
-            </h4>
+        <button class="accordion__trigger" aria-expanded="false">
+            <span class="material-symbols-outlined icon">add_comment</span>
+            Add a comment
+            <span class="material-symbols-outlined accordion__chevron">expand_more</span>
+        </button>
+        <div class="accordion__panel">
+            <form method="post" class="w-full">
+                {% csrf_token %}
+                {{ comment_form }}
+                <div class="form-actions">
+                    <button type="submit" class="btn btn--primary">
+                        <span class="material-symbols-outlined icon">send</span>
+                        Submit
+                    </button>
+                </div>
+            </form>
+            {{ comment_form.media }}
         </div>
-        <form method="post" class="PackageForm folding_box_content">
-            {% csrf_token %}
-            {{ comment_form }}
-            <button type="submit" class="button">
-                <span class="material-symbols-outlined mdi-icon">send</span>
-                Submit
-            </button>
-        </form>
-        {{ comment_form.media }}
         {% endif %}
     </div>
-</section>
+</div>
 {% else %}
-<section class="bottom-section">
-    <div class="comment-subbing">
-        <p>You need to be logged in to leave comments.</p>
-        <p>Registration is free. </p>
-        <a class="button" href="{% url 'register' %}"><span class="material-symbols-outlined mdi-icon">person_add</span>Register</a>
-    </div>
-</section>
+<div class="comment-submit text-center">
+    <p>You need to be logged in to leave comments.</p>
+    <p>Registration is free.</p>
+    <a class="btn btn--primary" href="{% url 'register' %}">
+        <span class="material-symbols-outlined icon">person_add</span>
+        Register
+    </a>
+</div>
 {% endif %}
-{% endblock %}
-
-{% endblock %}
-
-{% block script_content %}
-<script src="{% static 'js/folding_box.js' %}"></script>
 {% endblock %}

@@ -1,6 +1,7 @@
 """
 Simple locking system for the database
 """
+
 from datetime import datetime
 from pathlib import Path
 
@@ -26,7 +27,7 @@ class DbLocking:
         """
         if self.lockfile.exists():
             if (
-                datetime.fromtimestamp(self.lockfile.stat().st_mtime) - datetime.now()
+                datetime.now() - datetime.fromtimestamp(self.lockfile.stat().st_mtime)
             ).total_seconds() > self.lock_timeout:
                 self.lockfile.unlink()
                 return False
