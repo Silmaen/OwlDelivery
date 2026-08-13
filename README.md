@@ -12,13 +12,45 @@ docker compose up       # run (Ctrl+C to stop)
 
 The application is then available at `http://localhost:8080` (or the port configured in `.env`).
 
+For a deployment on a server, use [`deploy.sh`](#deployment) instead: it does the
+update, the build, the start and the health check in one command.
+
 ## Stack
 
-- **Python 3.13** on Alpine Linux
+- **Python 3.14** on Alpine Linux
 - **Django 6.x** with SQLite
 - **Gunicorn** (WSGI server, port 8000 internal)
 - **Nginx** (port 80 internal, reverse proxy + upload module for large files up to 8GB)
 - **django-markdownx** for Markdown editing
+
+## Deployment
+
+`deploy.sh` is the single entry point on a server: it fast-forwards the checkout, snapshots
+the database, refreshes the base images, rebuilds, starts and waits for the container to
+report healthy.
+
+```bash
+./deploy.sh                 # full deployment
+./deploy.sh check           # is an update pending? (exit 10 = yes)
+./deploy.sh --dry-run       # print what would run, execute nothing
+./deploy.sh logs            # follow the logs
+./deploy.sh help            # every command
+```
+
+Two details worth knowing:
+
+- **the base images are refreshed by this script.** The application image is built locally,
+  so it exists in no registry and nothing can watch it — hence `wud.watch: 'false'` in
+  `docker-compose.yml`. What matters is the `FROM` tags of the `Dockerfile`, which are pinned
+  on a version and therefore keep receiving their patch releases; `deploy.sh` pulls them at
+  every deployment. Bumping a *minor* version is a deliberate edit of the `Dockerfile`.
+- **the database is snapshotted before the deployment**, into `docker_data/backup/` (the last
+  5 are kept). `entrypoint.py` runs `makemigrations` and `migrate` at every start, so a
+  deployment can change the schema; the snapshot is the undo button. It lives outside the data
+  volume on purpose, since nginx serves that volume at `/media`.
+
+Run with no argument, the script is non-interactive: this is what lets the fleet console of
+`home-server-stacks` offer a deploy button for this stack.
 
 ## Environment Variables
 
@@ -115,8 +147,9 @@ GET returns the client script (`api.py`).
 
 ```
 OwlDelivery/
-├── docker-compose.yml          # Service definition
-├── Dockerfile                  # Multi-stage build (alpine/git + python:3.13-alpine)
+├── docker-compose.yml          # Service definition (wud label, healthcheck)
+├── deploy.sh                   # Server deployment (update, backup, build, start, health)
+├── Dockerfile                  # Multi-stage build (alpine/git + python:3.14-alpine)
 ├── entrypoint.py               # Container init (user/perms/migrations/server start)
 ├── requirements.txt            # Python deps (django, pillow, gunicorn, markdownx, markdown)
 ├── pyproject.toml              # Dev deps (ruff via Poetry)

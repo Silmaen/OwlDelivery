@@ -8,11 +8,12 @@ Django web application for hosting and managing delivery packages for the Owl Ga
 cp .env.sample .env   # configure
 docker compose build   # build
 docker compose up      # run
+./deploy.sh            # on a server: update + build + start + health check
 ```
 
 ## Stack
 
-- **Python 3.13** (Alpine Linux)
+- **Python 3.14** (Alpine Linux)
 - **Django 6.x** with SQLite
 - **Gunicorn** (WSGI, port 8000)
 - **Nginx** (port 80, reverse proxy + upload module for large files up to 8GB)
@@ -23,8 +24,9 @@ docker compose up      # run
 
 ```
 OwlDelivery/
-├── docker-compose.yml          # Service definition
-├── Dockerfile                  # Multi-stage build (alpine/git + python:3.13-alpine)
+├── docker-compose.yml          # Service definition (wud label, healthcheck)
+├── deploy.sh                   # Server deployment (git ff, db snapshot, build, up, health)
+├── Dockerfile                  # Multi-stage build (alpine/git:v2.54.0 + python:3.14-alpine)
 ├── entrypoint.py               # Container init (user/perms/migrations/server start)
 ├── requirements.txt            # Python deps (django, pillow, gunicorn, markdownx, markdown)
 ├── pyproject.toml              # Dev deps (ruff) — poetry.lock is gitignored
@@ -96,6 +98,25 @@ check_env() → check_user_exist() → check_timezone() → correct_permission()
 
 `correct_permission()` runs twice: before migrations (so DB is writable) and after (to fix files created as root by dump_migrations).
 
+## Deployment (`deploy.sh`)
+
+`./deploy.sh` = git fast-forward → database snapshot → `docker pull` of the `FROM` images →
+`docker compose build` → `up -d` → wait for `healthy`. Other commands: `check` (exit 10 if an
+update is pending), `status`, `logs`, `stop`, `restart`, `backup`, `superuser`, `shell`,
+`help`; flags `--no-pull`, `--no-backup`, `--dry-run`.
+
+Invariants, because the fleet console of `home-server-stacks` runs this file through its wake
+agent: executable, committed, works with **no argument**, never reads stdin, never asks a
+question, and fails rather than deploying a checkout it could not fast-forward.
+
+Image version tracking: `web` is built locally so it exists in no registry — hence
+`wud.watch: 'false'` in `docker-compose.yml` (without it wud reports a 401 on
+`library/owldelivery-web:latest`). The real subjects are the `Dockerfile`'s pinned bases,
+which `deploy.sh` pulls at every deployment.
+
+Database snapshots go to `docker_data/backup/` (last 5), **outside** `PATH_DATA`: nginx serves
+the whole data volume at `/media`.
+
 ## Key Environment Variables
 
 - `PUID`/`PGID` - Unix user/group IDs for file ownership
@@ -149,6 +170,10 @@ Script Python téléchargé par les clients (CI, développeurs) via `GET /api` p
 
 - Nginx upload module handles `/upload` path, passes to `/api` after storing file
 - FileField stores relative paths (e.g., `packages/main/abc123/file.zip`), MEDIA_ROOT is `/app/data`
+- `/media` is a **whitelist** in nginx (`packages/`, `documentation/`, `markdownx/`), everything
+  else returns 404: the data volume also holds `delivery.db`, `log/` and `_upload/`, and a bare
+  `alias /app/data` published the database. Adding a public subdirectory is a deliberate edit of
+  `server/config/http.d/Django_server.conf`
 - `server/VERSION` is generated at Docker build time (version + git short hash) — never commit manually
 - `.gitignore` excludes `server/VERSION`, `sample_data/*`, `docker_data/`, `.env`, `poetry.lock`
 - Constants in UPPER_SNAKE_CASE at module level
