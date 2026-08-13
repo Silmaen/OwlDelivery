@@ -1,9 +1,14 @@
-FROM alpine/git AS git-info
+# Both bases are pinned, and pinned on the version rather than on a digest: the tag
+# keeps receiving its patch releases -- which is where the security fixes are -- and
+# `deploy.sh` pulls them at every deployment. A floating `latest`/`3.x` would instead
+# freeze on whatever was pulled the first time, and change under us on the day the
+# build cache misses. Bumping either line is a decision, taken in a commit.
+FROM alpine/git:v2.54.0 AS git-info
 COPY .git /repo/.git
 WORKDIR /repo
 RUN git rev-parse --short HEAD > /git-rev.txt
 
-FROM python:3.13-alpine
+FROM python:3.14-alpine
 
 ENV PYTHONUNBUFFERED=1
 EXPOSE 80

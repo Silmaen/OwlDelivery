@@ -3,3 +3,11 @@
 CMakelists.txt text eol=lf
 *.sh text eol=lf
 *.py text eol=lf
+#  Read inside the container, or copied into a file that is: a CRLF checkout on a
+#  workstation with core.autocrlf=true would travel into the image. `cp .env.sample .env`
+#  is the path that matters -- a CRLF .env is readable by docker compose, which strips the
+#  CR, but not by anything else that parses the file.
+.env.sample text eol=lf
+Dockerfile text eol=lf
+*.yml text eol=lf
+*.conf text eol=lf

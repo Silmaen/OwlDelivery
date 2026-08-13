@@ -1,10 +1,28 @@
+---
 services:
   web:
     build: .
+    restart: unless-stopped
+    # Built here, so this image exists in no registry: left to itself wud looks up
+    # `library/owldelivery-web:latest` on Docker Hub and reports a 401 for it. Nothing
+    # is lost by excluding it -- what this image really tracks is the bases pinned in
+    # the Dockerfile, and `deploy.sh` pulls those at every deployment.
+    labels:
+      wud.watch: 'false'
     ports:
+      # 8170 on selene, behind swag as owl.argawaen.net -- set PORT in .env.
       - "${PORT:-8080}:80"
     env_file:
       - .env
-    restart: unless-stopped
     volumes:
       - ${PATH_DATA:-./docker_data/data}:/app/data
+    # nginx is the process that answers, but `/` goes through to gunicorn and needs a
+    # migrated database to render: a check on the root page therefore covers the whole
+    # chain rather than just the front door. busybox wget, so nothing extra is
+    # installed for it. This is also what `deploy.sh` and gatus wait on.
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1/ || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
