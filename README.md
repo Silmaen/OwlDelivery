@@ -169,25 +169,6 @@ OwlDelivery/
 │       └── connector/                  # User auth & profiles
 ```
 
-## Roadmap
+## Changelog and roadmap
 
-- [ ] 0.5.0
-    - [ ] OAuth authentication support
-    - [ ] Email notifications
-        - [ ] Tunable notification preferences
-        - [ ] New release notifications
-        - [ ] Comment notifications
-- [x] 0.4.0 — 2026-03-04
-    - [x] Modernize the UI
-    - [x] Modernize the backend
-- [x] 0.3.1 — 2025-02-05
-    - [x] Hotfix: correct API problem with file suffixes
-- [x] 0.3.0 — 2025-02-05
-    - [x] Engine API documentation pages
-    - [x] Branch display management (stable vs dev, visibility toggle)
-- [x] 0.2.0 — 2025-02-03
-    - [x] Revision reorganization with branch filtering
-- [x] 0.1.0 — 2024-05-18
-    - [x] User management (login, registration, permissions, profile, password reset)
-    - [x] Revision management (browsing, push script, automated upload)
-    - [x] Admin sections (delete revisions/items)
+Shipped changes are listed in [CHANGELOG.md](CHANGELOG.md), planned ones in [ROADMAP.md](ROADMAP.md).
