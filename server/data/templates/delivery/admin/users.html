@@ -22,7 +22,12 @@
         <tbody>
         {% for user_for in users %}
         <tr>
-            <td>{{ user_for.name }}</td>
+            <td>
+                {{ user_for.name }}
+                {# Read-only rows say why: nobody edits their own rights or those of a superuser. #}
+                {% if user_for.pk == user.pk %}<span class="badge badge--neutral" title="You cannot change your own rights">You</span>
+                {% elif user_for.admin %}<span class="badge badge--primary" title="Only a superuser can change a superuser">Superuser</span>{% endif %}
+            </td>
             <td>{{ user_for.last_conn }}</td>
             {% if not user_for.manageable or not perms.auth.delete_user %}
             <td class="cell--center">

@@ -89,3 +89,16 @@ class UserManagementTest(TestCase):
         self.assertIn(f'/admin/user/{self.other.pk}"', content)
         self.assertNotIn(f'/admin/user/{self.root.pk}"', content)
         self.assertNotIn(f'/admin/user/{self.manager.pk}"', content)
+
+    def test_read_only_rows_say_why(self):
+        content = self.client.get("/admin/users").content.decode()
+        self.assertIn("You cannot change your own rights", content)
+        self.assertIn("Only a superuser can change a superuser", content)
+
+    def test_toggle_through_the_users_page_form(self):
+        self.client.force_login(self.root)
+        response = self.client.post(f"/admin/user/{self.other.pk}", {"action": "toggle_news_add"})
+        self.assertRedirects(response, "/admin/users", fetch_redirect_response=False)
+        self.assertTrue(User.objects.get(pk=self.other.pk).has_perm("delivery.add_newsentry"))
+        self.client.post(f"/admin/user/{self.other.pk}", {"action": "toggle_news_add"})
+        self.assertFalse(User.objects.get(pk=self.other.pk).has_perm("delivery.add_newsentry"))
