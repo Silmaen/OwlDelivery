@@ -2,6 +2,12 @@
 
 What has shipped, newest first. What is planned lives in [ROADMAP.md](ROADMAP.md).
 
+## 0.5.1 — in development
+
+- Logout works again: the header posts it, Django 5+ refuses a logout by GET.
+- The users admin says why a row is read-only (your own account, a superuser).
+- `./deploy.sh password [user]` resets a lost password.
+
 ## 0.5.0 — 2026-10-18
 
 - Gunicorn and Nginx timeouts raised and upload concurrency fixed, so large packages no longer fail mid-upload.
@@ -24,9 +30,6 @@ What has shipped, newest first. What is planned lives in [ROADMAP.md](ROADMAP.md
 - The image builds from a git worktree too: the commit hash can be passed with `--build-arg GIT_REV`.
 - Packages above 100 MB upload through `/upload` again: the nginx module dropped their fields, `api.py` now also sends them in the query string.
 - The custom error pages are used at last: their handlers sat in `settings.py`, where Django never reads them.
-- Logout works again: the header posts it, Django 5+ refuses a logout by GET.
-- The users admin says why a row is read-only (your own account, a superuser).
-- `./deploy.sh password [user]` resets a lost password.
 - Base images pinned on a version (Python 3.14 Alpine), refreshed at every deployment.
 - Changelog and roadmap moved out of the README into `CHANGELOG.md` and `ROADMAP.md`.
 - Site name, footer and meta description come from the database (`SiteSettings`), seeded by `manage.py seed_pages` at start.
