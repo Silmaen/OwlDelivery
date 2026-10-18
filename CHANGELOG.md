@@ -2,7 +2,7 @@
 
 What has shipped, newest first. What is planned lives in [ROADMAP.md](ROADMAP.md).
 
-## 0.5.0 — in development
+## 0.5.0 — 2026-10-18
 
 - Gunicorn and Nginx timeouts raised and upload concurrency fixed, so large packages no longer fail mid-upload.
 - `deploy.sh` deploys on a server in one command: fast-forward, database snapshot, base image refresh, build, health check.

@@ -2,7 +2,7 @@
 
 Django web application for hosting and managing the delivery packages of **Owl Engine**, with the engine's public
 home page (`/`) and presentation page (`/presentation`). Runs in Docker with Nginx (reverse proxy + large file
-upload) and Gunicorn. Version in `VERSION` (0.5.0 in development); shipped changes in `CHANGELOG.md`, planned ones in
+upload) and Gunicorn. Version in `VERSION` (0.5.0, released 2026-10-18); shipped changes in `CHANGELOG.md`, planned ones in
 `ROADMAP.md`.
 
 ## Quick Start
