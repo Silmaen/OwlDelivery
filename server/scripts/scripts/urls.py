@@ -26,3 +26,9 @@ urlpatterns = [
 ]
 if settings.ENABLE_STAFF:
     urlpatterns.append(path("staff/", admin.site.urls, name="staff"))
+
+# Django reads the error handlers from the root URLconf only (they were in settings.py, and never used).
+handler400 = "delivery.views_error.bad_request"
+handler403 = "delivery.views_error.permission_denied"
+handler404 = "delivery.views_error.page_not_found"
+handler500 = "delivery.views_error.server_error"

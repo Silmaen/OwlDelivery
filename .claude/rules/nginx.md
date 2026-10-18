@@ -45,5 +45,8 @@ default is "not served".
 The `/upload` location uses `nginx-mod-http-upload` to handle large file uploads before passing to Django. The upload module:
 1. Receives the file directly into `/app/data/_upload/{0-9}/`
 2. Rewrites the request body with file metadata (path, name, md5, size)
-3. Forwards to `/api` for Django processing
+3. Forwards to `/api` for Django processing, with the query string (`upload_pass_args on`)
 4. Cleans up on 4xx-5xx errors
+
+The `upload_pass_form_field` lines forward no field with this module build (nginx 1.30, Alpine): the client repeats
+every field in the query string and `revision_api` merges `request.GET` for requests carrying `package.path`.

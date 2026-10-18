@@ -1,6 +1,6 @@
 from django.conf import settings
 from django.contrib.auth.models import Permission, User
-from django.shortcuts import redirect, render
+from django.shortcuts import get_object_or_404, redirect, render
 
 from .db_locking import locker
 from .forms import BranchEntryForm, NewsEntryForm, RevisionItemEntryForm
@@ -69,6 +69,18 @@ PAGE_MODEL_NAMES = (
 PAGES_EDIT_CODENAMES = [f"{action}_{model}" for model in PAGE_MODEL_NAMES for action in ("add", "change", "delete")]
 # What the engine CI needs to feed the presentation page through the API.
 PAGES_PUSH_CODENAMES = ["add_showcaseimage", "add_releasenote"]
+# Permission toggles of the users admin: action -> (app label, codenames).
+USER_TOGGLES = {
+    "toggle_user_delete": ("auth", ["delete_user"]),
+    "toggle_user_view": ("auth", ["view_user"]),
+    "toggle_news_add": ("delivery", ["add_newsentry"]),
+    "toggle_news_delete": ("delivery", ["delete_newsentry"]),
+    "toggle_comment_delete": ("delivery", ["delete_newscomment"]),
+    "toggle_revision_add": ("delivery", ["add_revisionitementry"]),
+    "toggle_revision_delete": ("delivery", ["delete_revisionitementry"]),
+    "toggle_pages_edit": ("delivery", PAGES_EDIT_CODENAMES),
+    "toggle_pages_push": ("delivery", PAGES_PUSH_CODENAMES),
+}
 
 
 def extract_subpages(request):
@@ -89,13 +101,14 @@ def admin_users(request):
         return redirect("/")
     if locker.is_locked():
         return redirect("/")
-    entries = User.objects.all()
+    entries = User.objects.order_by("username")
     p_users = []
     for entry in entries:
         p_users.append(
             {
                 "pk": entry.pk,
                 "name": entry.username,
+                "manageable": can_manage_user(request, entry),
                 "last_conn": entry.last_login,
                 "admin": entry.is_superuser,
                 "can_add_news": entry.has_perm("delivery.add_newsentry"),
@@ -127,9 +140,19 @@ def admin_users(request):
     )
 
 
+def can_manage_user(request, target):
+    """
+    A user manager never changes their own account, and only a superuser changes a superuser.
+    """
+    if target.pk == request.user.pk:
+        return False
+    return request.user.is_superuser or not target.is_superuser
+
+
 def admin_modif_user(request, pk):
     """
-
+    Delete a user or toggle one of their permissions.
+    A permission can only be given or taken by someone who holds it: `delete_user` alone grants nothing more.
     :param request:
     :param pk:
     :return:
@@ -137,74 +160,27 @@ def admin_modif_user(request, pk):
     if not request.user.is_authenticated:
         return redirect("/")
     if not request.user.has_perm("auth.delete_user"):
-        return redirect(request.META.get("HTTP_REFERER", "a_news"))
+        return redirect("a_users")
     if locker.is_locked():
         return redirect("/")
-    if request.method == "POST":
-        user = User.objects.get(pk=pk)
-        if "action" not in request.POST:
-            return redirect(request.META.get("HTTP_REFERER", "a_users"))
-        if request.POST["action"] == "delete":
-            user.delete()
-        elif request.POST["action"] == "toggle_user_delete":
-            ido = Permission.objects.get(codename="delete_user")
-            if user.has_perm("auth.delete_user"):
-                user.user_permissions.remove(ido)
-            else:
-                user.user_permissions.add(ido)
-            user.save()
-        elif request.POST["action"] == "toggle_user_view":
-            ido = Permission.objects.get(codename="view_user")
-            if user.has_perm("auth.view_user"):
-                user.user_permissions.remove(ido)
-            else:
-                user.user_permissions.add(ido)
-            user.save()
-        elif request.POST["action"] == "toggle_news_add":
-            ido = Permission.objects.get(codename="add_newsentry")
-            if user.has_perm("delivery.add_newsentry"):
-                user.user_permissions.remove(ido)
-            else:
-                user.user_permissions.add(ido)
-            user.save()
-        elif request.POST["action"] == "toggle_news_delete":
-            ido = Permission.objects.get(codename="delete_newsentry")
-            if user.has_perm("delivery.delete_newsentry"):
-                user.user_permissions.remove(ido)
-            else:
-                user.user_permissions.add(ido)
-            user.save()
-        elif request.POST["action"] == "toggle_comment_delete":
-            ido = Permission.objects.get(codename="delete_newscomment")
-            if user.has_perm("delivery.delete_newscomment"):
-                user.user_permissions.remove(ido)
-            else:
-                user.user_permissions.add(ido)
-            user.save()
-        elif request.POST["action"] == "toggle_revision_add":
-            ido = Permission.objects.get(codename="add_revisionitementry")
-            if user.has_perm("delivery.add_revisionitementry"):
-                user.user_permissions.remove(ido)
-            else:
-                user.user_permissions.add(ido)
-            user.save()
-        elif request.POST["action"] in ("toggle_pages_edit", "toggle_pages_push"):
-            codenames = PAGES_EDIT_CODENAMES if request.POST["action"] == "toggle_pages_edit" else PAGES_PUSH_CODENAMES
-            granted = all(user.has_perm(f"delivery.{code}") for code in codenames)
-            permissions = Permission.objects.filter(content_type__app_label="delivery", codename__in=codenames)
-            if granted:
-                user.user_permissions.remove(*permissions)
-            else:
-                user.user_permissions.add(*permissions)
-            user.save()
-        elif request.POST["action"] == "toggle_revision_delete":
-            ido = Permission.objects.get(codename="delete_revisionitementry")
-            if user.has_perm("delivery.delete_revisionitementry"):
-                user.user_permissions.remove(ido)
-            else:
-                user.user_permissions.add(ido)
-            user.save()
-    return redirect(request.META.get("HTTP_REFERER", "a_users"))
+    if request.method != "POST":
+        return redirect("a_users")
+    user = get_object_or_404(User, pk=pk)
+    action = request.POST.get("action", "")
+    if not can_manage_user(request, user):
+        return redirect("a_users")
+    if action == "delete":
+        user.delete()
+    elif action in USER_TOGGLES:
+        app_label, codenames = USER_TOGGLES[action]
+        if not all(request.user.has_perm(f"{app_label}.{code}") for code in codenames):
+            return redirect("a_users")
+        permissions = Permission.objects.filter(content_type__app_label=app_label, codename__in=codenames)
+        if all(user.has_perm(f"{app_label}.{code}") for code in codenames):
+            user.user_permissions.remove(*permissions)
+        else:
+            user.user_permissions.add(*permissions)
+    return redirect("a_users")
 
 
 def admin_news(request):
@@ -253,7 +229,9 @@ def admin_news_detail(request, news_id):
     :param request:
     :return:
     """
-    news_item = NewsEntry.objects.get(pk=news_id)
+    if not can_see_news_admin(request):
+        return redirect("/")
+    news_item = get_object_or_404(NewsEntry, pk=news_id)
     modified = False
     news_form = NewsEntryForm(instance=news_item)
     if request.method == "POST" and request.user.has_perm("delivery.add_newsentry"):
@@ -290,15 +268,10 @@ def admin_modif_news(request, news_id):
     """
     if not request.user.is_authenticated:
         return redirect("/")
-    if not request.user.has_perm("delivery.delete_newsentry"):
-        return redirect(request.META.get("HTTP_REFERER", "a_news"))
-    if request.method == "POST":
-        news = NewsEntry.objects.get(pk=news_id)
-        if "action" not in request.POST:
-            return redirect(request.META.get("HTTP_REFERER", "a_news"))
-        if request.POST["action"] == "delete" and request.user.has_perm("delivery.delete_newsentry"):
-            news.delete()
-    return redirect(request.META.get("HTTP_REFERER", "a_news"))
+    if request.method == "POST" and request.POST.get("action") == "delete":
+        if request.user.has_perm("delivery.delete_newsentry"):
+            get_object_or_404(NewsEntry, pk=news_id).delete()
+    return redirect("a_news")
 
 
 def admin_modif_comment(request, comment_id):
@@ -310,18 +283,17 @@ def admin_modif_comment(request, comment_id):
     """
     if not request.user.is_authenticated:
         return redirect("/")
-    if not request.user.has_perm("delivery.delete_newscomment"):
-        return redirect(request.META.get("HTTP_REFERER", "a_news"))
+    if not is_comment_moderator(request):
+        return redirect("a_news")
+    comment = get_object_or_404(NewsComment, pk=comment_id)
     if request.method == "POST":
-        comment = NewsComment.objects.get(pk=comment_id)
-        if "action" not in request.POST:
-            return redirect(request.META.get("HTTP_REFERER", "a_news"))
-        if request.POST["action"] == "delete" and is_comment_moderator(request):
+        action = request.POST.get("action", "")
+        if action == "delete":
             comment.delete()
-        if request.POST["action"] == "toggle_active" and is_comment_moderator(request):
+        elif action == "toggle_active":
             comment.active = not comment.active
             comment.save()
-    return redirect(request.META.get("HTTP_REFERER", "a_news"))
+    return redirect("a_news_detail", news_id=comment.related_news_id)
 
 
 def admin_revisions_page(request, page):
@@ -414,35 +386,27 @@ def admin_modif_revision(request, rev_hash):
     if not request.user.is_authenticated:
         return redirect("/")
     if not request.user.has_perm("delivery.delete_revisionitementry"):
-        return redirect(request.META.get("HTTP_REFERER", "a_news"))
-    if request.method != "POST":
-        return redirect(request.META.get("HTTP_REFERER", "a_news"))
-    if "action" not in request.POST:
-        return redirect(request.META.get("HTTP_REFERER", "a_news"))
-    revs = RevisionItemEntry.objects.filter(hash=rev_hash)
-    if request.POST["action"] == "delete":
-        for rev in revs:
+        return redirect("a_revisions")
+    if request.method == "POST" and request.POST.get("action") == "delete":
+        for rev in RevisionItemEntry.objects.filter(hash=rev_hash):
             rev.delete()
-    return redirect(request.META.get("HTTP_REFERER", "a_news"))
+    return redirect("a_revisions")
 
 
 def admin_modif_revision_item(request, pk):
     if not request.user.is_authenticated:
         return redirect("/")
     if not request.user.has_perm("delivery.delete_revisionitementry"):
-        return redirect(request.META.get("HTTP_REFERER", "a_news"))
-    if request.method != "POST":
-        return redirect(request.META.get("HTTP_REFERER", "a_news"))
-    if "action" not in request.POST:
-        return redirect(request.META.get("HTTP_REFERER", "a_news"))
-    rev_item = RevisionItemEntry.objects.get(pk=pk)
-    if request.POST["action"] == "delete":
-        rev_item.delete()
-    return redirect(request.META.get("HTTP_REFERER", "a_news"))
+        return redirect("a_revisions")
+    if request.method == "POST" and request.POST.get("action") == "delete":
+        get_object_or_404(RevisionItemEntry, pk=pk).delete()
+    return redirect("a_revisions")
 
 
 def admin_edit_revision_item(request, pk):
-    rev = RevisionItemEntry.objects.get(pk=pk)
+    if not can_see_revision_admin(request):
+        return redirect("/")
+    rev = get_object_or_404(RevisionItemEntry, pk=pk)
     modified = False
     rev_form = RevisionItemEntryForm(instance=rev)
     if request.method == "POST" and request.user.has_perm("delivery.delete_revisionitementry"):
@@ -465,31 +429,6 @@ def admin_edit_revision_item(request, pk):
             "revision": rev,
             "rev_form": rev_form,
             "new_revision": modified,
-            "version": {"number": SITE_VERSION, "hash": SITE_HASH},
-        },
-    )
-
-
-def admin_revision_detail(request, rev_hash):
-    """
-
-    :param request:
-    :return:
-    """
-    if not request.user.is_authenticated:
-        return redirect("/")
-    return render(
-        request,
-        "delivery/admin/revisions.html",
-        {
-            "title": "admin",
-            "page": "admin",
-            "subpage": "revisions",
-            "subpages": extract_subpages(request),
-            "has_menu": True,
-            "has_submenu": True,
-            "staff_active": STAFF_ACTIVE,
-            "is_admin": can_see_admin(request),
             "version": {"number": SITE_VERSION, "hash": SITE_HASH},
         },
     )

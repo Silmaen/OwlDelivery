@@ -24,7 +24,7 @@
         <tr>
             <td>{{ user_for.name }}</td>
             <td>{{ user_for.last_conn }}</td>
-            {% if user_for.admin or not perms.auth.delete_user %}
+            {% if not user_for.manageable or not perms.auth.delete_user %}
             <td class="cell--center">
                 {% if user_for.can_add_news %}<span class="material-symbols-outlined perm">subtitles</span>
                 {% else %}<span class="material-symbols-outlined noperm">subtitles_off</span>{% endif %}

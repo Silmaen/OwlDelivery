@@ -6,6 +6,7 @@ import sys
 from datetime import datetime
 from pathlib import Path
 from sys import stderr
+from urllib.parse import urlencode
 
 try:
     from requests import post as http_post
@@ -143,8 +144,10 @@ def push():
                 encoder, callback=create_callback(encoder)
             )
             headers = {"Content-Type": monitor.content_type}
+            # The nginx upload module drops the text fields of the form: they go in the query string too.
+            query = urlencode({k: v for k, v in post_data.items() if k != "package"})
             resp = http_post(
-                f"{destination}/upload",
+                f"{destination}/upload?{query}",
                 auth=basic,
                 data=monitor,
                 headers=headers,
