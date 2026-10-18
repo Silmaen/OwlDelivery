@@ -1,6 +1,6 @@
 # Home and presentation pages specification
 
-Status: draft, revised 2026-10-18. Target: OwlDelivery 0.5.0. Scope: two public pages of
+Status: implemented, shipped in OwlDelivery 0.5.0 (2026-10-18). Scope: two public pages of
 [owl.argawaen.net](https://owl.argawaen.net):
 
 - `/` (**Home**): a short landing page. Today it renders the news list (`delivery.views.news`).
