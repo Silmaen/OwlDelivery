@@ -15,24 +15,7 @@
         <a href="{% url 'news_detail' release.note.news.pk %}">Read the announcement</a>
         {% endif %}
     </div>
-    <div class="pres-release__packages">
-        {% for package in release.packages %}
-        <div class="pres-release__package">
-            <h4 class="pres-release__package-name">{{ package.name }}</h4>
-            <div class="flavor-grid">
-                {% for flavor in package.flavors %}
-                <a class="flavor-card" href="{{ flavor.url }}" title="{{ flavor.name }}">
-                    <span class="flavor-card__name">
-                        <span class="material-symbols-outlined icon--sm" aria-hidden="true">download</span>
-                        {{ package.name }} — {{ flavor.label }}
-                    </span>
-                    <span class="flavor-card__size">{% if flavor.detail %}{{ flavor.detail }} · {% endif %}{% if flavor.format %}{{ flavor.format }} · {% endif %}{{ flavor.size }}</span>
-                </a>
-                {% endfor %}
-            </div>
-        </div>
-        {% endfor %}
-    </div>
+    {% include 'delivery/includes/_packages.html' with packages=release.packages %}
     <div class="pres-release__links">
         <a class="btn" href="{{ release.revisions_url }}">
             <span class="material-symbols-outlined icon" aria-hidden="true">folder_open</span>

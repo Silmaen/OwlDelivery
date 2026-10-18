@@ -1,83 +1,31 @@
 {% extends 'base.html' %}
 
+{% block page_title %}{{ revision.hash }} — {{ revision.branch }} — {{ site.site_name }}{% endblock %}
+
 {% block content %}
-<div class="pkg-list mb-6">
-    <div class="pkg-item">
-        <a class="pkg-item__header" href="{% url 'revisions' revision.branch %}">
-            <span class="material-symbols-outlined icon">arrow_back</span>
-            <span class="pkg-item__label">Revision:</span>
-            <span class="pkg-item__value">{{ revision.hash }}</span>
-            <span class="pkg-item__date">{{ revision.date }}</span>
-        </a>
-    </div>
-</div>
-
-{% for item in revision.item_list %}
-{% if item.type == 'doc' %}
-<div class="pkg-list mb-4">
-    <div class="pkg-item accordion" id="doc_{{ item.name }}">
-        <button class="accordion__trigger" aria-expanded="false">
-            {% if item.icon %}<img src="{{ item.icon }}" alt="" style="height:1.5em">{% endif %}
-            {{ item.name }}
-            <span class="material-symbols-outlined accordion__chevron">expand_more</span>
-        </button>
-        <div class="accordion__panel">
-            <div class="flavor-grid">
-                <a class="flavor-card" href="{{ item.url }}">
-                    <span class="flavor-card__name">Documentation</span>
-                </a>
-            </div>
+<div class="content-page content-page--wide">
+    <a class="back-link" href="{% url 'revisions' revision.branch %}">
+        <span class="material-symbols-outlined icon--sm" aria-hidden="true">arrow_back</span>
+        {{ revision.branch }}
+    </a>
+    <header class="content-page__header">
+        <h1 class="content-page__title">
+            Revision {{ revision.hash }}
+            {% if is_newest %}<span class="badge badge--primary">Newest of {{ revision.branch }}</span>{% endif %}
+        </h1>
+        <p class="text-muted">Branch {{ revision.branch }} · built <time>{{ revision.date }}</time></p>
+        {% if doc_url %}
+        <div class="content-page__actions">
+            <a class="btn" href="{{ doc_url }}">
+                <span class="material-symbols-outlined icon" aria-hidden="true">menu_book</span>
+                Documentation of {{ revision.branch }}
+            </a>
         </div>
-    </div>
-</div>
-{% endif %}
-{% endfor %}
+        {% endif %}
+    </header>
 
-{% for item in revision.item_list %}
-{% if item.type == 'engine' %}
-<div class="pkg-list mb-4">
-    <div class="pkg-item accordion" id="engine_{{ item.name }}">
-        <button class="accordion__trigger" aria-expanded="false">
-            {% if item.icon %}<img src="{{ item.icon }}" alt="" style="height:1.5em">{% endif %}
-            {{ item.name }}
-            <span class="material-symbols-outlined accordion__chevron">expand_more</span>
-        </button>
-        <div class="accordion__panel">
-            <div class="flavor-grid">
-                {% for flavor in item.flavors %}
-                <a class="flavor-card" href="{{ flavor.url }}">
-                    <span class="flavor-card__name">{{ flavor.name }}</span>
-                    <span class="flavor-card__size">{{ flavor.size }}</span>
-                </a>
-                {% endfor %}
-            </div>
-        </div>
-    </div>
+    <section class="revision-block" aria-label="Files">
+        {% include 'delivery/includes/_packages.html' with packages=packages level=2 %}
+    </section>
 </div>
-{% endif %}
-{% endfor %}
-
-{% for item in revision.item_list %}
-{% if item.type == 'application' %}
-<div class="pkg-list mb-4">
-    <div class="pkg-item accordion" id="app_{{ item.name }}">
-        <button class="accordion__trigger" aria-expanded="false">
-            {% if item.icon %}<img src="{{ item.icon }}" alt="" style="height:1.5em">{% endif %}
-            {{ item.name }}
-            <span class="material-symbols-outlined accordion__chevron">expand_more</span>
-        </button>
-        <div class="accordion__panel">
-            <div class="flavor-grid">
-                {% for flavor in item.flavors %}
-                <a class="flavor-card" href="{{ flavor.url }}">
-                    <span class="flavor-card__name">{{ flavor.name }}</span>
-                    <span class="flavor-card__size">{{ flavor.size }}</span>
-                </a>
-                {% endfor %}
-            </div>
-        </div>
-    </div>
-</div>
-{% endif %}
-{% endfor %}
 {% endblock %}

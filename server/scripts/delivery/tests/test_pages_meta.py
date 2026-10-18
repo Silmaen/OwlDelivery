@@ -55,7 +55,7 @@ class PagesMetaTest(PagesTestCase):
     def test_site_name_everywhere(self):
         seed_pages()
         response = self.client.get("/news")
-        self.assertContains(response, "<title>Owl Engine</title>")
+        self.assertContains(response, "<title>News — Owl Engine</title>")
         self.assertNotContains(response, "Owl Game Engine")
         self.assertContains(response, "© Argawaen — Owl Engine is MIT licensed.")
         self.assertContains(response, 'href="https://github.com/Silmaen/OwlDelivery"')

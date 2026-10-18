@@ -2,56 +2,85 @@
 
 {% block content %}
 <div class="pkg-list">
-{% for branch_name, branch in revisions.items %}
-    <div class="pkg-item accordion" id="Branch_{{ branch_name }}">
-        <button class="accordion__trigger" aria-expanded="false">
-            <span class="material-symbols-outlined icon">account_tree</span>
-            Branch: {{ branch_name }}
-            <span class="material-symbols-outlined accordion__chevron">expand_more</span>
-        </button>
+    <form method="get" action="{% url 'a_revisions' %}" class="admin-filter">
+        <label class="form-group__label" for="branch-filter">Branch</label>
+        <select class="form-group__input" id="branch-filter" name="branch" onchange="this.form.submit()">
+            <option value="">All branches</option>
+            {% for name in branches %}
+            <option value="{{ name }}"{% if name == branch %} selected{% endif %}>{{ name }}</option>
+            {% endfor %}
+        </select>
+        <noscript><button type="submit" class="btn btn--sm">Filter</button></noscript>
+        <span class="text-muted admin-filter__count">
+            {{ revision_page.paginator.count }} revision{{ revision_page.paginator.count|pluralize }}
+        </span>
+    </form>
+
+    {% for row in revision_page.rows %}
+    <div class="pkg-item accordion" id="revision_{{ row.branch }}_{{ row.hash }}">
+        <div class="flex-row">
+            {% if perms.delivery.delete_revisionitementry %}
+            <form method="post" action="{% url 'a_modif_revision' row.hash %}" class="admin-revision__delete">
+                {% csrf_token %}
+                <input type="hidden" value="delete" name="action">
+                <input type="hidden" value="{{ revision_page.number }}" name="page">
+                <input type="hidden" value="{{ branch }}" name="branch">
+                <button type="submit" class="btn btn--danger btn--icon btn--sm" title="Delete the whole revision" aria-label="Delete revision {{ row.hash }}">
+                    <span class="material-symbols-outlined icon" aria-hidden="true">delete</span>
+                </button>
+            </form>
+            {% endif %}
+            <button class="accordion__trigger" aria-expanded="false">
+                <span class="badge badge--neutral">{{ row.branch }}</span>
+                <span class="admin-revision__hash">{{ row.hash }}</span>
+                <span class="text-muted">{{ row.built }}</span>
+                <span class="material-symbols-outlined accordion__chevron" aria-hidden="true">expand_more</span>
+            </button>
+        </div>
         <div class="accordion__panel">
-            {% for rev in branch %}
-            <div class="accordion mb-2" id="flavor_{{ branch_name }}_{{ rev.hash }}" style="border:1px solid var(--color-neutral-500);border-radius:var(--radius-md)">
-                <div class="flex-row" style="background:var(--color-neutral-500);border-radius:var(--radius-md) var(--radius-md) 0 0">
-                    {% if perms.delivery.delete_revisionitementry %}
-                    <form method="post" action="{% url 'a_modif_revision' rev.hash %}" style="flex-shrink:0">
-                        {% csrf_token %}
-                        <input type="hidden" value="delete" name="action">
-                        <button type="submit" class="btn btn--danger btn--icon btn--sm" title="Delete entire revision">
-                            <span class="material-symbols-outlined icon">delete</span>
-                        </button>
-                    </form>
-                    {% endif %}
-                    <button class="accordion__trigger" aria-expanded="false" style="flex:1;min-width:0">
-                        {{ rev.hash }} — {{ rev.date }}
-                        <span class="material-symbols-outlined accordion__chevron">expand_more</span>
+            {% for item in row.info.item_list %}
+            {% for flavor in item.flavors %}
+            <div class="flex-row gap-2 admin-revision__file">
+                {% if perms.delivery.delete_revisionitementry %}
+                <a class="btn btn--icon btn--sm btn--ghost" href="{% url 'a_edit_revision_item' flavor.pk %}" title="Edit" aria-label="Edit {{ item.name }} {{ flavor.name }}">
+                    <span class="material-symbols-outlined icon" aria-hidden="true">edit</span>
+                </a>
+                <form method="post" action="{% url 'a_modif_revision_item' flavor.pk %}">
+                    {% csrf_token %}
+                    <input type="hidden" value="delete" name="action">
+                    <input type="hidden" value="{{ revision_page.number }}" name="page">
+                    <input type="hidden" value="{{ branch }}" name="branch">
+                    <button type="submit" class="btn btn--danger btn--icon btn--sm" title="Delete" aria-label="Delete {{ item.name }} {{ flavor.name }}">
+                        <span class="material-symbols-outlined icon" aria-hidden="true">delete</span>
                     </button>
-                </div>
-                <div class="accordion__panel">
-                    {% for item in rev.item_list %}
-                    {% for flavor in item.flavors %}
-                    <div class="flex-row gap-2 mb-2" style="padding:var(--sp-2) 0;border-bottom:1px solid var(--color-neutral-600)">
-                        {% if perms.delivery.delete_revisionitementry %}
-                        <a class="btn btn--icon btn--sm btn--ghost" href="{% url 'a_edit_revision_item' flavor.pk %}" title="Edit">
-                            <span class="material-symbols-outlined icon">edit</span>
-                        </a>
-                        <form method="post" action="{% url 'a_modif_revision_item' flavor.pk %}">
-                            {% csrf_token %}
-                            <input type="hidden" value="delete" name="action">
-                            <button type="submit" class="btn btn--danger btn--icon btn--sm" title="Delete">
-                                <span class="material-symbols-outlined icon">delete</span>
-                            </button>
-                        </form>
-                        {% endif %}
-                        <span>{{ item.name }} / {{ flavor.name }} — {{ flavor.size }}</span>
-                    </div>
-                    {% endfor %}
-                    {% endfor %}
-                </div>
+                </form>
+                {% endif %}
+                <span>{{ item.name }} / {{ flavor.name }} — {{ flavor.size }}</span>
             </div>
+            {% endfor %}
             {% endfor %}
         </div>
     </div>
-{% endfor %}
+    {% empty %}
+    <div class="empty-state"><h3>No revision.</h3></div>
+    {% endfor %}
+
+    {% if revision_page.has_other_pages %}
+    <nav class="pager" aria-label="Revision pages">
+        {% if revision_page.has_previous %}
+        <a class="btn" href="{% url 'a_revisions_page' revision_page.previous_page_number %}{{ branch_query }}">
+            <span class="material-symbols-outlined icon" aria-hidden="true">arrow_back</span>
+            Newer
+        </a>
+        {% endif %}
+        <span class="pager__position">Page {{ revision_page.number }} of {{ revision_page.paginator.num_pages }}</span>
+        {% if revision_page.has_next %}
+        <a class="btn" href="{% url 'a_revisions_page' revision_page.next_page_number %}{{ branch_query }}">
+            Older
+            <span class="material-symbols-outlined icon" aria-hidden="true">arrow_forward</span>
+        </a>
+        {% endif %}
+    </nav>
+    {% endif %}
 </div>
 {% endblock %}

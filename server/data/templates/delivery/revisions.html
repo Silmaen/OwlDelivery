@@ -1,58 +1,76 @@
 {% extends 'base.html' %}
 
+{% block page_title %}{{ branch.name }} — Downloads — {{ site.site_name }}{% endblock %}
+
 {% block content %}
-<div class="pkg-list mb-6">
-    <div class="pkg-item">
-        <a class="pkg-item__header" href="{% url 'branches' %}">
-            <span class="material-symbols-outlined icon">arrow_back</span>
-            <span class="pkg-item__label">Branch:</span>
-            <span class="pkg-item__value">{{ branch.name }}</span>
-        </a>
-    </div>
-    {% if branch.doc %}
-    <div class="pkg-item">
-        <a class="pkg-item__header" href="{{ branch.doc_url }}">
-            <span class="material-symbols-outlined icon">developer_guide</span>
-            <span class="pkg-item__value">Engine API Documentation</span>
-        </a>
+<div class="content-page content-page--wide">
+    <a class="back-link" href="{% url 'branches' %}">
+        <span class="material-symbols-outlined icon--sm" aria-hidden="true">arrow_back</span>
+        All downloads
+    </a>
+    <header class="content-page__header">
+        <h1 class="content-page__title">
+            {% if release_note.title %}{{ release_note.title }}{% else %}{{ site.site_name }} {{ branch.name }}{% endif %}
+            <span class="badge {% if branch.stable %}badge--primary{% else %}badge--neutral{% endif %}">{% if branch.stable %}Release{% else %}Development build{% endif %}</span>
+        </h1>
+        {% if release_note.highlights %}<div class="prose content-page__lead">{{ release_note.highlights_md|safe }}</div>{% endif %}
+        <div class="content-page__actions">
+            {% if doc_url %}
+            <a class="btn" href="{{ doc_url }}">
+                <span class="material-symbols-outlined icon" aria-hidden="true">menu_book</span>
+                Documentation
+            </a>
+            {% endif %}
+            {% if release_note.changelog_url %}
+            <a class="btn" href="{{ release_note.changelog_url }}">
+                <span class="material-symbols-outlined icon" aria-hidden="true">history</span>
+                Changelog
+            </a>
+            {% endif %}
+        </div>
+    </header>
+
+    {% if current_revision %}
+    <section class="revision-block" aria-labelledby="current-title">
+        <h2 class="revision-block__title" id="current-title">
+            Newest revision
+            <a class="revision-block__hash" href="{% url 'revision_detail' current_revision.hash %}">{{ current_revision.hash }}</a>
+        </h2>
+        <p class="text-muted">Built <time>{{ current_revision.date }}</time></p>
+        {% include 'delivery/includes/_packages.html' with packages=current_revision.packages level=3 %}
+    </section>
+
+    {% if older_revisions %}
+    <section class="revision-block" aria-labelledby="older-title">
+        <h2 class="revision-block__title" id="older-title">Older revisions</h2>
+        <div class="table-responsive">
+            <table class="data-table">
+                <thead>
+                <tr>
+                    <th>Revision</th>
+                    <th>Built</th>
+                    <th>Packages</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for revision in older_revisions %}
+                <tr class="data-table__row--clickable" onclick="location.href='{% url 'revision_detail' revision.hash %}'">
+                    <td><a href="{% url 'revision_detail' revision.hash %}">{{ revision.hash }}</a></td>
+                    <td>{{ revision.date }}</td>
+                    <td class="text-muted">{{ revision.names|join:", " }}</td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+    {% endif %}
+
+    {% else %}
+    <div class="empty-state">
+        <h3>No revision yet</h3>
+        <p>Nothing has been pushed to this branch.</p>
     </div>
     {% endif %}
 </div>
-
-{% if current_revision %}
-<div class="pkg-list mb-6">
-    <h2 class="pkg-list__heading">Current Revision</h2>
-    <div class="pkg-item">
-        <a class="pkg-item__header" href="{% url 'revision_detail' current_revision.hash %}">
-            <span class="pkg-item__value">{{ current_revision.hash }}</span>
-            <span class="pkg-item__date">{{ current_revision.date }}</span>
-        </a>
-    </div>
-</div>
-
-{% if older_revisions %}
-<div class="pkg-list">
-    <div class="pkg-item accordion" id="older_revisions">
-        <button class="accordion__trigger" aria-expanded="false">
-            Older revisions
-            <span class="material-symbols-outlined accordion__chevron">expand_more</span>
-        </button>
-        <div class="accordion__panel">
-            {% for revision in older_revisions %}
-            <a class="flex-row gap-4 justify-between" href="{% url 'revision_detail' revision.hash %}" style="padding:var(--sp-2) 0;border-bottom:1px solid var(--color-neutral-500)">
-                <span>{{ revision.hash }}</span>
-                <span class="text-muted">{{ revision.date }}</span>
-            </a>
-            {% endfor %}
-        </div>
-    </div>
-</div>
-{% endif %}
-
-{% else %}
-<div class="empty-state">
-    <h3>We are new!</h3>
-    <p>No revisions are yet available on this server.</p>
-</div>
-{% endif %}
 {% endblock %}

@@ -103,3 +103,39 @@
   width: 480px;
   border-radius: var(--radius-md);
 }
+
+/* Revision admin: filter bar and rows */
+.admin-filter {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+.admin-filter .form-group__label {
+  margin: 0;
+}
+
+.admin-filter select.form-group__input {
+  width: auto;
+  min-width: 12rem;
+}
+
+.admin-filter__count {
+  margin-left: auto;
+  font-size: var(--text-sm);
+}
+
+.admin-revision__delete {
+  flex-shrink: 0;
+  padding-left: var(--sp-3);
+}
+
+.admin-revision__hash {
+  font-family: var(--font-mono);
+}
+
+.admin-revision__file {
+  padding: var(--sp-2) 0;
+  border-bottom: 1px solid var(--color-neutral-600);
+}

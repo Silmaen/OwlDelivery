@@ -1,6 +1,11 @@
+from urllib.parse import urlencode
+
 from django.conf import settings
 from django.contrib.auth.models import Permission, User
+from django.core.paginator import Paginator
+from django.db.models import Max, Min
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 
 from .db_locking import locker
 from .forms import BranchEntryForm, NewsEntryForm, RevisionItemEntryForm
@@ -16,7 +21,6 @@ from .perms_utils import (
 from .revision_utils import (
     get_all_branches_info,
     get_revision_branches,
-    get_revision_hashes,
     get_revision_info,
 )
 from .views import SITE_HASH, SITE_VERSION
@@ -296,16 +300,44 @@ def admin_modif_comment(request, comment_id):
     return redirect("a_news_detail", news_id=comment.related_news_id)
 
 
+def get_revision_page(page, branch=""):
+    """
+    One page of the revisions, newest first: one grouped query for the page, then the files of its revisions only.
+    :param page: Page number (1-based; out of range gives the nearest page).
+    :param branch: Optional branch filter.
+    :return: The Django page, its rows carrying the revision info.
+    """
+    revisions = RevisionItemEntry.objects.values("hash", "branch")
+    if branch:
+        revisions = revisions.filter(branch=branch)
+    revisions = revisions.annotate(built=Min("date"), latest=Max("date")).order_by("-latest", "hash")
+    revision_page = Paginator(revisions, REVISION_PER_PAGE).get_page(page)
+    revision_page.rows = [{**row, "info": get_revision_info(row["hash"])} for row in revision_page.object_list]
+    return revision_page
+
+
+def revisions_return_url(request):
+    """
+    Back to the page of the revision admin the action came from (posted `page` and `branch`).
+    """
+    page = request.POST.get("page", "")
+    branch = request.POST.get("branch", "")
+    url = reverse("a_revisions_page", args=[int(page)]) if page.isdigit() else reverse("a_revisions")
+    if branch in get_revision_branches():
+        url += "?" + urlencode({"branch": branch})
+    return url
+
+
 def admin_revisions_page(request, page):
     if not request.user.is_authenticated:
         return redirect("/")
     if not can_see_revision_admin(request):
         return redirect("/")
-    revisions = {}
-    for branch in get_revision_branches():
-        revisions[branch] = []
-        for rev_hash in get_revision_hashes(branch):
-            revisions[branch].append(get_revision_info(rev_hash))
+    branches = get_revision_branches()
+    branch = request.GET.get("branch", "")
+    if branch not in branches:
+        branch = ""
+    revision_page = get_revision_page(max(page, 1), branch)
     return render(
         request,
         "delivery/admin/revisions.html",
@@ -318,7 +350,10 @@ def admin_revisions_page(request, page):
             "has_submenu": True,
             "staff_active": STAFF_ACTIVE,
             "is_admin": can_see_admin(request),
-            "revisions": revisions,
+            "revision_page": revision_page,
+            "branches": sorted(branches),
+            "branch": branch,
+            "branch_query": "?" + urlencode({"branch": branch}) if branch else "",
             "version": {"number": SITE_VERSION, "hash": SITE_HASH},
         },
     )
@@ -326,11 +361,11 @@ def admin_revisions_page(request, page):
 
 def admin_revisions(request):
     """
-
+    First page of the revisions.
     :param request:
     :return:
     """
-    return admin_revisions_page(request, 0)
+    return admin_revisions_page(request, 1)
 
 
 def admin_branches(request):
@@ -386,21 +421,21 @@ def admin_modif_revision(request, rev_hash):
     if not request.user.is_authenticated:
         return redirect("/")
     if not request.user.has_perm("delivery.delete_revisionitementry"):
-        return redirect("a_revisions")
+        return redirect(revisions_return_url(request))
     if request.method == "POST" and request.POST.get("action") == "delete":
         for rev in RevisionItemEntry.objects.filter(hash=rev_hash):
             rev.delete()
-    return redirect("a_revisions")
+    return redirect(revisions_return_url(request))
 
 
 def admin_modif_revision_item(request, pk):
     if not request.user.is_authenticated:
         return redirect("/")
     if not request.user.has_perm("delivery.delete_revisionitementry"):
-        return redirect("a_revisions")
+        return redirect(revisions_return_url(request))
     if request.method == "POST" and request.POST.get("action") == "delete":
         get_object_or_404(RevisionItemEntry, pk=pk).delete()
-    return redirect("a_revisions")
+    return redirect(revisions_return_url(request))
 
 
 def admin_edit_revision_item(request, pk):

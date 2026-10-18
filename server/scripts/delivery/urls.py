@@ -31,6 +31,7 @@ from .views_admin import (
     admin_users,
 )
 from .views_admin_pages import admin_pages, admin_pages_action, admin_pages_detail, admin_pages_settings
+from .views_docs import docs
 from .views_pages import home, presentation, robots_txt
 
 urlpatterns = [
@@ -38,6 +39,8 @@ urlpatterns = [
     path("presentation", presentation, name="presentation"),
     path("robots.txt", robots_txt, name="robots_txt"),
     path("sitemap.xml", sitemap, {"sitemaps": SITEMAPS}, name="sitemap"),
+    path("docs/<str:branch>/", docs, name="docs"),
+    path("docs/<str:branch>/<path:page>", docs, name="docs_page"),
     path("news", news, name="news"),
     path("news/<int:news_id>", news_details, name="news_detail"),
     path("branches", branches, name="branches"),

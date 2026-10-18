@@ -102,13 +102,14 @@
 {% endif %}
 
 <!-- ============ MAIN ============ -->
-<main class="site-main" id="main">
+<main class="site-main{% if hide_footer %} site-main--full{% endif %}" id="main">
     <div class="site-main__content">
         {% block content %}{% endblock %}
         {% block additionnalsection %}{% endblock %}
     </div>
 </main>
 
+{% if not hide_footer %}
 <!-- ============ FOOTER ============ -->
 <footer class="site-footer">
     <div class="site-footer__inner container">
@@ -142,6 +143,7 @@
         </div>
     </div>
 </footer>
+{% endif %}
 
 <script src="{% static 'js/accordion.js' %}"></script>
 <script src="{% static 'js/mobile-nav.js' %}"></script>

@@ -1,51 +1,64 @@
 {% extends 'base.html' %}
 
+{% block page_title %}News — {{ site.site_name }}{% endblock %}
+
 {% block content %}
-{% for news_item in news_list %}
-<article class="card mb-4">
-    <div class="card__header">
-        <a href="{% url 'news_detail' news_item.id %}"><h2>{{ news_item.title }}</h2></a>
-    </div>
-    <div class="card__body">
-        {{ news_item.content_md|safe }}
-    </div>
-    <div class="card__footer">
-        <div class="card__footer-start">
-            <span class="material-symbols-outlined icon--sm">account_circle</span>
-            {{ news_item.author }}
-        </div>
-        <div class="card__footer-center">
-            <span class="material-symbols-outlined icon--sm">comment</span>
-            {{ news_item.nb_comments }}
-        </div>
-        <div class="card__footer-end">
-            <span class="material-symbols-outlined icon--sm">schedule</span>
-            <time>{{ news_item.date }}</time>
-        </div>
-    </div>
-    {% if news_item.nb_comments > 0 %}
-    <div class="comment-list">
-        {% for cc in news_item.get_comments %}
-        <div class="comment-item">
-            <div class="comment-item__meta">
-                <div class="comment-item__author">
-                    <span class="material-symbols-outlined icon--sm">account_circle</span>
-                    {{ cc.author }}
-                </div>
-                <div class="comment-item__date">
-                    <span class="material-symbols-outlined icon--sm">schedule</span>
-                    <time>{{ cc.date }}</time>
-                </div>
+<div class="content-page">
+    <header class="content-page__header">
+        <h1 class="content-page__title">News</h1>
+        <p class="content-page__lead">What happens around {{ site.site_name }}: releases, new samples, the site itself.</p>
+    </header>
+
+    {% if news_list %}
+    <div class="news-feed">
+        {% for news_item in news_list %}
+        <article class="news-card{% if forloop.first and not news_page.has_previous %} news-card--latest{% endif %}">
+            <div class="news-card__meta">
+                {% if forloop.first and not news_page.has_previous %}<span class="badge badge--primary">Latest</span>{% endif %}
+                <time datetime="{{ news_item.date|date:'c' }}">{{ news_item.date|date }}</time>
+                <span aria-hidden="true">·</span>
+                <span>{{ news_item.author }}</span>
+                {% with count=news_item.nb_comments %}
+                {% if count %}
+                <span aria-hidden="true">·</span>
+                <span class="news-card__comments">
+                    <span class="material-symbols-outlined icon--sm" aria-hidden="true">comment</span>
+                    {{ count }} comment{{ count|pluralize }}
+                </span>
+                {% endif %}
+                {% endwith %}
             </div>
-            <div class="comment-item__body">{{ cc.content_md|safe }}</div>
-        </div>
+            <h2 class="news-card__title"><a href="{% url 'news_detail' news_item.id %}">{{ news_item.title }}</a></h2>
+            <div class="news-card__excerpt prose">{{ news_item.excerpt_md|safe }}</div>
+            <a class="news-card__more" href="{% url 'news_detail' news_item.id %}" aria-label="Read “{{ news_item.title }}”">
+                Read more
+                <span class="material-symbols-outlined icon--sm" aria-hidden="true">arrow_forward</span>
+            </a>
+        </article>
         {% endfor %}
     </div>
+
+    {% if news_page.has_other_pages %}
+    <nav class="pager" aria-label="News pages">
+        {% if news_page.has_previous %}
+        <a class="btn" href="?page={{ news_page.previous_page_number }}">
+            <span class="material-symbols-outlined icon" aria-hidden="true">arrow_back</span>
+            Newer
+        </a>
+        {% endif %}
+        <span class="pager__position">Page {{ news_page.number }} of {{ news_page.paginator.num_pages }}</span>
+        {% if news_page.has_next %}
+        <a class="btn" href="?page={{ news_page.next_page_number }}">
+            Older
+            <span class="material-symbols-outlined icon" aria-hidden="true">arrow_forward</span>
+        </a>
+        {% endif %}
+    </nav>
     {% endif %}
-</article>
-{% empty %}
-<div class="empty-state">
-    <h3>No news to display.</h3>
+    {% else %}
+    <div class="empty-state">
+        <h3>No news yet.</h3>
+    </div>
+    {% endif %}
 </div>
-{% endfor %}
 {% endblock %}

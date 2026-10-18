@@ -12,6 +12,7 @@ from shutil import move
 
 from django.conf import settings
 from django.contrib.auth import authenticate
+from django.core.paginator import Paginator
 from django.http import FileResponse, Http404, HttpResponse, HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.csrf import csrf_exempt
@@ -19,7 +20,7 @@ from django.views.decorators.csrf import csrf_exempt
 from .api_pages import PAGE_ACTIONS
 from .db_locking import locker
 from .forms import NewsCommentForm, RevisionItemEntryFullForm
-from .models import NewsEntry, RevisionItemEntry
+from .models import BranchEntry, NewsEntry, RevisionItemEntry
 from .perms_utils import (
     can_see_admin,
     can_see_news_admin,
@@ -27,14 +28,20 @@ from .perms_utils import (
     can_see_revision_admin,
     is_comment_moderator,
 )
+from .release_utils import (
+    branch_sort_key,
+    get_latest_release,
+    get_latest_release_branch,
+    get_packages,
+    get_release_note,
+)
 from .revision_utils import (
     find_revision,
-    get_branch_info,
-    get_revision_count,
+    get_branch_documentation_url,
     get_revision_date,
     get_revision_hashes,
     get_revision_info,
-    get_visible_branches_info,
+    get_revision_name_list,
 )
 
 root = Path(__file__).resolve().parent.parent.parent
@@ -52,24 +59,26 @@ SAFE_PATH_FIELDS = {
     "package.name": re.compile(r"^[A-Za-z0-9][A-Za-z0-9._+ ()-]*$"),
 }
 DOC_ARCHIVE_SUFFIXES = (".zip", ".tgz")
+NEWS_PER_PAGE = 10
 
 
 def news(request):
     """
-    Main Page, with news.
+    The news, newest first, `NEWS_PER_PAGE` per page.
     :param request: the page request
     :return: the rendered page
     """
-    news_list = NewsEntry.objects.filter(published=True).order_by("-date")[:15]
+    paginator = Paginator(NewsEntry.objects.filter(published=True).order_by("-date"), NEWS_PER_PAGE)
+    news_page = paginator.get_page(request.GET.get("page"))
     return render(
         request,
         "delivery/news.html",
         {
-            "title": "news",
             "page": "news",
             "has_menu": True,
             "has_submenu": False,
-            "news_list": news_list,
+            "news_page": news_page,
+            "news_list": news_page.object_list,
             "staff_active": STAFF_ACTIVE,
             "is_admin": can_see_admin(request),
             "version": {"number": SITE_VERSION, "hash": SITE_HASH},
@@ -104,15 +113,18 @@ def news_details(request, news_id):
             new_comment.save()
     else:
         comment_form = NewsCommentForm()
+    published = NewsEntry.objects.filter(published=True)
     return render(
         request,
         "delivery/news_detail.html",
         {
-            "title": "news",
             "page": "news",
             "has_menu": True,
             "has_submenu": False,
             "news_item": news_item,
+            "comments": news_item.get_all_active_comments(),
+            "newer": published.filter(date__gt=news_item.date).order_by("date").first(),
+            "older": published.filter(date__lt=news_item.date).order_by("-date").first(),
             "comment_form": comment_form,
             "new_comment": new_comment,
             "staff_active": STAFF_ACTIVE,
@@ -122,78 +134,79 @@ def news_details(request, news_id):
     )
 
 
+def branch_summary(branch):
+    """
+    One branch of the downloads page: name, newest revision, docs.
+    """
+    hashes = get_revision_hashes(branch.name)
+    return {
+        "name": branch.name,
+        "stable": branch.stable,
+        "date": get_revision_date(hashes[0]) if hashes else branch.date,
+        "hash": hashes[0] if hashes else "",
+        "revision_count": len(hashes),
+        "doc_url": get_branch_documentation_url(branch.name),
+    }
+
+
 def branches(request):
     """
-
-    :param request:
-    :return:
+    The downloads: the latest release first (highest stable version, as on the presentation page), then the
+    development branches and the older releases, newest version first.
     """
-    branch_list = get_visible_branches_info()
-
-    latest_stable = None
-    for b in branch_list:
-        if b["stable"]:
-            latest_stable = b
-            break
-    old_stable_branch_list = []
-    dev_branch_list = []
-    for b in branch_list:
-        if latest_stable and b["name"] == latest_stable["name"]:
-            continue
-        if b["stable"]:
-            old_stable_branch_list.append(b)
-        else:
-            dev_branch_list.append(b)
-
+    visible = sorted(BranchEntry.objects.filter(visible=True), key=branch_sort_key, reverse=True)
+    latest_branch = get_latest_release_branch()
+    latest = None
+    if latest_branch is not None:
+        latest = get_latest_release()
+        latest["summary"] = branch_summary(latest_branch)
+    others = [branch for branch in visible if latest_branch is None or branch.pk != latest_branch.pk]
     return render(
         request,
         "delivery/branches.html",
         {
-            "title": "Branches",
             "page": "revisions",
             "has_menu": True,
             "has_submenu": False,
             "staff_active": STAFF_ACTIVE,
             "is_admin": can_see_admin(request),
-            "dev_branch_list": dev_branch_list,
-            "old_stable_branch_list": old_stable_branch_list,
+            "latest": latest,
+            "dev_branch_list": [branch_summary(branch) for branch in others if not branch.stable],
+            "old_stable_branch_list": [branch_summary(branch) for branch in others if branch.stable],
             "version": {"number": SITE_VERSION, "hash": SITE_HASH},
-            "latest": latest_stable,
         },
     )
 
 
 def revisions(request, rev_branch: str):
     """
-
-    :param rev_branch:
-    :param request:
-    :return:
+    One branch: the downloads of its newest revision, then the older revisions.
     """
+    branch = get_object_or_404(BranchEntry, name=rev_branch, visible=True)
+    hashes = get_revision_hashes(rev_branch)
     current_revision = None
-    older_revisions = []
-    branch_filter = rev_branch
-    # get last hash
-    if get_revision_count(branch_filter) > 0:
-        hashes = get_revision_hashes(branch_filter)
+    if hashes:
         current_revision = {
             "hash": hashes[0],
             "date": get_revision_date(hashes[0]),
+            "packages": get_packages(hashes[0]),
         }
-        for rev_hash in hashes[1:]:
-            older_revisions.append({"hash": rev_hash, "date": get_revision_date(rev_hash)})
-
+    older_revisions = [
+        {"hash": rev_hash, "date": get_revision_date(rev_hash), "names": get_revision_name_list(rev_hash)}
+        for rev_hash in hashes[1:]
+    ]
     return render(
         request,
         "delivery/revisions.html",
         {
-            "title": f"revisions - branch: {rev_branch}",
             "page": "revisions",
             "has_menu": True,
             "has_submenu": False,
             "staff_active": STAFF_ACTIVE,
             "is_admin": can_see_admin(request),
-            "branch": get_branch_info(rev_branch),
+            "branch": branch,
+            "doc_url": get_branch_documentation_url(rev_branch),
+            "release_note": get_release_note(rev_branch),
             "current_revision": current_revision,
             "older_revisions": older_revisions,
             "version": {"number": SITE_VERSION, "hash": SITE_HASH},
@@ -203,24 +216,25 @@ def revisions(request, rev_branch: str):
 
 def revision_detail(request, rev_hash):
     """
-
-    :param request:
-    :param rev_hash:
-    :return:
+    The files of one revision.
     """
     current_revision = get_revision_info(rev_hash)
-
+    if not current_revision:
+        raise Http404("No such revision.")
+    hashes = get_revision_hashes(current_revision["branch"])
     return render(
         request,
         "delivery/revision_detail.html",
         {
-            "title": f"revision - hash: {current_revision['hash']} - branch: {current_revision['branch']}",
             "page": "revisions",
             "has_menu": True,
             "has_submenu": False,
             "staff_active": STAFF_ACTIVE,
             "is_admin": can_see_admin(request),
             "revision": current_revision,
+            "packages": get_packages(rev_hash),
+            "is_newest": bool(hashes) and hashes[0] == rev_hash,
+            "doc_url": get_branch_documentation_url(current_revision["branch"]),
             "version": {"number": SITE_VERSION, "hash": SITE_HASH},
         },
     )

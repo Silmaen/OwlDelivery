@@ -46,14 +46,16 @@ OwlDelivery/
 │   │   ├── static/
 │   │   │   ├── css/                    # 9 CSS files (tokens, reset, base, layout,
 │   │   │   │                           #   components, forms, tables, pages, utilities)
-│   │   │   ├── js/                     # accordion.js, mobile-nav.js, gallery.js (lightbox)
+│   │   │   ├── js/                     # accordion.js, mobile-nav.js, gallery.js (lightbox),
+│   │   │   │                           #   docs-frame.js (address bar follows the doc frame)
 │   │   │   ├── img/                    # favicon.ico, logo_owl.png
 │   │   │   └── scripts/api.py          # Python client script for pushing packages
 │   │   └── templates/
 │   │       ├── base.html               # Master template (header, nav, footer)
 │   │       ├── includes/form_field.html # Reusable form field component
 │   │       ├── delivery/               # Public + admin templates; home.html, presentation.html,
-│   │       │                           #   sections/_<page>_<key>.html (one partial per section)
+│   │       │                           #   sections/_<page>_<key>.html (one partial per section),
+│   │       │                           #   includes/_packages.html (download buttons, shared), docs.html
 │   │       ├── registration/           # Auth templates (login, register, profile, password)
 │   │       ├── errors/                 # 400, 403, 404, 500 error pages
 │   │       └── markdownx/             # Markdown widget template
@@ -74,11 +76,12 @@ OwlDelivery/
 │       │   ├── context_processors.py   # site settings, navigation, footer links
 │       │   ├── views.py                # Public views + /api endpoint (path validation, nginx upload merge)
 │       │   ├── views_pages.py          # Home (/), presentation, robots.txt
+│       │   ├── views_docs.py           # /docs/<branch>/: site header + doxygen in a frame
 │       │   ├── api_pages.py            # push_screenshot, push_release, release_info
-│       │   ├── views_admin.py          # Admin CRUD views
+│       │   ├── views_admin.py          # Admin CRUD views (revisions paginated: get_revision_page)
 │       │   ├── views_admin_pages.py    # Admin Pages tab (generic per-kind views)
 │       │   ├── sitemaps.py             # sitemap.xml
-│       │   ├── views_error.py          # Custom error handlers (400/403/404/500)
+│       │   ├── views_error.py          # Error pages (400/403/404/500), registered in scripts/urls.py
 │       │   ├── urls.py                 # URL routing
 │       │   ├── forms.py               # NewsEntryForm, RevisionItemEntryForm, BranchEntryForm, etc.
 │       │   ├── admin.py               # Django admin site registration
@@ -91,6 +94,18 @@ OwlDelivery/
 │           ├── urls.py                 # Auth URL routes
 │           └── forms.py                # CustomUserCreationForm, CustomUserChangeForm
 ```
+
+## Public URLs
+
+| URL | View | Content |
+|-----|------|---------|
+| `/` | `views_pages.home` | Home: hero, Discover, latest release, 3 latest news |
+| `/presentation` | `views_pages.presentation` | Presentation of the engine (sections from `PageSection`) |
+| `/news`, `/news/<id>` | `views.news`, `views.news_details` | Paginated feed, article with comments |
+| `/branches`, `/revisions/<branch>`, `/revision/<hash>` | `views` | Downloads, a branch, a revision |
+| `/docs/<branch>/[<page>]` | `views_docs.docs` | Doxygen tree in a frame under the site header |
+| `/robots.txt`, `/sitemap.xml` | `views_pages`, `sitemaps` | SEO |
+| `/api`, `/upload` | `views.revision_api` (+ nginx) | CI pushes |
 
 ## Container Paths
 
@@ -209,7 +224,9 @@ Script Python téléchargé par les clients (CI, développeurs) via `GET /api` p
 - `delivery.add_showcaseimage` / `delivery.add_releasenote` - CI push of screenshots / release notes
 - User manager (`auth.delete_user`): never changes their own account or a superuser, and only grants or removes a
   permission they hold themselves (`USER_TOGGLES` in `views_admin.py`)
-- Every admin view checks its permission, including GET; admin redirects go to fixed URL names, never `Referer`
+- Every admin view checks its permission, including GET; admin redirects go to fixed URL names, never `Referer`.
+  The revision admin (`/admin/revisions[/<n>]?branch=`) pages `REVISION_PER_PAGE` revisions from one grouped query;
+  its delete forms post `page` and `branch`, and `revisions_return_url` sends back to that page
 
 ## Frontend
 
@@ -227,6 +244,9 @@ Script Python téléchargé par les clients (CI, développeurs) via `GET /api` p
   when `package.path` is present
 - `/api` validates every field that becomes a path (`branch`, `hash`, `package.name`: no `..`, no leading `/`) and
   only accepts a `package.path` inside `/app/data/_upload/`
+- Documentation links go through `get_branch_documentation_url` → `/docs/<branch>/` (the site frame); the raw
+  doxygen URL (`/media/documentation/<branch>/`) is only the `src` of the frame
+- Content pages (news, downloads, revisions) render their own `<h1>` and pass no `title` (no page-header band)
 - Markdown is always rendered with `markdown_utils.markdownify_safe` (python-markdown + nh3), never `markdownify`
   alone: the templates print it `|safe`
 - FileField stores relative paths (e.g., `packages/main/abc123/file.zip`), MEDIA_ROOT is `/app/data`
@@ -234,6 +254,7 @@ Script Python téléchargé par les clients (CI, développeurs) via `GET /api` p
   else returns 404: the data volume also holds `delivery.db`, `log/` and `_upload/`, and a bare
   `alias /app/data` published the database. Adding a public subdirectory is a deliberate edit of
   `server/config/http.d/Django_server.conf`
+- Static files are collected at container start (`/app/staticfiles`): after a CSS/JS change, restart the container
 - `server/VERSION` is generated at Docker build time (version + git short hash) — never commit manually
 - `.gitignore` excludes `server/VERSION`, `sample_data/*`, `docker_data/`, `.env`, `poetry.lock`
 - Settings: `SECRET_KEY` from `.env` or `/app/data/secret_key`; `ALLOWED_HOSTS` from `DOMAIN_NAME` (+ `ALLOWED_HOSTS`);

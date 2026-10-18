@@ -5,6 +5,7 @@ Utility function for revision manipulation
 from pathlib import Path
 
 from django.conf import settings
+from django.urls import reverse
 
 from .models import BranchEntry, RevisionItemEntry
 
@@ -27,9 +28,28 @@ def get_branch_documentation(branch_name):
 
 
 def get_branch_documentation_url(branch_name):
-    doc_path = Path(settings.MEDIA_ROOT) / "documentation" / branch_name
-    if doc_path.exists():
-        return f"{settings.MEDIA_URL}documentation/{branch_name}"
+    """
+    :return: The documentation page of a branch, inside the site frame, or None without documentation.
+    """
+    if get_branch_documentation(branch_name):
+        return reverse("docs", args=[branch_name])
+
+
+def get_branch_documentation_raw_url(branch_name, page=""):
+    """
+    :return: URL of the doxygen files as nginx serves them, shown in the frame of the documentation page.
+    """
+    return f"{settings.MEDIA_URL}documentation/{branch_name}/{page}"
+
+
+def get_documented_branches():
+    """
+    :return: Names of the visible branches with a documentation, highest version first.
+    """
+    from .release_utils import branch_sort_key
+
+    branches = [branch for branch in BranchEntry.objects.filter(visible=True) if get_branch_documentation(branch.name)]
+    return [branch.name for branch in sorted(branches, key=branch_sort_key, reverse=True)]
 
 
 def get_branch_info(branch_name):
