@@ -22,6 +22,7 @@ class NewsEntry(models.Model):
     author = models.CharField(max_length=50, default="admin", verbose_name="The news author")
     date = models.DateTimeField(default=timezone.now, verbose_name="News date")
     content = MarkdownxField(blank=True, default="", verbose_name="Content of the news")
+    published = models.BooleanField(default=True, verbose_name="Published")
 
     class Meta:
         """
@@ -194,3 +195,16 @@ class BranchEntry(models.Model):
 
         verbose_name = "Branch of Revision"
         ordering = ["-date"]
+
+
+# The page models live in their own module; importing them here registers them with the app.
+from .models_pages import (  # noqa: E402, F401
+    FeatureCard,
+    PageSection,
+    ReleaseNote,
+    RoadmapMilestone,
+    SampleGame,
+    ShowcaseImage,
+    SiteLink,
+    SiteSettings,
+)

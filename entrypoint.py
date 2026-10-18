@@ -17,6 +17,7 @@ server_config = server_path / "config"
 server_data = Path("/app/data")
 packages_dir = server_data / "packages"
 documentation_dir = server_data / "documentation"
+pages_dir = server_data / "pages"
 server_data_upload = server_data / "_upload"
 server_scripts = server_path / "scripts"
 server_log = server_data / "log"
@@ -152,6 +153,7 @@ def correct_permission():
             server_log,
             packages_dir,
             documentation_dir,
+            pages_dir,
             migrations_dir,
         ]
         for i in range(10):
@@ -360,6 +362,18 @@ def fix_absolute_media_paths():
         con.close()
 
 
+def seed_pages():
+    """
+    Create the missing default content of the home and presentation pages.
+    """
+    print("Seeding the pages")
+    os.chdir(server_scripts)
+    if not exec_cmd("python3 manage.py seed_pages"):
+        print("ERROR: Error seeding the pages.", file=stderr)
+        return False
+    return True
+
+
 def collect_static():
     """
     Collect static files for Django
@@ -426,6 +440,9 @@ def main():
             fall_back()
             return
         if not do_migrations():
+            fall_back()
+            return
+        if not seed_pages():
             fall_back()
             return
         if not correct_permission():

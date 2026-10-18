@@ -1,0 +1,26 @@
+<div class="pres-samples">
+    {% for sample in data.samples %}
+    <article class="pres-samples__card{% if not sample.published %} is-draft{% endif %}">
+        {% if sample.image %}
+        <img class="pres-samples__image" src="{{ sample.image.thumbnail_url }}" alt="{{ sample.image.alt_text }}"
+             width="{{ sample.image.width }}" height="{{ sample.image.height }}" loading="lazy">
+        {% else %}
+        <div class="pres-samples__placeholder" aria-hidden="true">
+            <span class="material-symbols-outlined">{{ data.placeholder_icon }}</span>
+        </div>
+        {% endif %}
+        <div class="pres-samples__body">
+            <h3 class="pres-samples__title">
+                {% if sample.link_url %}<a href="{{ sample.link_url }}">{{ sample.title }}</a>{% else %}{{ sample.title }}{% endif %}
+            </h3>
+            <p class="pres-samples__badges">
+                <span class="badge {% if sample.status == 'planned' %}badge--neutral{% else %}badge--primary{% endif %}">{{ sample.status_label }}</span>
+                {% if not sample.published %}<span class="badge badge--neutral">Draft</span>{% endif %}
+            </p>
+            {% if sample.inspired_by %}<p class="pres-samples__inspired text-muted">Inspired by {{ sample.inspired_by }}</p>{% endif %}
+            <div class="pres-samples__summary">{{ sample.summary_md|safe }}</div>
+            {% if sample.exercises %}<p class="pres-samples__exercises text-muted">{{ sample.exercises }}</p>{% endif %}
+        </div>
+    </article>
+    {% endfor %}
+</div>

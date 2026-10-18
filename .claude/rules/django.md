@@ -8,7 +8,7 @@ paths:
 
 ## Stack
 
-- **Django 6.x** on **Python 3.13** (Alpine)
+- **Django 6.x** on **Python 3.14** (Alpine)
 - SQLite database at `/app/data/delivery.db`
 - `django-markdownx` for Markdown fields
 - Gunicorn as WSGI server (port 8000)
@@ -22,6 +22,9 @@ paths:
 
 - `FileField` values must be **relative** paths (e.g., `packages/main/abc123/file.zip`). Never store absolute paths — `MEDIA_ROOT` (`/app/data`) is prepended by Django.
 - `BranchEntry.date` is auto-updated when a `RevisionItemEntry` is saved.
+- Rows shown on the home or presentation page (page models, news, branches, revision items) are changed with
+  `save()` / `delete()` only: the signals of `delivery/signals.py` bump `SiteSettings.content_version`, the cache
+  key of the pages. `QuerySet.update()` fires no signal and leaves the pages stale.
 
 ## Settings
 
@@ -32,12 +35,14 @@ paths:
 
 ## URL Structure
 
-- `/` and `/news` — public news
+- `/` — home page (`views_pages.home`), `/presentation` — presentation page
+- `/news` — public news (published only)
+- `/robots.txt`, `/sitemap.xml`
 - `/branches`, `/revisions/<branch>`, `/revision/<hash>` — public package browsing
-- `/admin/*` — app admin views (not Django admin)
+- `/admin/*` — app admin views (not Django admin); `/admin/pages/*` edits the two pages
 - `/staff/` — Django admin (only if `ENABLE_STAFF=True`)
 - `/profile/*` — auth (login, register, password reset)
-- `/api` — REST endpoint (push/delete/version, HTTP Basic Auth or session)
+- `/api` — REST endpoint (push/push_doc/delete/version, push_screenshot/push_release/release_info; HTTP Basic Auth or session)
 - `/upload` — handled by Nginx upload module, forwarded to `/api`
 
 ## Permissions

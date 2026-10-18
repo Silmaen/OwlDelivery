@@ -70,6 +70,12 @@
   font-size: var(--text-xs);
 }
 
+/* Large (call to action) */
+.btn--lg {
+  padding: var(--sp-3) var(--sp-6);
+  font-size: var(--text-base);
+}
+
 /* Icon-only */
 .btn--icon {
   padding: var(--sp-1);

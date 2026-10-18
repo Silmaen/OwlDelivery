@@ -1,0 +1,10 @@
+<section class="page-section{% if section.draft %} is-draft{% endif %}" id="{{ section.key }}" aria-labelledby="{{ section.key }}-title">
+    <header class="page-section__header">
+        <h2 class="page-section__title" id="{{ section.key }}-title">
+            {{ section.title }}
+            {% if section.draft %}<span class="badge badge--neutral">Draft</span>{% endif %}
+        </h2>
+        {% if section.intro_md %}<div class="page-section__intro">{{ section.intro_md|safe }}</div>{% endif %}
+    </header>
+    {% include section.template with data=section.data %}
+</section>

@@ -89,3 +89,17 @@
   font-size: var(--text-sm);
   color: var(--color-neutral-100);
 }
+
+/* Thumbnails of the pages admin */
+.admin-thumb {
+  width: 64px;
+  height: 36px;
+  object-fit: cover;
+  border-radius: var(--radius-sm);
+}
+
+.admin-preview {
+  max-width: 100%;
+  width: 480px;
+  border-radius: var(--radius-md);
+}

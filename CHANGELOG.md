@@ -9,6 +9,16 @@ What has shipped, newest first. What is planned lives in [ROADMAP.md](ROADMAP.md
 - `/media` only serves `packages/`, `documentation/` and `markdownx/`, so the database and logs are no longer downloadable.
 - Base images pinned on a version (Python 3.14 Alpine), refreshed at every deployment.
 - Changelog and roadmap moved out of the README into `CHANGELOG.md` and `ROADMAP.md`.
+- Site name, footer and meta description come from the database (`SiteSettings`), seeded by `manage.py seed_pages` at start.
+- News get a draft state (`published`), and the pages say `lang="en"` with a skip link.
+- New home page: name and tagline, a Discover link, the latest release with its Download button, the 3 latest news.
+- New Presentation tab: screenshots with a lightbox, features, downloads per platform, sample games, roadmap, how it is built.
+- Navigation renamed (Presentation, News, Downloads, Docs) and footer links taken from the database.
+- OpenGraph tags, canonical URLs, JSON-LD, `robots.txt` and `sitemap.xml` for the public pages.
+- Pages admin tab to edit, reorder, publish and preview every text, image and list of both pages.
+- A screenshot pushed after the seed reaches the sample games waiting for it, like the hero and social images.
+- Users admin gains two toggles: edit the pages, push screenshots and release notes.
+- API actions `push_screenshot`, `push_release` and `release_info`, with the matching `api.py` sub-commands, so the engine CI feeds the presentation page.
 
 ## 0.4.0 — 2026-03-04
 

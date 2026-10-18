@@ -11,14 +11,21 @@ from shutil import move
 
 from django.conf import settings
 from django.contrib.auth import authenticate, login
-from django.http import FileResponse, HttpResponse, HttpResponseForbidden
+from django.http import FileResponse, Http404, HttpResponse, HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.csrf import csrf_exempt
 
+from .api_pages import PAGE_ACTIONS
 from .db_locking import locker
 from .forms import NewsCommentForm, RevisionItemEntryFullForm
 from .models import NewsEntry, RevisionItemEntry
-from .perms_utils import can_see_admin, can_see_news_admin, can_see_revision_admin, is_comment_moderator
+from .perms_utils import (
+    can_see_admin,
+    can_see_news_admin,
+    can_see_pages_admin,
+    can_see_revision_admin,
+    is_comment_moderator,
+)
 from .revision_utils import (
     find_revision,
     get_branch_info,
@@ -43,7 +50,7 @@ def news(request):
     :param request: the page request
     :return: the rendered page
     """
-    news_list = NewsEntry.objects.order_by("-date")[:15]
+    news_list = NewsEntry.objects.filter(published=True).order_by("-date")[:15]
     return render(
         request,
         "delivery/news.html",
@@ -68,6 +75,8 @@ def news_details(request, news_id):
     :return: the rendered page
     """
     news_item = get_object_or_404(NewsEntry, pk=news_id)
+    if not news_item.published and not can_see_news_admin(request):
+        raise Http404("No such news.")
     new_comment = None
     # comment posted (only for authenticated users)
     if request.method == "POST" and request.user.is_authenticated:
@@ -217,6 +226,8 @@ def admin(request):
         return redirect("/")
     if can_see_news_admin(request):
         return redirect("a_news")
+    if can_see_pages_admin(request):
+        return redirect("a_pages")
     if can_see_revision_admin(request):
         return redirect("a_revisions")
     return redirect("a_users")
@@ -285,6 +296,8 @@ def revision_api(request):
         action = data["action"]
         if action == "version":
             return HttpResponse(f"version: {SITE_VERSION}\n", status=200)
+        elif action in PAGE_ACTIONS:
+            return PAGE_ACTIONS[action](request, data)
         elif action == "pull":
             return HttpResponse("""ERROR PULL function is not yet implemented.""", status=406)
         elif action == "push":

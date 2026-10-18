@@ -1,12 +1,13 @@
 {% load static %}<!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="robots" content="index,follow">
     <meta name="author" content="Argawaen">
-    <meta name="description" content="Owl Game Engine — Package delivery">
-    <title>Owl Game Engine</title>
+    <meta name="description" content="{{ site.meta_description }}">
+    <title>{% block page_title %}{{ site.site_name }}{% endblock %}</title>
+    {% block meta %}{% endblock %}
     <link rel="shortcut icon" href="{% static 'favicon.ico' %}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -24,37 +25,26 @@
     {% block extra_head %}{% endblock %}
 </head>
 <body>
+<a class="sr-only skip-link" href="#main">Skip to content</a>
 
 <!-- ============ HEADER ============ -->
 <header class="site-header">
     <div class="site-header__inner container">
         <a href="/" class="site-header__brand">
             <img src="{% static 'img/logo_owl.png' %}" alt="Owl logo" class="site-header__logo">
-            <span class="site-header__title">Owl Game Engine</span>
+            <span class="site-header__title">{{ site.site_name }}</span>
         </a>
 
         {% if has_menu %}
         <nav class="nav-menu" aria-label="Main navigation">
+            {% for entry in nav_entries %}
             <div class="nav-menu__item">
-                <a class="nav-menu__link {% if page == 'news' %}nav-menu__link--active{% endif %}" href="{% url 'news' %}">
-                    <span class="material-symbols-outlined icon">newspaper</span>
-                    News
+                <a class="nav-menu__link {% if page == entry.page %}nav-menu__link--active{% endif %}" href="{{ entry.url }}"{% if page == entry.page %} aria-current="page"{% endif %}>
+                    <span class="material-symbols-outlined icon" aria-hidden="true">{{ entry.icon }}</span>
+                    {{ entry.label }}
                 </a>
             </div>
-            <div class="nav-menu__item">
-                <a class="nav-menu__link {% if page == 'revisions' %}nav-menu__link--active{% endif %}" href="{% url 'branches' %}">
-                    <span class="material-symbols-outlined icon">package_2</span>
-                    Revisions
-                </a>
-            </div>
-            {% if is_admin %}
-            <div class="nav-menu__item">
-                <a class="nav-menu__link {% if page == 'admin' %}nav-menu__link--active{% endif %}" href="{% url 'admin' %}">
-                    <span class="material-symbols-outlined icon">admin_panel_settings</span>
-                    Admin
-                </a>
-            </div>
-            {% endif %}
+            {% endfor %}
         </nav>
         {% endif %}
 
@@ -85,20 +75,12 @@
 
     {% if has_menu %}
     <nav class="mobile-nav" id="mobile-nav" aria-label="Mobile navigation">
-        <a class="mobile-nav__link {% if page == 'news' %}mobile-nav__link--active{% endif %}" href="{% url 'news' %}">
-            <span class="material-symbols-outlined icon">newspaper</span>
-            News
+        {% for entry in nav_entries %}
+        <a class="mobile-nav__link {% if page == entry.page %}mobile-nav__link--active{% endif %}" href="{{ entry.url }}"{% if page == entry.page %} aria-current="page"{% endif %}>
+            <span class="material-symbols-outlined icon" aria-hidden="true">{{ entry.icon }}</span>
+            {{ entry.label }}
         </a>
-        <a class="mobile-nav__link {% if page == 'revisions' %}mobile-nav__link--active{% endif %}" href="{% url 'branches' %}">
-            <span class="material-symbols-outlined icon">package_2</span>
-            Revisions
-        </a>
-        {% if is_admin %}
-        <a class="mobile-nav__link {% if page == 'admin' %}mobile-nav__link--active{% endif %}" href="{% url 'admin' %}">
-            <span class="material-symbols-outlined icon">admin_panel_settings</span>
-            Admin
-        </a>
-        {% endif %}
+        {% endfor %}
     </nav>
     {% endif %}
 </header>
@@ -120,7 +102,7 @@
 {% endif %}
 
 <!-- ============ MAIN ============ -->
-<main class="site-main">
+<main class="site-main" id="main">
     <div class="site-main__content">
         {% block content %}{% endblock %}
         {% block additionnalsection %}{% endblock %}
@@ -130,17 +112,23 @@
 <!-- ============ FOOTER ============ -->
 <footer class="site-footer">
     <div class="site-footer__inner container">
-        <a href="https://github.com/Silmaen/Owl" class="site-footer__brand">
+        <a href="/" class="site-footer__brand">
             <img src="{% static 'img/logo_owl.png' %}" alt="Owl">
-            Owl Game Engine
+            {{ site.site_name }}
         </a>
         <div class="site-footer__center">
-            &copy; Argawaen — All rights reserved.
+            {{ site.footer_text }}
             {% if version %}
             · <a href="https://github.com/Silmaen/OwlDelivery">v{{ version.number }} ({{ version.hash }})</a>
             {% endif %}
         </div>
         <div class="site-footer__right">
+            {% for link in footer_links %}
+            <a href="{{ link.url }}">
+                {% if link.icon %}<span class="material-symbols-outlined icon--sm" aria-hidden="true">{{ link.icon }}</span>{% endif %}
+                {{ link.label }}
+            </a>
+            {% endfor %}
             <a href="https://fonts.google.com/icons" title="Material Design Icons">
                 <span class="material-symbols-outlined icon--sm">grading</span>
                 Icons

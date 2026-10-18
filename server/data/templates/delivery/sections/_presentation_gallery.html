@@ -1,0 +1,35 @@
+<ul class="pres-gallery" data-gallery>
+    {% for image in data.images %}
+    <li class="pres-gallery__item{% if not image.published %} is-draft{% endif %}">
+        <figure class="pres-gallery__figure">
+            <a class="pres-gallery__link" href="{{ image.image.url }}" data-gallery-item
+               data-caption="{{ image.caption }}" data-alt="{{ image.alt_text }}">
+                <img class="pres-gallery__image" src="{{ image.thumbnail_url }}" alt="{{ image.alt_text }}"
+                     width="{{ image.width }}" height="{{ image.height }}" loading="lazy">
+            </a>
+            <figcaption class="pres-gallery__caption">
+                {% if image.style_tag %}<span class="badge badge--neutral">{{ image.get_style_tag_display }}</span>{% endif %}
+                {% if not image.published %}<span class="badge badge--neutral">Draft</span>{% endif %}
+                {{ image.caption }}
+            </figcaption>
+        </figure>
+    </li>
+    {% endfor %}
+</ul>
+<dialog class="lightbox" id="lightbox" aria-label="Screenshot viewer">
+    <figure class="lightbox__figure">
+        <img class="lightbox__image" src="" alt="">
+        <figcaption class="lightbox__caption"></figcaption>
+    </figure>
+    <div class="lightbox__controls">
+        <button type="button" class="btn btn--icon" data-lightbox-prev aria-label="Previous screenshot">
+            <span class="material-symbols-outlined icon" aria-hidden="true">chevron_left</span>
+        </button>
+        <button type="button" class="btn btn--icon" data-lightbox-next aria-label="Next screenshot">
+            <span class="material-symbols-outlined icon" aria-hidden="true">chevron_right</span>
+        </button>
+        <button type="button" class="btn btn--icon" data-lightbox-close aria-label="Close the viewer">
+            <span class="material-symbols-outlined icon" aria-hidden="true">close</span>
+        </button>
+    </div>
+</dialog>

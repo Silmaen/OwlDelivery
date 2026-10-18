@@ -8,6 +8,7 @@ from .models import BranchEntry, NewsComment, NewsEntry, RevisionItemEntry
 from .perms_utils import (
     can_see_admin,
     can_see_news_admin,
+    can_see_pages_admin,
     can_see_revision_admin,
     can_see_user_admin,
     is_comment_moderator,
@@ -26,6 +27,12 @@ SUBPAGES = [
         "url": "a_news",
         "display_name": "News",
         "permission": can_see_news_admin,
+    },
+    {
+        "name": "pages",
+        "url": "a_pages",
+        "display_name": "Pages",
+        "permission": can_see_pages_admin,
     },
     {
         "name": "revisions",
@@ -48,6 +55,20 @@ SUBPAGES = [
 ]
 STAFF_ACTIVE = settings.ENABLE_STAFF
 REVISION_PER_PAGE = 15
+# "Edit pages" toggles every permission on the page models at once.
+PAGE_MODEL_NAMES = (
+    "sitesettings",
+    "pagesection",
+    "showcaseimage",
+    "featurecard",
+    "samplegame",
+    "roadmapmilestone",
+    "releasenote",
+    "sitelink",
+)
+PAGES_EDIT_CODENAMES = [f"{action}_{model}" for model in PAGE_MODEL_NAMES for action in ("add", "change", "delete")]
+# What the engine CI needs to feed the presentation page through the API.
+PAGES_PUSH_CODENAMES = ["add_showcaseimage", "add_releasenote"]
 
 
 def extract_subpages(request):
@@ -84,6 +105,8 @@ def admin_users(request):
                 "can_delete_revision": entry.has_perm("delivery.delete_revisionitementry"),
                 "can_view_user": entry.has_perm("auth.view_user"),
                 "can_delete_user": entry.has_perm("auth.delete_user"),
+                "can_edit_pages": all(entry.has_perm(f"delivery.{code}") for code in PAGES_EDIT_CODENAMES),
+                "can_push_pages": all(entry.has_perm(f"delivery.{code}") for code in PAGES_PUSH_CODENAMES),
             }
         )
     return render(
@@ -164,6 +187,15 @@ def admin_modif_user(request, pk):
                 user.user_permissions.remove(ido)
             else:
                 user.user_permissions.add(ido)
+            user.save()
+        elif request.POST["action"] in ("toggle_pages_edit", "toggle_pages_push"):
+            codenames = PAGES_EDIT_CODENAMES if request.POST["action"] == "toggle_pages_edit" else PAGES_PUSH_CODENAMES
+            granted = all(user.has_perm(f"delivery.{code}") for code in codenames)
+            permissions = Permission.objects.filter(content_type__app_label="delivery", codename__in=codenames)
+            if granted:
+                user.user_permissions.remove(*permissions)
+            else:
+                user.user_permissions.add(*permissions)
             user.save()
         elif request.POST["action"] == "toggle_revision_delete":
             ido = Permission.objects.get(codename="delete_revisionitementry")
