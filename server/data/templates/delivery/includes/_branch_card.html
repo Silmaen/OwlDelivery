@@ -1,0 +1,23 @@
+{# One branch of the downloads page: `branch` from views.branch_summary. #}
+<article class="branch-card">
+    <h3 class="branch-card__name">
+        <a href="{% url 'revisions' branch.name %}">{{ branch.name }}</a>
+        <span class="badge badge--neutral">{% if branch.stable %}Release{% else %}Dev{% endif %}</span>
+    </h3>
+    <p class="branch-card__meta text-muted">
+        {% if branch.hash %}{{ branch.hash }} · {% endif %}<time>{{ branch.date|date }}</time>
+        {% if branch.revision_count > 1 %} · {{ branch.revision_count }} revisions{% endif %}
+    </p>
+    <div class="branch-card__links">
+        <a class="btn btn--sm" href="{% url 'revisions' branch.name %}">
+            <span class="material-symbols-outlined icon--sm" aria-hidden="true">download</span>
+            Files
+        </a>
+        {% if branch.doc_url %}
+        <a class="btn btn--sm btn--ghost" href="{{ branch.doc_url }}">
+            <span class="material-symbols-outlined icon--sm" aria-hidden="true">menu_book</span>
+            Docs
+        </a>
+        {% endif %}
+    </div>
+</article>

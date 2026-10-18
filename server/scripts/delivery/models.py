@@ -9,6 +9,7 @@ from markdownx.models import MarkdownxField
 from .markdown_utils import markdownify_safe
 
 TRUNCATION = 200  # Length of truncate text.
+EXCERPT_TRUNCATION = 420  # Length of the excerpt in the news list.
 COMMENT_TRUNCATION = 100  # Length of truncated comment.
 NB_LAST_COMMENTS = 3  # Truncate mode number of comments to display.
 
@@ -46,6 +47,13 @@ class NewsEntry(models.Model):
         :return: Html output.
         """
         return markdownify_safe(str(self.content))
+
+    def excerpt_md(self):
+        """
+        Longer truncated render, for the news list.
+        :return: Html output.
+        """
+        return Truncator(markdownify_safe(str(self.content))).chars(EXCERPT_TRUNCATION, truncate="…", html=True)
 
     def nb_comments(self):
         """

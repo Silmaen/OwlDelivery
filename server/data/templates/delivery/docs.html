@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block page_title %}Documentation {{ branch }} — {{ site.site_name }}{% endblock %}
+
+{% block content %}
+<div class="doc-frame">
+    <div class="doc-frame__bar">
+        <h1 class="doc-frame__title">
+            <span class="material-symbols-outlined icon" aria-hidden="true">menu_book</span>
+            Documentation
+            <span class="badge badge--primary">{{ branch }}</span>
+        </h1>
+        {% if other_branches %}
+        <details class="doc-frame__switch">
+            <summary class="btn btn--sm btn--ghost">
+                Other versions
+                <span class="material-symbols-outlined icon--sm" aria-hidden="true">expand_more</span>
+            </summary>
+            <ul class="doc-frame__versions">
+                {% for name in other_branches %}
+                <li><a href="{% url 'docs' name %}">{{ name }}</a></li>
+                {% endfor %}
+            </ul>
+        </details>
+        {% endif %}
+        <a class="btn btn--sm btn--ghost doc-frame__raw" href="{{ frame_url }}" data-doc-raw>
+            <span class="material-symbols-outlined icon--sm" aria-hidden="true">open_in_new</span>
+            Without the site frame
+        </a>
+    </div>
+    <iframe class="doc-frame__view" src="{{ frame_url }}" title="{{ site.site_name }} documentation, {{ branch }}"
+            data-doc-frame data-raw-root="{{ raw_root }}" data-page-root="{% url 'docs' branch %}"></iframe>
+</div>
+{% endblock %}
+
+{% block script_content %}<script src="{% static 'js/docs-frame.js' %}"></script>{% endblock %}

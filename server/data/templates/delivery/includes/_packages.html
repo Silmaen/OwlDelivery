@@ -1,0 +1,19 @@
+{# Download buttons of one revision: `packages` from release_utils.get_packages, `level` = heading level. #}
+<div class="pres-release__packages">
+    {% for package in packages %}
+    <div class="pres-release__package">
+        <p class="pres-release__package-name" role="heading" aria-level="{{ level|default:4 }}">{{ package.name }}</p>
+        <div class="flavor-grid">
+            {% for flavor in package.flavors %}
+            <a class="flavor-card" href="{{ flavor.url }}" title="{{ flavor.name }}">
+                <span class="flavor-card__name">
+                    <span class="material-symbols-outlined icon--sm" aria-hidden="true">download</span>
+                    {{ package.name }} — {{ flavor.label }}
+                </span>
+                <span class="flavor-card__size">{% if flavor.detail %}{{ flavor.detail }} · {% endif %}{% if flavor.format %}{{ flavor.format }} · {% endif %}{{ flavor.size }}</span>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+    {% endfor %}
+</div>

@@ -1,55 +1,78 @@
 {% extends 'base.html' %}
 
+{% block page_title %}Downloads — {{ site.site_name }}{% endblock %}
+
 {% block content %}
-{% if latest or dev_branch_list or old_stable_branch_list %}
+<div class="content-page content-page--wide">
+    <header class="content-page__header">
+        <h1 class="content-page__title">Downloads</h1>
+        <p class="content-page__lead">The engine SDK and the Owl Nest editor, for every release and development build.</p>
+    </header>
 
-{% if latest %}
-<div class="pkg-list mb-6">
-    <h2 class="pkg-list__heading">Latest Stable Branch</h2>
-    <div class="pkg-item">
-        <a class="pkg-item__header" href="{% url 'revisions' latest.name %}">
-            <span class="badge badge--primary">Stable</span>
-            <span class="pkg-item__value">{{ latest.name }}</span>
-            <span class="pkg-item__date">{{ latest.date }}</span>
-        </a>
+    {% if latest or dev_branch_list or old_stable_branch_list %}
+
+    {% if latest %}
+    <section class="download-hero" aria-labelledby="latest-title">
+        <div class="download-hero__head">
+            <span class="badge badge--primary">Latest release</span>
+            <h2 class="download-hero__title" id="latest-title">
+                {% if latest.note.title %}{{ latest.note.title }}{% else %}{{ site.site_name }} {{ latest.version }}{% endif %}
+            </h2>
+            <p class="text-muted">
+                Version {{ latest.version }}{% if latest.date %} · <time>{{ latest.date|date }}</time>{% endif %}{% if latest.hash %} · {{ latest.hash }}{% endif %}
+            </p>
+            {% if latest.note.highlights %}<div class="prose">{{ latest.note.highlights_md|safe }}</div>{% endif %}
+        </div>
+        {% include 'delivery/includes/_packages.html' with packages=latest.packages level=3 %}
+        <div class="pres-release__links">
+            <a class="btn" href="{{ latest.revisions_url }}">
+                <span class="material-symbols-outlined icon" aria-hidden="true">folder_open</span>
+                All files and older revisions
+            </a>
+            {% if latest.doc_url %}
+            <a class="btn" href="{{ latest.doc_url }}">
+                <span class="material-symbols-outlined icon" aria-hidden="true">menu_book</span>
+                Documentation
+            </a>
+            {% endif %}
+            {% if latest.changelog_url %}
+            <a class="btn" href="{{ latest.changelog_url }}">
+                <span class="material-symbols-outlined icon" aria-hidden="true">history</span>
+                Changelog
+            </a>
+            {% endif %}
+        </div>
+    </section>
+    {% endif %}
+
+    {% if dev_branch_list %}
+    <section class="branch-group" aria-labelledby="dev-title">
+        <h2 class="branch-group__title" id="dev-title">Development builds</h2>
+        <p class="text-muted">Built from the work in progress: not releases, may break.</p>
+        <div class="branch-grid">
+            {% for branch in dev_branch_list %}
+            {% include 'delivery/includes/_branch_card.html' %}
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+
+    {% if old_stable_branch_list %}
+    <section class="branch-group" aria-labelledby="old-title">
+        <h2 class="branch-group__title" id="old-title">Older releases</h2>
+        <div class="branch-grid">
+            {% for branch in old_stable_branch_list %}
+            {% include 'delivery/includes/_branch_card.html' %}
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+
+    {% else %}
+    <div class="empty-state">
+        <h3>We are new!</h3>
+        <p>No branch is yet available on this server.</p>
     </div>
+    {% endif %}
 </div>
-{% endif %}
-
-{% if dev_branch_list %}
-<div class="pkg-list mb-6">
-    <h2 class="pkg-list__heading">Dev Branches</h2>
-    {% for branch in dev_branch_list %}
-    <div class="pkg-item">
-        <a class="pkg-item__header" href="{% url 'revisions' branch.name %}">
-            <span class="badge badge--neutral">Dev</span>
-            <span class="pkg-item__value">{{ branch.name }}</span>
-            <span class="pkg-item__date">{{ branch.date }}</span>
-        </a>
-    </div>
-    {% endfor %}
-</div>
-{% endif %}
-
-{% if old_stable_branch_list %}
-<div class="pkg-list mb-6">
-    <h2 class="pkg-list__heading">Old Stable Branches</h2>
-    {% for branch in old_stable_branch_list %}
-    <div class="pkg-item">
-        <a class="pkg-item__header" href="{% url 'revisions' branch.name %}">
-            <span class="badge badge--neutral">Stable</span>
-            <span class="pkg-item__value">{{ branch.name }}</span>
-            <span class="pkg-item__date">{{ branch.date }}</span>
-        </a>
-    </div>
-    {% endfor %}
-</div>
-{% endif %}
-
-{% else %}
-<div class="empty-state">
-    <h3>We are new!</h3>
-    <p>No branch is yet available on this server.</p>
-</div>
-{% endif %}
 {% endblock %}

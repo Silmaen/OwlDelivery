@@ -31,6 +31,10 @@ What has shipped, newest first. What is planned lives in [ROADMAP.md](ROADMAP.md
 - New home page: name and tagline, a Discover link, the latest release with its Download button, the 3 latest news.
 - New Presentation tab: screenshots with a lightbox, features, downloads per platform, sample games, roadmap, how it is built.
 - Navigation renamed (Presentation, News, Downloads, Docs) and footer links taken from the database.
+- The documentation opens under the site header (`/docs/<branch>/`), the address following the doxygen page.
+- News: a paginated feed with excerpts, articles with their neighbours and a clearer comment section.
+- Downloads: the latest release by version with its buttons, development and older builds as cards, files of a revision by platform.
+- The revision admin is paginated (15 per page) with a branch filter, and a deletion returns to the same page.
 - OpenGraph tags, canonical URLs, JSON-LD, `robots.txt` and `sitemap.xml` for the public pages.
 - Pages admin tab to edit, reorder, publish and preview every text, image and list of both pages.
 - A screenshot pushed after the seed reaches the sample games waiting for it, like the hero and social images.

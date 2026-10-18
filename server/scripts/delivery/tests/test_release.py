@@ -81,7 +81,7 @@ class LatestReleaseTest(MediaTestCase):
         make_item("0.3.0", "aaa111", stable=True)
         self.assertEqual(get_latest_release()["doc_url"], "")
         (Path(settings.MEDIA_ROOT) / "documentation" / "0.3.0").mkdir(parents=True)
-        self.assertEqual(get_latest_release()["doc_url"], "/media/documentation/0.3.0")
+        self.assertEqual(get_latest_release()["doc_url"], "/docs/0.3.0/")
 
     def test_release_note_date_overrides_the_build_date(self):
         make_item("0.3.0", "aaa111", stable=True)

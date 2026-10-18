@@ -121,6 +121,8 @@ Include the port if it is not the standard HTTP/HTTPS port:
   `?preview=1`) or pushed by the engine CI; nothing needs a redeploy. The default content is created at start by
   `manage.py seed_pages`, which never modifies an existing row.
 - The latest release is the visible stable branch with the highest `MAJOR.MINOR.PATCH`.
+- `/docs/<branch>/` shows the doxygen documentation under the site header; `/news` and `/branches` list the news and
+  the downloads.
 
 Design and rules: [doc/specs/site-pages.md](doc/specs/site-pages.md).
 

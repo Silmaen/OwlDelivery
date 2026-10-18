@@ -36,7 +36,8 @@ paths:
 ## URL Structure
 
 - `/` — home page (`views_pages.home`), `/presentation` — presentation page
-- `/news` — public news (published only)
+- `/news` — public news (published only, `?page=N`, 10 per page), `/news/<id>` — one article
+- `/docs/<branch>/[<page>]` — documentation under the site header (`views_docs`)
 - `/robots.txt`, `/sitemap.xml`
 - `/branches`, `/revisions/<branch>`, `/revision/<hash>` — public package browsing
 - `/admin/*` — app admin views (not Django admin); `/admin/pages/*` edits the two pages
