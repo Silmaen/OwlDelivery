@@ -1,0 +1,69 @@
+{% with release=data.release %}
+{% if release %}
+<div class="pres-release">
+    <div class="pres-release__head">
+        <span class="badge badge--primary">Latest release</span>
+        <h3 class="pres-release__title">
+            {% if release.note.title %}{{ release.note.title }}{% else %}{{ site.site_name }} {{ release.version }}{% endif %}
+            {% if release.note and not release.note.published %}<span class="badge badge--neutral">Draft</span>{% endif %}
+        </h3>
+        <p class="text-muted">
+            Version {{ release.version }}{% if release.date %} · <time>{{ release.date|date }}</time>{% endif %}{% if release.hash %} · {{ release.hash }}{% endif %}
+        </p>
+        {% if release.note.highlights %}<div class="pres-release__highlights">{{ release.note.highlights_md|safe }}</div>{% endif %}
+        {% if release.note.news %}
+        <a href="{% url 'news_detail' release.note.news.pk %}">Read the announcement</a>
+        {% endif %}
+    </div>
+    <div class="pres-release__packages">
+        {% for package in release.packages %}
+        <div class="pres-release__package">
+            <h4 class="pres-release__package-name">{{ package.name }}</h4>
+            <div class="flavor-grid">
+                {% for flavor in package.flavors %}
+                <a class="flavor-card" href="{{ flavor.url }}" title="{{ flavor.name }}">
+                    <span class="flavor-card__name">
+                        <span class="material-symbols-outlined icon--sm" aria-hidden="true">download</span>
+                        {{ package.name }} — {{ flavor.label }}
+                    </span>
+                    <span class="flavor-card__size">{% if flavor.detail %}{{ flavor.detail }} · {% endif %}{% if flavor.format %}{{ flavor.format }} · {% endif %}{{ flavor.size }}</span>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    <div class="pres-release__links">
+        <a class="btn" href="{{ release.revisions_url }}">
+            <span class="material-symbols-outlined icon" aria-hidden="true">folder_open</span>
+            All files and older versions
+        </a>
+        {% if release.doc_url %}
+        <a class="btn" href="{{ release.doc_url }}">
+            <span class="material-symbols-outlined icon" aria-hidden="true">menu_book</span>
+            Documentation
+        </a>
+        {% endif %}
+        {% if release.changelog_url %}
+        <a class="btn" href="{{ release.changelog_url }}">
+            <span class="material-symbols-outlined icon" aria-hidden="true">history</span>
+            Changelog
+        </a>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+{% if data.dev_build %}
+<p class="pres-release__dev">
+    <span class="badge badge--neutral">Development build, not a release</span>
+    {{ data.dev_build.version }} · {{ data.dev_build.hash }} · <time>{{ data.dev_build.date|date }}</time> ·
+    <a href="{{ data.dev_build.url }}">See its files</a>
+</p>
+{% endif %}
+{% if not release and not data.dev_build %}
+<div class="empty-state">
+    <h3>No release yet</h3>
+    {% if data.github_url %}<p>Follow the development on <a href="{{ data.github_url }}">GitHub</a>.</p>{% endif %}
+</div>
+{% endif %}
+{% endwith %}

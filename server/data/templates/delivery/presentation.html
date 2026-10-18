@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block page_title %}Presentation — {{ site.site_name }}{% endblock %}
+
+{% block meta %}
+{% include 'delivery/includes/_page_meta.html' %}
+<script type="application/ld+json">{{ json_ld|safe }}</script>
+{% endblock %}
+
+{% block content %}
+{% if preview %}<div class="alert alert--info">Preview: drafts and disabled sections are shown with a dashed outline.</div>{% endif %}
+{% include 'delivery/sections/_hero.html' with variant='presentation' %}
+{% for section in sections %}
+{% include 'delivery/sections/_section.html' %}
+{% endfor %}
+{% endblock %}
+
+{% block script_content %}<script src="{% static 'js/gallery.js' %}"></script>{% endblock %}

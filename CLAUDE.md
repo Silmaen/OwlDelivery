@@ -32,6 +32,8 @@ OwlDelivery/
 ├── pyproject.toml              # Dev deps (ruff) — poetry.lock is gitignored
 ├── .env.sample                 # Environment template
 ├── VERSION                     # Version number (single line)
+├── CHANGELOG.md / ROADMAP.md   # Shipped / planned, one line per change
+├── doc/specs/site-pages.md     # Spec of the home and presentation pages
 ├── server/
 │   ├── config/
 │   │   ├── nginx.conf                  # Main nginx config
@@ -40,13 +42,14 @@ OwlDelivery/
 │   │   ├── static/
 │   │   │   ├── css/                    # 9 CSS files (tokens, reset, base, layout,
 │   │   │   │                           #   components, forms, tables, pages, utilities)
-│   │   │   ├── js/                     # accordion.js, mobile-nav.js
+│   │   │   ├── js/                     # accordion.js, mobile-nav.js, gallery.js (lightbox)
 │   │   │   ├── img/                    # favicon.ico, logo_owl.png
 │   │   │   └── scripts/api.py          # Python client script for pushing packages
 │   │   └── templates/
 │   │       ├── base.html               # Master template (header, nav, footer)
 │   │       ├── includes/form_field.html # Reusable form field component
-│   │       ├── delivery/               # Public + admin templates
+│   │       ├── delivery/               # Public + admin templates; home.html, presentation.html,
+│   │       │                           #   sections/_<page>_<key>.html (one partial per section)
 │   │       ├── registration/           # Auth templates (login, register, profile, password)
 │   │       ├── errors/                 # 400, 403, 404, 500 error pages
 │   │       └── markdownx/             # Markdown widget template
@@ -56,17 +59,28 @@ OwlDelivery/
 │       │   ├── settings.py
 │       │   ├── urls.py
 │       │   └── wsgi.py
-│       ├── delivery/                   # Main app: packages, news, branches, API
+│       ├── delivery/                   # Main app: packages, news, branches, pages, API
 │       │   ├── models.py               # NewsEntry, NewsComment, RevisionItemEntry, BranchEntry
+│       │   ├── models_pages.py         # Page content models (SiteSettings, PageSection, ShowcaseImage, ...)
+│       │   ├── signals.py              # content_version bump (cache key), image file clean-up
+│       │   ├── pages_utils.py          # Block builders + per-block cache of the two pages
+│       │   ├── pages_seed.py           # Default content; management/commands/seed_pages.py
+│       │   ├── release_utils.py        # Latest release (highest stable version), dev build
+│       │   ├── context_processors.py   # site settings, navigation, footer links
 │       │   ├── views.py                # Public views + /api endpoint
+│       │   ├── views_pages.py          # Home (/), presentation, robots.txt
+│       │   ├── api_pages.py            # push_screenshot, push_release, release_info
 │       │   ├── views_admin.py          # Admin CRUD views
+│       │   ├── views_admin_pages.py    # Admin Pages tab (generic per-kind views)
+│       │   ├── sitemaps.py             # sitemap.xml
 │       │   ├── views_error.py          # Custom error handlers (400/403/404/500)
 │       │   ├── urls.py                 # URL routing
 │       │   ├── forms.py               # NewsEntryForm, RevisionItemEntryForm, BranchEntryForm, etc.
 │       │   ├── admin.py               # Django admin site registration
 │       │   ├── revision_utils.py       # Revision query helpers
 │       │   ├── perms_utils.py          # Permission checks
-│       │   └── db_locking.py           # DB lock for maintenance mode
+│       │   ├── db_locking.py           # DB lock for maintenance mode
+│       │   └── tests/                  # Django TestCase suite
 │       └── connector/                  # User auth & profiles
 │           ├── views.py                # Login, register, profile, password reset
 │           ├── urls.py                 # Auth URL routes
@@ -92,11 +106,12 @@ OwlDelivery/
 
 ```
 check_env() → check_user_exist() → check_timezone() → correct_permission()
-→ do_migrations() → correct_permission() → collect_static()
+→ do_migrations() → seed_pages() → correct_permission() → collect_static()
 → check_admin_user() → start_server() (nginx + gunicorn foreground via execvp)
 ```
 
 `correct_permission()` runs twice: before migrations (so DB is writable) and after (to fix files created as root by dump_migrations).
+`seed_pages` creates the missing default content of the pages and never modifies an existing row.
 
 ## Deployment (`deploy.sh`)
 
@@ -133,6 +148,9 @@ POST with HTTP Basic Auth or session auth. Actions:
 - `push` - Upload a package file (supports direct upload via `request.FILES` and nginx upload module for large files)
 - `push_doc` - Upload documentation archive (.zip/.tgz), extracted per branch (supports both direct upload and nginx upload module)
 - `delete` - Delete a revision item
+- `push_screenshot` - Create or update a `ShowcaseImage` by `key` (new = draft, `source=ci`; admin edits kept)
+- `push_release` - Create or update the `ReleaseNote` of a branch (never touches `BranchEntry.stable`)
+- `release_info` - Plain-text dump of the derived release
 
 ## Client Script (`server/data/static/scripts/api.py`)
 
@@ -150,6 +168,12 @@ Script Python téléchargé par les clients (CI, développeurs) via `GET /api` p
 - **NewsComment** - Moderated comments on news (FK to NewsEntry, FK to User, active flag)
 - **RevisionItemEntry** - Package files with hash/branch/name/flavor/type/date/package(FileField)
 - **BranchEntry** - Branch metadata (name, visible, stable, date)
+- **NewsEntry.published** - Draft flag: hidden from `/`, `/news` and the detail page when false
+- **Page content** (`models_pages.py`): `SiteSettings` (singleton `pk=1`, site texts + `content_version`),
+  `PageSection` (page, key, title, intro, enabled, order), `ShowcaseImage`, `FeatureCard`, `SampleGame`,
+  `RoadmapMilestone`, `ReleaseNote`, `SiteLink`. Each block of `/` and `/presentation` is cached under
+  `pages:<page>:<block>:<content_version>`; signals bump the counter on every save/delete, so change these rows
+  with `save()`/`delete()`, **never `QuerySet.update()`** (no signal, stale cache)
 
 ## Permissions
 
@@ -157,12 +181,15 @@ Script Python téléchargé par les clients (CI, développeurs) via `GET /api` p
 - `delivery.add_newsentry` / `delivery.delete_newsentry` - Create/delete news
 - `delivery.delete_newscomment` - Moderate comments
 - `delivery.add_revisionitementry` / `delivery.delete_revisionitementry` - Upload/delete packages
+- `delivery.change_<page model>` - Any of them opens the Pages admin tab and `?preview=1`
+- `delivery.add_showcaseimage` / `delivery.add_releasenote` - CI push of screenshots / release notes
 
 ## Frontend
 
 - **CSS architecture**: 9 files with BEM naming (`tokens.css` → `utilities.css`)
 - **Design tokens**: `tokens.css` defines colors (primary golden #be8509, neutral palette), spacing (4px scale), typography (Inter), breakpoints (480/768/1024/1280px)
-- **JS**: `accordion.js` (collapsible panels with `aria-expanded`), `mobile-nav.js` (hamburger menu)
+- **JS**: `accordion.js` (collapsible panels with `aria-expanded`), `mobile-nav.js` (hamburger menu),
+  `gallery.js` (native `<dialog>` lightbox, presentation page only)
 - **Icons**: Material Symbols Outlined (Google Fonts)
 - **Forms**: `INPUT_CSS = {"class": "form-group__input"}` on all widget attrs; `includes/form_field.html` template for rendering fields with label/help/errors
 
@@ -170,12 +197,15 @@ Script Python téléchargé par les clients (CI, développeurs) via `GET /api` p
 
 - Nginx upload module handles `/upload` path, passes to `/api` after storing file
 - FileField stores relative paths (e.g., `packages/main/abc123/file.zip`), MEDIA_ROOT is `/app/data`
-- `/media` is a **whitelist** in nginx (`packages/`, `documentation/`, `markdownx/`), everything
+- `/media` is a **whitelist** in nginx (`packages/`, `documentation/`, `markdownx/`, `pages/`), everything
   else returns 404: the data volume also holds `delivery.db`, `log/` and `_upload/`, and a bare
   `alias /app/data` published the database. Adding a public subdirectory is a deliberate edit of
   `server/config/http.d/Django_server.conf`
 - `server/VERSION` is generated at Docker build time (version + git short hash) — never commit manually
 - `.gitignore` excludes `server/VERSION`, `sample_data/*`, `docker_data/`, `.env`, `poetry.lock`
+- Tests: `delivery/tests/`, run in the container
+  (`docker compose run --rm --entrypoint python3 -w /app/server/scripts web manage.py test delivery`);
+  under `test`, `MIGRATION_MODULES` disables migrations (they are generated at start, never committed)
 - Constants in UPPER_SNAKE_CASE at module level
 - Explicit imports, no wildcard imports
 - `super()` without arguments (PEP 3135)

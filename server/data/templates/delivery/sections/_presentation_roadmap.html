@@ -1,0 +1,23 @@
+<ol class="pres-roadmap">
+    {% for milestone in data.milestones %}
+    <li class="pres-roadmap__step{% if milestone == data.current %} pres-roadmap__step--current{% endif %}{% if milestone.is_target %} pres-roadmap__step--target{% endif %}{% if not milestone.published %} is-draft{% endif %}">
+        <h3 class="pres-roadmap__version">
+            {% if milestone.is_target %}{{ site.site_name }} {% endif %}v{{ milestone.version }}
+            <span class="badge {% if milestone.status == 'in_progress' %}badge--primary{% else %}badge--neutral{% endif %}">{{ milestone.get_status_display }}</span>
+            {% if not milestone.published %}<span class="badge badge--neutral">Draft</span>{% endif %}
+        </h3>
+        {% if milestone.expected_date %}<p class="pres-roadmap__date text-muted">Expected <time datetime="{{ milestone.expected_date|date:'Y-m-d' }}">{{ milestone.expected_date|date }}</time></p>{% endif %}
+        <p class="pres-roadmap__goal">{{ milestone.goal }}</p>
+        {% if milestone.highlights %}<div class="pres-roadmap__highlights">{{ milestone.highlights_md|safe }}</div>{% endif %}
+        {% if milestone.link_url %}<a href="{{ milestone.link_url }}">Design of v{{ milestone.version }}</a>{% endif %}
+    </li>
+    {% endfor %}
+</ol>
+{% if data.roadmap_url %}
+<p class="page-section__more">
+    <a class="btn" href="{{ data.roadmap_url }}">
+        Full roadmap
+        <span class="material-symbols-outlined icon" aria-hidden="true">arrow_forward</span>
+    </a>
+</p>
+{% endif %}

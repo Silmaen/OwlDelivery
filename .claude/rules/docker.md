@@ -43,7 +43,7 @@ runs it through its wake agent:
 Startup sequence:
 ```
 check_env → check_user_exist → check_timezone → correct_permission
-→ do_migrations → correct_permission → collect_static
+→ do_migrations → seed_pages → correct_permission → collect_static
 → check_admin_user → start_server (nginx + gunicorn foreground)
 ```
 

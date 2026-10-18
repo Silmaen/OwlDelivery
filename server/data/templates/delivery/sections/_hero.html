@@ -1,0 +1,50 @@
+{% load static %}
+<section class="page-hero page-hero--{{ variant }}" aria-labelledby="hero-title">
+    <div class="page-hero__text">
+        <h1 class="page-hero__title" id="hero-title">{{ site.site_name }}</h1>
+        {% if site.tagline %}<p class="page-hero__tagline">{{ site.tagline }}</p>{% endif %}
+        {% if variant == 'presentation' %}<div class="page-hero__pitch">{{ site.pitch_md|safe }}</div>{% endif %}
+        <div class="page-hero__actions">
+            {% if variant == 'home' %}
+            {% if site.cta_discover_label %}
+            <a class="btn btn--primary btn--lg" href="{{ hero.discover_url }}">
+                <span class="material-symbols-outlined icon" aria-hidden="true">explore</span>
+                {{ site.cta_discover_label }}
+            </a>
+            {% endif %}
+            {% else %}
+            {% if site.cta_download_label %}
+            <a class="btn btn--primary btn--lg" href="{{ hero.download_url }}">
+                <span class="material-symbols-outlined icon" aria-hidden="true">download</span>
+                {{ site.cta_download_label }}
+            </a>
+            {% endif %}
+            {% if site.cta_docs_label and hero.docs_url %}
+            <a class="btn btn--lg" href="{{ hero.docs_url }}">
+                <span class="material-symbols-outlined icon" aria-hidden="true">menu_book</span>
+                {{ site.cta_docs_label }}
+            </a>
+            {% endif %}
+            {% if site.cta_github_label and hero.github_url %}
+            <a class="btn btn--lg" href="{{ hero.github_url }}">
+                <span class="material-symbols-outlined icon" aria-hidden="true">code</span>
+                {{ site.cta_github_label }}
+            </a>
+            {% endif %}
+            {% endif %}
+        </div>
+    </div>
+    <figure class="page-hero__media">
+        {% if hero.image %}
+        <img class="page-hero__image" src="{{ hero.image.thumbnail_url }}"
+             srcset="{{ hero.image.thumbnail_url }} 640w, {{ hero.image.image.url }} {{ hero.image.width }}w"
+             sizes="(min-width: 768px) 50vw, 100vw"
+             width="{{ hero.image.width }}" height="{{ hero.image.height }}"
+             alt="{{ hero.image.alt_text }}" fetchpriority="high">
+        {% else %}
+        <div class="page-hero__placeholder">
+            <img src="{% static 'img/logo_owl.png' %}" alt="Owl logo">
+        </div>
+        {% endif %}
+    </figure>
+</section>

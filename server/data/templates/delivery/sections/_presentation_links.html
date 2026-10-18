@@ -1,0 +1,10 @@
+<ul class="pres-links">
+    {% for link in data.links %}
+    <li>
+        <a class="btn btn--lg{% if link.draft %} is-draft{% endif %}" href="{{ link.url }}">
+            {% if link.icon %}<span class="material-symbols-outlined icon" aria-hidden="true">{{ link.icon }}</span>{% endif %}
+            {{ link.label }}
+        </a>
+    </li>
+    {% endfor %}
+</ul>

@@ -1,0 +1,22 @@
+<div class="home-download">
+    {% if data.release %}
+    <div class="home-download__version">
+        <span class="badge badge--primary">Latest release</span>
+        <span class="home-download__number">v{{ data.release.version }}</span>
+        {% if data.release.date %}<time class="text-muted">{{ data.release.date|date }}</time>{% endif %}
+        {% if data.release.note.title %}<p class="home-download__title">{{ data.release.note.title }}</p>{% endif %}
+    </div>
+    {% endif %}
+    <div class="home-download__actions">
+        {% if data.release %}
+        <a class="btn btn--primary btn--lg" href="{{ data.download_url }}">
+            <span class="material-symbols-outlined icon" aria-hidden="true">download</span>
+            {{ site.cta_download_label|default:"Download" }} v{{ data.release.version }}
+        </a>
+        {% endif %}
+        <a class="btn btn--lg" href="{{ data.branches_url }}">
+            <span class="material-symbols-outlined icon" aria-hidden="true">package_2</span>
+            All downloads
+        </a>
+    </div>
+</div>

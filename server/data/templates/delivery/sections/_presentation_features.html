@@ -1,0 +1,22 @@
+<div class="pres-features">
+    {% for card in data.cards %}
+    <article class="pres-features__card{% if not card.published %} is-draft{% endif %}">
+        {% if card.image %}
+        <img class="pres-features__image" src="{{ card.image.thumbnail_url }}" alt="{{ card.image.alt_text }}"
+             width="{{ card.image.width }}" height="{{ card.image.height }}" loading="lazy">
+        {% endif %}
+        <h3 class="pres-features__title">
+            {% if card.icon %}<span class="material-symbols-outlined icon--lg pres-features__icon" aria-hidden="true">{{ card.icon }}</span>{% endif %}
+            {{ card.title }}
+            {% if not card.published %}<span class="badge badge--neutral">Draft</span>{% endif %}
+        </h3>
+        <div class="pres-features__body">{{ card.body_md|safe }}</div>
+        {% if card.link_url %}
+        <a class="pres-features__link" href="{{ card.link_url }}">
+            {{ card.link_label|default:"Learn more" }}
+            <span class="material-symbols-outlined icon--sm" aria-hidden="true">arrow_forward</span>
+        </a>
+        {% endif %}
+    </article>
+    {% endfor %}
+</div>

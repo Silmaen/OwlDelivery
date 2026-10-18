@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
 import os
+import sys
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -57,6 +58,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "django.contrib.sitemaps",
     "markdownx",
     "delivery.apps.DeliveryConfig",
     "connector.apps.ConnectorConfig",
@@ -85,6 +87,7 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                "delivery.context_processors.site",
             ],
         },
     },
@@ -102,6 +105,12 @@ DATABASES = {
     }
 }
 DATABASES_LOCK_PATH = "/app/data/delivery.lock"
+
+# The tests build their in-memory database straight from the models: the migrations are generated at
+# container start (entrypoint.py) and never committed, so there is nothing to apply.
+TESTING = len(sys.argv) > 1 and sys.argv[1] == "test"
+if TESTING:
+    MIGRATION_MODULES = {"delivery": None, "connector": None}
 
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators

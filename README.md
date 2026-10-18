@@ -106,6 +106,17 @@ Include the port if it is not the standard HTTP/HTTPS port:
 - Access via `https://deliv.home.lan:785` → `DOMAIN_NAME=deliv.home.lan:785`
 - Access via `https://delivery.example.com` → `DOMAIN_NAME=delivery.example.com`
 
+## Pages
+
+- `/` is the home page: product name, a **Discover** link, the latest release and the 3 latest news.
+- `/presentation` presents the engine: screenshots, features, downloads per platform, sample games, roadmap.
+- Every text, image and list of both pages is a database row, edited in **Admin → Pages** (preview with
+  `?preview=1`) or pushed by the engine CI; nothing needs a redeploy. The default content is created at start by
+  `manage.py seed_pages`, which never modifies an existing row.
+- The latest release is the visible stable branch with the highest `MAJOR.MINOR.PATCH`.
+
+Design and rules: [doc/specs/site-pages.md](doc/specs/site-pages.md).
+
 ## Client Script (api.py)
 
 A Python script is served at `GET /api` for CI systems and developers to publish releases and documentation.
@@ -115,13 +126,21 @@ A Python script is served at `GET /api` for CI systems and developers to publish
 curl -o api.py http://your-server/api
 
 # Push a package
-python api.py push --server http://your-server --user admin --passwd secret \
-    --name MyPackage --hash abc123 --branch main --date 2025-01-01 \
-    --rev_type Release --flavor_name default --file package.zip
+python api.py push --url http://your-server --user admin --passwd secret \
+    --type e --name "Owl Engine" --hash abc123 --branch 0.3.0 --date 2026-10-11T12:00:00 \
+    --flavor_name "linux glibc_2.43 x64" --file package.tar.gz
 
-# Push documentation
-python api.py push_doc --server http://your-server --user admin --passwd secret \
-    --branch main --file docs.tgz
+# Push documentation (a folder holding index.html, archived by the script)
+python api.py push --url http://your-server --user admin --passwd secret \
+    --type d --branch 0.3.0 --file doc/html
+
+# Push a screenshot of the presentation page (a new key is a draft unless --publish)
+python api.py push_screenshot --url http://your-server --user ci --passwd secret \
+    --key raycast --file raycast.png --caption "Raycast level" --style_tag raycast
+
+# Push the release note of a version
+python api.py push_release --url http://your-server --user ci --passwd secret \
+    --branch 0.3.0 --title "Owl Engine 0.3.0" --release_date 2026-10-11 --highlights_file highlights.md
 ```
 
 **Client dependencies**: `requests`, `requests_toolbelt` (install with `pip install requests requests_toolbelt`).
@@ -134,14 +153,18 @@ Files under 100 MB are uploaded directly to `/api`; larger files use the Nginx u
 
 POST with HTTP Basic Auth or session authentication. Actions:
 
-| Action | Description |
-|--------|-------------|
-| `version` | Get server version |
-| `push` | Upload a package file |
-| `push_doc` | Upload documentation archive (.zip/.tgz), extracted per branch |
-| `delete` | Delete a revision item |
+| Action | Permission | Description |
+|--------|------------|-------------|
+| `version` | authenticated | Get server version |
+| `push` | `add_revisionitementry` | Upload a package file |
+| `push_doc` | `add_revisionitementry` | Upload documentation archive (.zip/.tgz), extracted per branch |
+| `delete` | `delete_revisionitementry` | Delete a revision item |
+| `push_screenshot` | `add_showcaseimage` | Create or update a screenshot by `key`; admin edits are kept |
+| `push_release` | `add_releasenote` | Create or update the release note of a `branch` |
+| `release_info` | authenticated | Plain-text dump of the release the pages offer |
 
-GET returns the client script (`api.py`).
+GET returns the client script (`api.py`). The **Pages push** toggle of Admin → Users grants the two
+permissions of the CI.
 
 ## Project Structure
 
@@ -155,18 +178,28 @@ OwlDelivery/
 ├── pyproject.toml              # Dev deps (ruff via Poetry)
 ├── .env.sample                 # Environment template
 ├── VERSION                     # Version number
+├── CHANGELOG.md / ROADMAP.md   # What shipped / what is planned
+├── doc/specs/                  # Design specifications
 ├── server/
 │   ├── config/
 │   │   ├── nginx.conf                  # Main Nginx config
 │   │   └── http.d/Django_server.conf   # Server block (static/media/upload/proxy)
 │   ├── data/
-│   │   ├── static/                     # CSS, JS, images, client script
-│   │   └── templates/                  # HTML templates
+│   │   ├── static/                     # CSS, JS (accordion, mobile nav, gallery), images, client script
+│   │   └── templates/                  # HTML templates (delivery/sections/: blocks of the two pages)
 │   └── scripts/                        # Django project root
 │       ├── manage.py
 │       ├── scripts/                    # Django settings module
-│       ├── delivery/                   # Main app: packages, news, branches, API
+│       ├── delivery/                   # Main app: packages, news, branches, pages, API (tests/ inside)
 │       └── connector/                  # User auth & profiles
+```
+
+## Tests
+
+The Django tests run inside the container, on an in-memory database built from the models:
+
+```bash
+docker compose run --rm --entrypoint python3 -w /app/server/scripts web manage.py test delivery
 ```
 
 ## Changelog and roadmap

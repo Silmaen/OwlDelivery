@@ -1,0 +1,126 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="pkg-list mb-6">
+    <div class="flex-row flex-wrap gap-2 justify-between">
+        <h2 class="pkg-list__heading mb-0">Home and presentation pages</h2>
+        <div class="flex-row flex-wrap gap-2">
+            {% if can_change_settings %}
+            <a class="btn" href="{% url 'a_pages_settings' %}">
+                <span class="material-symbols-outlined icon" aria-hidden="true">tune</span>
+                Site texts
+            </a>
+            {% endif %}
+            <a class="btn" href="{% url 'index' %}?preview=1">
+                <span class="material-symbols-outlined icon" aria-hidden="true">preview</span>
+                Preview home
+            </a>
+            <a class="btn" href="{% url 'presentation' %}?preview=1">
+                <span class="material-symbols-outlined icon" aria-hidden="true">preview</span>
+                Preview presentation
+            </a>
+        </div>
+    </div>
+</div>
+
+{% for block in blocks %}
+<div class="pkg-list mb-6">
+    <div class="pkg-item accordion" id="block_{{ block.kind }}">
+        <button class="accordion__trigger" aria-expanded="{% if block.open %}true{% else %}false{% endif %}">
+            {{ block.title }}
+            <span class="badge badge--neutral">{{ block.rows|length }}</span>
+            <span class="material-symbols-outlined accordion__chevron" aria-hidden="true">expand_more</span>
+        </button>
+        <div class="accordion__panel {% if block.open %}is-open{% endif %}">
+            <div class="table-responsive mb-4">
+                <table class="data-table">
+                    <thead>
+                    <tr>
+                        <th></th>
+                        <th>Title</th>
+                        <th class="cell--center">Status</th>
+                        <th>Source</th>
+                        <th>Updated</th>
+                        <th class="cell--actions"></th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for row in block.rows %}
+                    <tr class="data-table__row--clickable" onclick="location.href='{% url 'a_pages_detail' block.kind row.pk %}'">
+                        <td>{% if row.thumb %}<img class="admin-thumb" src="{{ row.thumb }}" alt="" loading="lazy">{% endif %}</td>
+                        <td>
+                            <a href="{% url 'a_pages_detail' block.kind row.pk %}">{{ row.title }}</a>
+                            {% if row.subtitle %}<br><span class="text-muted">{{ row.subtitle|truncatechars:80 }}</span>{% endif %}
+                        </td>
+                        <td class="cell--center">
+                            {% if row.published %}<span class="badge badge--success">{% if block.fixed %}Enabled{% else %}Published{% endif %}</span>
+                            {% else %}<span class="badge badge--neutral">{% if block.fixed %}Disabled{% else %}Draft{% endif %}</span>{% endif %}
+                        </td>
+                        <td>{{ row.source }}</td>
+                        <td>{{ row.updated }}</td>
+                        <td class="cell--actions">
+                            <div class="flex-row gap-2" onclick="event.stopPropagation()">
+                                {% if block.can_change %}
+                                {% if block.ordered %}
+                                <form method="post" action="{% url 'a_pages_action' block.kind row.pk %}">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="up">
+                                    <button type="submit" class="btn btn--icon btn--ghost" title="Move up" aria-label="Move {{ row.title }} up">
+                                        <span class="material-symbols-outlined icon" aria-hidden="true">arrow_upward</span>
+                                    </button>
+                                </form>
+                                <form method="post" action="{% url 'a_pages_action' block.kind row.pk %}">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="down">
+                                    <button type="submit" class="btn btn--icon btn--ghost" title="Move down" aria-label="Move {{ row.title }} down">
+                                        <span class="material-symbols-outlined icon" aria-hidden="true">arrow_downward</span>
+                                    </button>
+                                </form>
+                                {% endif %}
+                                <form method="post" action="{% url 'a_pages_action' block.kind row.pk %}">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="{% if row.published %}unpublish{% else %}publish{% endif %}">
+                                    <button type="submit" class="btn btn--icon btn--ghost" title="{% if row.published %}Hide{% else %}Show{% endif %}" aria-label="{% if row.published %}Hide{% else %}Show{% endif %} {{ row.title }}">
+                                        {% if row.published %}<span class="material-symbols-outlined perm" aria-hidden="true">visibility</span>
+                                        {% else %}<span class="material-symbols-outlined noperm" aria-hidden="true">visibility_off</span>{% endif %}
+                                    </button>
+                                </form>
+                                {% endif %}
+                                {% if block.can_delete %}
+                                <form method="post" action="{% url 'a_pages_action' block.kind row.pk %}">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="delete">
+                                    <button type="submit" class="btn btn--danger btn--icon" title="Delete" aria-label="Delete {{ row.title }}">
+                                        <span class="material-symbols-outlined icon" aria-hidden="true">delete</span>
+                                    </button>
+                                </form>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="6" class="text-muted">Nothing yet.</td></tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% if block.form %}
+            <h3 class="mb-2">Add</h3>
+            <form method="post" enctype="multipart/form-data" class="w-full">
+                {% csrf_token %}
+                <input type="hidden" name="kind" value="{{ block.kind }}">
+                {% for field in block.form %}{% include 'includes/form_field.html' %}{% endfor %}
+                <div class="form-actions">
+                    <button type="submit" class="btn btn--primary">
+                        <span class="material-symbols-outlined icon" aria-hidden="true">add</span>
+                        Add
+                    </button>
+                </div>
+            </form>
+            {{ block.form.media }}
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endfor %}
+{% endblock %}

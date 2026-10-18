@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="pkg-list mb-6">
+    <h2 class="pkg-list__heading">Site texts and settings</h2>
+    <form method="post" class="w-full">
+        {% csrf_token %}
+        {% for field in form %}{% include 'includes/form_field.html' %}{% endfor %}
+        <div class="form-actions">
+            <a class="btn btn--ghost" href="{% url 'a_pages' %}">
+                <span class="material-symbols-outlined icon" aria-hidden="true">arrow_back</span>
+                Return
+            </a>
+            {% if can_change %}
+            <button type="submit" class="btn btn--primary">
+                <span class="material-symbols-outlined icon" aria-hidden="true">send</span>
+                Save
+            </button>
+            {% endif %}
+        </div>
+    </form>
+    {{ form.media }}
+</div>
+{% endblock %}

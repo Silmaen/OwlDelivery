@@ -2,8 +2,10 @@
 
 from django.conf import settings as main_settings
 from django.conf.urls.static import static
+from django.contrib.sitemaps.views import sitemap
 from django.urls import path
 
+from .sitemaps import SITEMAPS
 from .views import (
     admin,
     branches,
@@ -28,9 +30,14 @@ from .views_admin import (
     admin_revisions_page,
     admin_users,
 )
+from .views_admin_pages import admin_pages, admin_pages_action, admin_pages_detail, admin_pages_settings
+from .views_pages import home, presentation, robots_txt
 
 urlpatterns = [
-    path("", news, name="index"),
+    path("", home, name="index"),
+    path("presentation", presentation, name="presentation"),
+    path("robots.txt", robots_txt, name="robots_txt"),
+    path("sitemap.xml", sitemap, {"sitemaps": SITEMAPS}, name="sitemap"),
     path("news", news, name="news"),
     path("news/<int:news_id>", news_details, name="news_detail"),
     path("branches", branches, name="branches"),
@@ -43,6 +50,10 @@ urlpatterns = [
     path("admin/news/<int:news_id>", admin_news_detail, name="a_news_detail"),
     path("admin/mnews/<int:news_id>", admin_modif_news, name="a_modif_news"),
     path("admin/mcomment/<int:comment_id>", admin_modif_comment, name="a_modif_comment"),
+    path("admin/pages", admin_pages, name="a_pages"),
+    path("admin/pages/settings", admin_pages_settings, name="a_pages_settings"),
+    path("admin/pages/<str:kind>/<int:pk>", admin_pages_detail, name="a_pages_detail"),
+    path("admin/pages/<str:kind>/<int:pk>/action", admin_pages_action, name="a_pages_action"),
     path("admin/revisions", admin_revisions, name="a_revisions"),
     path("admin/branches", admin_branches, name="a_branches"),
     path("admin/revisions/<int:page>", admin_revisions_page, name="a_revisions_page"),

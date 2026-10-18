@@ -597,6 +597,8 @@ Links: `https://github.com/Silmaen/Owl/tree/main/samples/<breakout|sokoban|wolfe
 empty for the planned ones. The image keys of the planned games reuse Engine Demo screenshots until a sample has its
 own; the playable ones get their screenshots once the engine CI captures them (`sample_breakout`, `sample_sokoban`,
 `sample_wolfenstein`).
+The seed usually runs before the CI pushes any screenshot: an image created later (`push_screenshot` or
+`seed_pages --images`) is linked to the seeded samples waiting for its key, when their image is still empty.
 
 ### Roadmap milestones
 

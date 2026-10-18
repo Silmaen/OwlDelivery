@@ -234,6 +234,17 @@ body {
   background: var(--color-neutral-700);
 }
 
+/* --- Skip link: hidden until focused, then on top of the header --- */
+.skip-link:focus {
+  position: fixed;
+  top: var(--sp-2);
+  left: var(--sp-2);
+  z-index: var(--z-modal);
+  color: var(--color-neutral-950);
+  background: var(--color-primary);
+  border-radius: var(--radius-md);
+}
+
 /* ============================================
    SITE MAIN
    ============================================ */

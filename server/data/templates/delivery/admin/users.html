@@ -12,6 +12,8 @@
             <th class="cell--center">News mod.</th>
             <th class="cell--center">Rev. add</th>
             <th class="cell--center">Rev. del.</th>
+            <th class="cell--center">Pages edit</th>
+            <th class="cell--center">Pages push</th>
             <th class="cell--center">User view</th>
             <th class="cell--center">User del.</th>
             <th class="cell--actions"></th>
@@ -42,6 +44,14 @@
             <td class="cell--center">
                 {% if user_for.can_delete_revision %}<span class="material-symbols-outlined perm">open_in_new</span>
                 {% else %}<span class="material-symbols-outlined noperm">open_in_new_off</span>{% endif %}
+            </td>
+            <td class="cell--center">
+                {% if user_for.can_edit_pages %}<span class="material-symbols-outlined perm">web</span>
+                {% else %}<span class="material-symbols-outlined noperm">web_asset_off</span>{% endif %}
+            </td>
+            <td class="cell--center">
+                {% if user_for.can_push_pages %}<span class="material-symbols-outlined perm">add_photo_alternate</span>
+                {% else %}<span class="material-symbols-outlined noperm">hide_image</span>{% endif %}
             </td>
             <td class="cell--center">
                 {% if user_for.can_view_user %}<span class="material-symbols-outlined perm">visibility</span>
@@ -100,6 +110,26 @@
                     <button type="submit" class="btn btn--icon btn--ghost" title="Toggle revision delete">
                         {% if user_for.can_delete_revision %}<span class="material-symbols-outlined perm">open_in_new</span>
                         {% else %}<span class="material-symbols-outlined noperm">open_in_new_off</span>{% endif %}
+                    </button>
+                </form>
+            </td>
+            <td class="cell--center">
+                <form method="post" action="{% url 'modif_user' user_for.pk %}">
+                    {% csrf_token %}
+                    <input type="hidden" value="toggle_pages_edit" name="action">
+                    <button type="submit" class="btn btn--icon btn--ghost" title="Toggle pages edit">
+                        {% if user_for.can_edit_pages %}<span class="material-symbols-outlined perm">web</span>
+                        {% else %}<span class="material-symbols-outlined noperm">web_asset_off</span>{% endif %}
+                    </button>
+                </form>
+            </td>
+            <td class="cell--center">
+                <form method="post" action="{% url 'modif_user' user_for.pk %}">
+                    {% csrf_token %}
+                    <input type="hidden" value="toggle_pages_push" name="action">
+                    <button type="submit" class="btn btn--icon btn--ghost" title="Toggle screenshot and release note push">
+                        {% if user_for.can_push_pages %}<span class="material-symbols-outlined perm">add_photo_alternate</span>
+                        {% else %}<span class="material-symbols-outlined noperm">hide_image</span>{% endif %}
                     </button>
                 </form>
             </td>

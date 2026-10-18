@@ -31,9 +31,10 @@ password hashes included. Fixed by serving only what is public, one `location` e
 | `/media/packages/`     | the package files          | `get_upload_to` in `models.py`    |
 | `/media/documentation/`| the doxygen trees, per branch | `push_doc` in `views.py`       |
 | `/media/markdownx/`    | images from the MD editor  | django-markdownx                  |
+| `/media/pages/`        | screenshots of the pages, `expires 30d` | `ShowcaseImage` in `models_pages.py` |
 
 `location /media/ { return 404; }` collects everything else — nginx picks the longest
-matching prefix, so the three above win. It also covers `DEBUG_MODE=True`, where
+matching prefix, so the four above win. It also covers `DEBUG_MODE=True`, where
 `delivery/urls.py` would otherwise serve `MEDIA_ROOT` through Django.
 
 **A new public subdirectory has to be added here on purpose.** That is the point: the

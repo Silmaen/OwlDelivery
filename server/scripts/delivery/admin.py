@@ -7,6 +7,16 @@ from django.utils.text import Truncator
 from markdownx.admin import MarkdownxModelAdmin
 
 from .models import BranchEntry, NewsComment, NewsEntry, RevisionItemEntry
+from .models_pages import (
+    FeatureCard,
+    PageSection,
+    ReleaseNote,
+    RoadmapMilestone,
+    SampleGame,
+    ShowcaseImage,
+    SiteLink,
+    SiteSettings,
+)
 
 # --------------------- The news -------------------------------------
 
@@ -16,10 +26,11 @@ class NewsEntryAdmin(MarkdownxModelAdmin):
     Admin page for news
     """
 
-    list_display = ("title", "author", "date", "content_overview")
+    list_display = ("title", "author", "date", "published", "content_overview")
     list_filter = (
         "author",
         "date",
+        "published",
     )
     date_hierarchy = "date"
     ordering = ("date",)
@@ -33,7 +44,7 @@ class NewsEntryAdmin(MarkdownxModelAdmin):
         (
             "General",
             {
-                "fields": ("title", "slug", "author", "date"),
+                "fields": ("title", "slug", "author", "date", "published"),
             },
         ),
         # Fieldset 2 : article content
@@ -132,3 +143,59 @@ class BranchEntryAdmin(admin.ModelAdmin):
 
 
 admin.site.register(BranchEntry, BranchEntryAdmin)
+
+
+# --------------------- The pages -------------------------------------
+# Fallback editors only: the pages are edited in the Pages tab of the site admin.
+
+
+class SiteSettingsAdmin(MarkdownxModelAdmin):
+    list_display = ("site_name", "tagline", "content_version")
+
+    def has_add_permission(self, request):
+        return not SiteSettings.objects.exists()
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+
+class PageSectionAdmin(MarkdownxModelAdmin):
+    list_display = ("page", "key", "title", "enabled", "order")
+    list_filter = ("page", "enabled")
+
+
+class ShowcaseImageAdmin(admin.ModelAdmin):
+    list_display = ("key", "caption", "style_tag", "in_gallery", "source", "published", "order")
+    list_filter = ("source", "published", "in_gallery")
+
+
+class FeatureCardAdmin(MarkdownxModelAdmin):
+    list_display = ("title", "icon", "published", "order")
+
+
+class SampleGameAdmin(MarkdownxModelAdmin):
+    list_display = ("title", "status", "target_version", "published", "order")
+    prepopulated_fields = {"slug": ("title",)}
+
+
+class RoadmapMilestoneAdmin(MarkdownxModelAdmin):
+    list_display = ("version", "status", "expected_date", "is_target", "published")
+
+
+class ReleaseNoteAdmin(MarkdownxModelAdmin):
+    list_display = ("branch", "title", "release_date", "published")
+
+
+class SiteLinkAdmin(admin.ModelAdmin):
+    list_display = ("label", "kind", "placement", "published", "order")
+    list_filter = ("placement", "kind")
+
+
+admin.site.register(SiteSettings, SiteSettingsAdmin)
+admin.site.register(PageSection, PageSectionAdmin)
+admin.site.register(ShowcaseImage, ShowcaseImageAdmin)
+admin.site.register(FeatureCard, FeatureCardAdmin)
+admin.site.register(SampleGame, SampleGameAdmin)
+admin.site.register(RoadmapMilestone, RoadmapMilestoneAdmin)
+admin.site.register(ReleaseNote, ReleaseNoteAdmin)
+admin.site.register(SiteLink, SiteLinkAdmin)

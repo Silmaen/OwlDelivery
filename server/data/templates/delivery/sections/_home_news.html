@@ -1,0 +1,21 @@
+<div class="home-news">
+    {% for news_item in data.news_list %}
+    <article class="card home-news__item{% if not news_item.published %} is-draft{% endif %}">
+        <div class="card__header">
+            <h3 class="home-news__title"><a href="{% url 'news_detail' news_item.id %}">{{ news_item.title }}</a></h3>
+        </div>
+        <div class="card__body">{{ news_item.content_md|safe }}</div>
+        <div class="home-news__meta">
+            <span class="material-symbols-outlined icon--sm" aria-hidden="true">schedule</span>
+            <time datetime="{{ news_item.date|date:'c' }}">{{ news_item.date|date }}</time>
+            {% if not news_item.published %}<span class="badge badge--neutral">Draft</span>{% endif %}
+        </div>
+    </article>
+    {% endfor %}
+</div>
+<p class="page-section__more">
+    <a class="btn" href="{{ data.news_url }}">
+        All news
+        <span class="material-symbols-outlined icon" aria-hidden="true">arrow_forward</span>
+    </a>
+</p>

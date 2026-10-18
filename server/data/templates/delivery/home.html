@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+
+{% block page_title %}{{ site.site_name }}{% if site.tagline %} — {{ site.tagline }}{% endif %}{% endblock %}
+
+{% block meta %}{% include 'delivery/includes/_page_meta.html' %}{% endblock %}
+
+{% block content %}
+{% if preview %}<div class="alert alert--info">Preview: drafts and disabled sections are shown with a dashed outline.</div>{% endif %}
+{% include 'delivery/sections/_hero.html' with variant='home' %}
+{% for section in sections %}
+{% include 'delivery/sections/_section.html' %}
+{% endfor %}
+{% endblock %}
