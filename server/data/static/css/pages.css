@@ -617,10 +617,6 @@ a.flavor-card:hover {
   margin-top: var(--sp-2);
 }
 
-.pres-release__highlights {
-  color: var(--color-neutral-200);
-}
-
 .pres-release__packages {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
@@ -941,6 +937,10 @@ a.flavor-card:hover {
 
 .prose > * + * {
   margin-top: var(--sp-4);
+}
+
+.prose > :first-child {
+  margin-top: 0;
 }
 
 .prose h1,

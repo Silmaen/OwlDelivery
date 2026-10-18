@@ -13,7 +13,7 @@
             {% if release_note.title %}{{ release_note.title }}{% else %}{{ site.site_name }} {{ branch.name }}{% endif %}
             <span class="badge {% if branch.stable %}badge--primary{% else %}badge--neutral{% endif %}">{% if branch.stable %}Release{% else %}Development build{% endif %}</span>
         </h1>
-        {% if release_note.highlights %}<div class="prose content-page__lead">{{ release_note.highlights_md|safe }}</div>{% endif %}
+        {% if release_note.highlights %}{% include 'delivery/includes/_release_highlights.html' with note=release_note id=branch.name %}{% endif %}
         <div class="content-page__actions">
             {% if doc_url %}
             <a class="btn" href="{{ doc_url }}">

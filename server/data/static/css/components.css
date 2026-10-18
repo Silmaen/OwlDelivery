@@ -329,3 +329,22 @@
     animation: none;
   }
 }
+
+/* ============================================
+   COLLAPSIBLE TEXT (long release notes)
+   ============================================ */
+.collapsible {
+  --collapsible-height: 14rem;
+  position: relative;
+}
+
+.collapsible.is-collapsed .collapsible__content {
+  max-height: var(--collapsible-height);
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(to bottom, #000 60%, transparent);
+  mask-image: linear-gradient(to bottom, #000 60%, transparent);
+}
+
+.collapsible__toggle {
+  margin-top: var(--sp-3);
+}

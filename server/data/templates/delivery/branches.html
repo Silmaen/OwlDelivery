@@ -21,7 +21,7 @@
             <p class="text-muted">
                 Version {{ latest.version }}{% if latest.date %} · <time>{{ latest.date|date }}</time>{% endif %}{% if latest.hash %} · {{ latest.hash }}{% endif %}
             </p>
-            {% if latest.note.highlights %}<div class="prose">{{ latest.note.highlights_md|safe }}</div>{% endif %}
+            {% if latest.note.highlights %}{% include 'delivery/includes/_release_highlights.html' with note=latest.note id="latest" %}{% endif %}
         </div>
         {% include 'delivery/includes/_packages.html' with packages=latest.packages level=3 %}
         <div class="pres-release__links">

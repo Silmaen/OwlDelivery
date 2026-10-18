@@ -1,0 +1,4 @@
+{# Release notes, folded to a few lines when long: `note` is a ReleaseNote, `id` makes the element unique. #}
+<div class="collapsible" data-collapsible data-more="Show the full release notes" data-less="Show less">
+    <div class="collapsible__content prose" id="release-notes-{{ id }}">{{ note.highlights_md|safe }}</div>
+</div>
