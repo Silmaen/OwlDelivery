@@ -121,3 +121,19 @@ class ErrorPagesTest(MediaTestCase):
         self.assertEqual(response.status_code, 404)
         self.assertContains(response, "No such page exists.", status_code=404)
         self.assertContains(response, 'href="/presentation"', status_code=404)
+
+
+class ReleaseNotesFoldingTest(MediaTestCase):
+    def test_release_notes_are_collapsible_everywhere(self):
+        make_item("0.3.0", "aaa111", stable=True)
+        from delivery.pages_seed import seed_pages
+
+        seed_pages()
+        note = ReleaseNote.objects.get(branch="0.3.0")
+        note.highlights = "### Added\n\n" + "\n".join(f"- Change number {index}" for index in range(80))
+        note.save()
+        for url in ("/presentation", "/branches", "/revisions/0.3.0"):
+            response = self.client.get(url)
+            self.assertContains(response, "data-collapsible", msg_prefix=url)
+            self.assertContains(response, "Change number 79", msg_prefix=url)
+        self.assertContains(self.client.get("/news"), "js/collapsible.js")

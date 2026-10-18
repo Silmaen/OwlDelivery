@@ -47,7 +47,8 @@ OwlDelivery/
 │   │   │   ├── css/                    # 9 CSS files (tokens, reset, base, layout,
 │   │   │   │                           #   components, forms, tables, pages, utilities)
 │   │   │   ├── js/                     # accordion.js, mobile-nav.js, gallery.js (lightbox),
-│   │   │   │                           #   docs-frame.js (address bar follows the doc frame)
+│   │   │   │                           #   docs-frame.js (address bar follows the doc frame),
+│   │   │   │                           #   collapsible.js (folds long text, loaded on every page)
 │   │   │   ├── img/                    # favicon.ico, logo_owl.png
 │   │   │   └── scripts/api.py          # Python client script for pushing packages
 │   │   └── templates/
@@ -55,7 +56,8 @@ OwlDelivery/
 │   │       ├── includes/form_field.html # Reusable form field component
 │   │       ├── delivery/               # Public + admin templates; home.html, presentation.html,
 │   │       │                           #   sections/_<page>_<key>.html (one partial per section),
-│   │       │                           #   includes/_packages.html (download buttons, shared), docs.html
+│   │       │                           #   includes/_packages.html (download buttons, shared),
+│   │       │                           #   includes/_release_highlights.html (folded release notes), docs.html
 │   │       ├── registration/           # Auth templates (login, register, profile, password)
 │   │       ├── errors/                 # 400, 403, 404, 500 error pages
 │   │       └── markdownx/             # Markdown widget template
@@ -246,6 +248,9 @@ Script Python téléchargé par les clients (CI, développeurs) via `GET /api` p
   only accepts a `package.path` inside `/app/data/_upload/`
 - Documentation links go through `get_branch_documentation_url` → `/docs/<branch>/` (the site frame); the raw
   doxygen URL (`/media/documentation/<branch>/`) is only the `src` of the frame
+- Release notes are shown through `includes/_release_highlights.html` only: `data-collapsible` folds them when long
+- Logout is a POST form in the header (Django 5+ refuses a logout by GET); a lost password is reset with
+  `./deploy.sh password [user]` (`changepassword`, run as PUID:PGID)
 - Content pages (news, downloads, revisions) render their own `<h1>` and pass no `title` (no page-header band)
 - Markdown is always rendered with `markdown_utils.markdownify_safe` (python-markdown + nh3), never `markdownify`
   alone: the templates print it `|safe`

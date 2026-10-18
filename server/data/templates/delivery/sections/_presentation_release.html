@@ -10,7 +10,7 @@
         <p class="text-muted">
             Version {{ release.version }}{% if release.date %} · <time>{{ release.date|date }}</time>{% endif %}{% if release.hash %} · {{ release.hash }}{% endif %}
         </p>
-        {% if release.note.highlights %}<div class="pres-release__highlights">{{ release.note.highlights_md|safe }}</div>{% endif %}
+        {% if release.note.highlights %}{% include 'delivery/includes/_release_highlights.html' with note=release.note id="presentation" %}{% endif %}
         {% if release.note.news %}
         <a href="{% url 'news_detail' release.note.news.pk %}">Read the announcement</a>
         {% endif %}
