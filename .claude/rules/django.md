@@ -31,7 +31,7 @@ paths:
 - Environment-driven config: `DEBUG_MODE`, `DOMAIN_NAME`, `PORT`, `PUID`/`PGID`, email, etc.
 - `STATIC_ROOT = "/app/staticfiles/"` — collected by `entrypoint.py` at startup
 - `MEDIA_ROOT = "/app/data"` — served by Nginx at `/media`
-- Error handlers (`handler400`..`handler500`) are defined in `settings.py`
+- Error handlers (`handler400`..`handler500`) are defined in `scripts/urls.py`: Django ignores them anywhere else
 
 ## URL Structure
 

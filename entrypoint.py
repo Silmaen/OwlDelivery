@@ -6,6 +6,7 @@ Main entry point for the docker image
 import grp
 import os
 import pwd
+import secrets
 import shutil
 import sqlite3
 import subprocess
@@ -22,15 +23,32 @@ server_data_upload = server_data / "_upload"
 server_scripts = server_path / "scripts"
 server_log = server_data / "log"
 migrations_dir = server_data / "migrations"
+secret_key_file = server_data / "secret_key"
 
 config = {
     "puid": 1000,
     "pgid": 1000,
     "tz": "",
     "admin_name": "admin",
-    "admin_passwd": "admin",
+    "admin_passwd": "",
     "domain_name": "",
 }
+# Environment variables whose value never goes to the logs.
+SECRET_MARKERS = ("PASSWD", "PASSWORD", "SECRET", "KEY", "TOKEN")
+# Admin passwords that get a warning: the old sample value, kept by many .env files.
+WEAK_ADMIN_PASSWORDS = ("admin",)
+initial_admin_password_file = Path("/app/data/initial_admin_password")
+
+
+def shown_value(key, val):
+    """
+    Value of an environment variable as printed in the logs.
+    """
+    if any(marker in key.upper() for marker in SECRET_MARKERS):
+        return "***" if val else ""
+    return val
+
+
 group_info = {"name": "server", "id": config["pgid"]}
 user_info = {"name": "server", "id": config["puid"]}
 
@@ -42,7 +60,7 @@ def check_env():
     """
     # get config from environment variables
     for key, val in os.environ.items():
-        print(f"{key}={val}")
+        print(f"{key}={shown_value(key, val)}")
         for key_config in config:
             if key.lower() == key_config:
                 config[key_config] = val
@@ -82,7 +100,7 @@ def check_env():
         print("Problem in environment...", file=stderr)
         print("======== ENV DUMP ==========", file=stderr)
         for key, val in config.items():
-            print(f"{key}={val}", file=stderr)
+            print(f"{key}={shown_value(key, val)}", file=stderr)
         print("====== END ENV DUMP ========", file=stderr)
     else:
         print("Environment OK.")
@@ -137,6 +155,26 @@ def check_user_exist():
         print(f"ERROR: unable to check user: {err}", file=stderr)
         return False
     print("Everything is OK with user.")
+    return True
+
+
+def check_secret_key():
+    """
+    Django's SECRET_KEY: from the environment, else generated once and kept on the data volume.
+    :return: True if a key is available.
+    """
+    if os.environ.get("SECRET_KEY"):
+        return True
+    if secret_key_file.is_file():
+        return True
+    try:
+        server_data.mkdir(parents=True, exist_ok=True)
+        secret_key_file.write_text(secrets.token_urlsafe(50) + "\n")
+        secret_key_file.chmod(0o600)
+        print(f"Generated a new secret key in {secret_key_file}.")
+    except Exception as err:
+        print(f"ERROR: unable to create the secret key: {err}", file=stderr)
+        return False
     return True
 
 
@@ -265,38 +303,42 @@ def check_timezone():
 
 def check_admin_user():
     """
-    Server initialization
+    Create the first admin when the database has none.
+    ADMIN_PASSWD is used when set (with a warning for the sample's `admin`); when it is empty, a random password is
+    generated and written to PATH_DATA/initial_admin_password, readable by the owner only. It never goes to the logs.
     """
     print("Checking for an admin user")
     try:
-        # create log folder if not exists
         print("Check if an admin user already exists.")
         con = sqlite3.connect("/app/data/delivery.db")
         cur = con.cursor()
         res = cur.execute("SELECT * FROM auth_user WHERE is_superuser=1")
-        ls_admin = res.fetchall()
-        admin_exist = len(ls_admin) > 0
+        admin_exist = len(res.fetchall()) > 0
+        con.close()
         if admin_exist:
             print("One admin already exists.")
-        else:
-            print(f"Create new admin user named {config['admin_name']}.")
-            cmd = (
-                f'python3 manage.py shell -c "'
-                f"from django.contrib.auth import get_user_model; "
-                f"User=get_user_model(); "
-                f"User.objects.create_superuser("
-                f"'{config['admin_name']}',"
-                f"'admin@foo.bar',"
-                f"'{config['admin_passwd']}')"
-                f'"'
+            return True
+        password = config["admin_passwd"]
+        if password in WEAK_ADMIN_PASSWORDS:
+            print(f"WARNING: ADMIN_PASSWD is the sample value: change the password of '{config['admin_name']}'.")
+        if not password:
+            password = secrets.token_urlsafe(18)
+            initial_admin_password_file.write_text(password + "\n")
+            initial_admin_password_file.chmod(0o600)
+            os.chown(initial_admin_password_file, user_info["id"], group_info["id"])
+            print(f"No ADMIN_PASSWD: the password of '{config['admin_name']}' is in {initial_admin_password_file}.")
+        print(f"Create new admin user named {config['admin_name']}.")
+        # The password goes through the environment, never through the command line (which is printed).
+        os.environ["DJANGO_SUPERUSER_PASSWORD"] = password
+        try:
+            return exec_cmd(
+                f"python3 manage.py createsuperuser --noinput --username '{config['admin_name']}' --email admin@foo.bar"
             )
-            print(f"Executing: '{cmd}'")
-            return exec_cmd(cmd)
+        finally:
+            os.environ.pop("DJANGO_SUPERUSER_PASSWORD", None)
     except Exception as err:
         print(f"ERROR exception during Server Initialization: {err}.", file=stderr)
         return False
-    # default: nothing to do
-    return True
 
 
 def dump_migrations(src: Path, dest: Path):
@@ -402,25 +444,26 @@ def start_server():
         print("ERROR: no project scripts is configured.", file=stderr)
         return False
     workers = os.environ.get("GUNICORN_WORKERS", "4")
-    cmd = f"gunicorn scripts.wsgi --bind=0.0.0.0:8000 --workers {workers} --timeout 1200 --reload --log-level info --log-file /app/data/log/gunicorn.log"
-    print(f"Executing: '{cmd}'")
-    os.execvp(
+    # The workers drop to PUID/PGID: the files they write (packages, docs, images) belong to that user.
+    args = [
         "gunicorn",
-        [
-            "gunicorn",
-            "scripts.wsgi",
-            "--bind=0.0.0.0:8000",
-            "--workers",
-            workers,
-            "--timeout",
-            "1200",
-            "--reload",
-            "--log-level",
-            "info",
-            "--log-file",
-            "/app/data/log/gunicorn.log",
-        ],
-    )
+        "scripts.wsgi",
+        "--bind=0.0.0.0:8000",
+        "--workers",
+        workers,
+        "--user",
+        str(user_info["id"]),
+        "--group",
+        str(group_info["id"]),
+        "--timeout",
+        "1200",
+        "--log-level",
+        "info",
+        "--log-file",
+        "/app/data/log/gunicorn.log",
+    ]
+    print(f"Executing: '{' '.join(args)}'")
+    os.execvp("gunicorn", args)
     return True
 
 
@@ -434,6 +477,9 @@ def main():
             fall_back()
             return
         if not check_timezone():
+            fall_back()
+            return
+        if not check_secret_key():
             fall_back()
             return
         if not correct_permission():

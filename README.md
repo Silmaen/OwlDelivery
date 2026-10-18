@@ -64,7 +64,9 @@ Copy `.env.sample` and adjust values. All variables are passed via the `env_file
 | `PGID` | `1000` | Unix group ID for file ownership |
 | `PORT` | `8080` | Host port mapped to the container |
 | `PATH_DATA` | `./docker_data/data` | Host path for the persistent data volume |
-| `DOMAIN_NAME` | `example.com` | Domain used for CSRF trusted origins (see below) |
+| `DOMAIN_NAME` | `example.com` | Domain used for CSRF trusted origins and allowed hosts (see below) |
+| `ALLOWED_HOSTS` | *(empty)* | Other host names than `DOMAIN_NAME`, comma separated (a LAN address...) |
+| `SECRET_KEY` | *(empty)* | Django secret key; when empty, one is generated in `PATH_DATA/secret_key` at first start |
 | `TZ` | `Europe/Paris` | Container timezone |
 
 ### Admin
@@ -72,9 +74,12 @@ Copy `.env.sample` and adjust values. All variables are passed via the `env_file
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `ADMIN_NAME` | `admin` | Initial superuser login (ignored if an admin already exists) |
-| `ADMIN_PASSWD` | `admin` | Initial superuser password |
+| `ADMIN_PASSWD` | *(empty)* | Initial superuser password |
 
-After the first run, it is strongly recommended to change this password.
+When `ADMIN_PASSWD` is empty, the first admin gets a generated password,
+written to `PATH_DATA/initial_admin_password` (readable by `PUID` only). Change it after the first login and delete
+the file. The old sample value `admin` is still accepted, with a warning in the logs. Like before, `ADMIN_PASSWD` only
+matters when the database has no admin yet: changing it later does not change the existing password. Passwords, secrets, keys and tokens of the environment are masked in the container logs.
 
 ### Email (SMTP)
 
@@ -98,7 +103,9 @@ Email is required for password reset functionality.
 
 ### DOMAIN_NAME Details
 
-This variable is **mandatory** for CSRF resolution on POST requests. `127.0.0.1` and `localhost` are always trusted.
+This variable is **mandatory** for CSRF resolution on POST requests, and only its host (plus `localhost` and
+`127.0.0.1`) is accepted in the `Host` header: add any other name with `ALLOWED_HOSTS`. A domain name without port
+means the site runs behind a TLS proxy (swag): Django then trusts `X-Forwarded-Proto` and marks its cookies `Secure`.
 
 Include the port if it is not the standard HTTP/HTTPS port:
 
@@ -147,7 +154,9 @@ python api.py push_release --url http://your-server --user ci --passwd secret \
 
 **Exit codes**: `0` = success, `1` = server/network error, `2` = missing Python dependency.
 
-Files under 100 MB are uploaded directly to `/api`; larger files use the Nginx upload module at `/upload`.
+Files under 100 MB are uploaded directly to `/api`; larger files use the Nginx upload module at `/upload`, with the
+fields also in the query string (the module drops the text fields of the form). Download a fresh `api.py`: older
+copies cannot push files above 100 MB.
 
 ## API Endpoint (`/api`)
 

@@ -42,7 +42,7 @@ runs it through its wake agent:
 
 Startup sequence:
 ```
-check_env → check_user_exist → check_timezone → correct_permission
+check_env → check_user_exist → check_timezone → check_secret_key → correct_permission
 → do_migrations → seed_pages → correct_permission → collect_static
 → check_admin_user → start_server (nginx + gunicorn foreground)
 ```
@@ -50,7 +50,10 @@ check_env → check_user_exist → check_timezone → correct_permission
 **Important patterns:**
 - `correct_permission()` runs **twice** (before and after migrations) because `dump_migrations` creates files as root
 - `collect_static()` runs as root (`as_root=True`) since `/app/staticfiles/` is container-local
-- Gunicorn starts in **foreground** via `os.execvp` (replaces the Python process) — no daemon mode, no sleep loop
+- Gunicorn starts in **foreground** via `os.execvp` (replaces the Python process) — no daemon mode, no sleep loop;
+  its workers drop to PUID/PGID (`--user`/`--group`), no `--reload`
+- `check_env` never prints the value of a PASSWD/PASSWORD/SECRET/KEY/TOKEN variable
+- The `git-info` stage takes `--build-arg GIT_REV=<hash>` when `.git` is unusable (a worktree), else "unknown"
 - `exec_cmd(cmd, as_root=False)` demotes to PUID/PGID by default; pass `as_root=True` for root commands
 - On failure, `fall_back()` drops to a shell for debugging
 

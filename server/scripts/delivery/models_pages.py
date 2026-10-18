@@ -15,8 +15,9 @@ from django.core.validators import FileExtensionValidator
 from django.db import models
 from django.db.models import F
 from markdownx.models import MarkdownxField
-from markdownx.utils import markdownify
 from PIL import Image, ImageOps
+
+from .markdown_utils import markdownify_safe
 
 PAGE_HOME = "home"
 PAGE_PRESENTATION = "presentation"
@@ -93,7 +94,7 @@ def render_markdown(text):
     :param text: The markdown source.
     :return: Html output.
     """
-    return markdownify(str(text or ""))
+    return markdownify_safe(text)
 
 
 def validate_showcase_image(value):

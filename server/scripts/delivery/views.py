@@ -2,6 +2,7 @@
 Package views
 """
 
+import re
 import shutil
 import tarfile
 import zipfile
@@ -10,7 +11,7 @@ from pathlib import Path
 from shutil import move
 
 from django.conf import settings
-from django.contrib.auth import authenticate, login
+from django.contrib.auth import authenticate
 from django.http import FileResponse, Http404, HttpResponse, HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.csrf import csrf_exempt
@@ -42,6 +43,15 @@ with open(root / "VERSION") as fp:
 SITE_VERSION = lines[0].strip()
 SITE_HASH = lines[1].strip()
 STAFF_ACTIVE = settings.ENABLE_STAFF
+
+# The API fields that end up in a path on disk. No segment may start with a dot, so `..` never passes.
+PATH_SEGMENT = r"[A-Za-z0-9][A-Za-z0-9._+-]*"
+SAFE_PATH_FIELDS = {
+    "branch": re.compile(rf"^{PATH_SEGMENT}(/{PATH_SEGMENT})*$"),
+    "hash": re.compile(rf"^{PATH_SEGMENT}$"),
+    "package.name": re.compile(r"^[A-Za-z0-9][A-Za-z0-9._+ ()-]*$"),
+}
+DOC_ARCHIVE_SUFFIXES = (".zip", ".tgz")
 
 
 def news(request):
@@ -240,8 +250,29 @@ def dl_script(request):
     return response
 
 
-def entry_exists(request):
-    data = request.POST.dict()
+def find_unsafe_field(data):
+    """
+    :param data: The POST fields of an API request.
+    :return: The name of the first field that cannot be used in a path, or None.
+    """
+    for field, pattern in SAFE_PATH_FIELDS.items():
+        if field in data and not pattern.match(data[field]):
+            return field
+    return None
+
+
+def is_spooled_upload(path_text):
+    """
+    `package.path` is set by the nginx upload module; a client can post it too, so it must point into the spool.
+    :param path_text: The posted path.
+    :return: True for an existing file under `MEDIA_ROOT/_upload`.
+    """
+    spool = (Path(settings.MEDIA_ROOT) / "_upload").resolve()
+    path = Path(path_text).resolve()
+    return path.is_file() and path.is_relative_to(spool)
+
+
+def entry_exists(request, data):
     file_name = ""
     if len(request.FILES.dict()) > 0:
         file_name = next(iter(request.FILES.dict()))
@@ -272,7 +303,8 @@ def revision_api(request):
                     user = authenticate(request, username=key, password=dec)
                     if user is None:
                         return HttpResponseForbidden("Invalid credentials.")
-                    login(request, user)
+                    # For this request only: a CI call must not create a session in the database.
+                    request.user = user
                 except Exception:
                     return HttpResponseForbidden("Invalid credentials.")
             if not request.user.is_authenticated:
@@ -284,16 +316,25 @@ def revision_api(request):
             return dl_script(request)
         if request.method != "POST":
             return HttpResponse(
-                f"ERROR invalid action.\nMETHOD: {request.method}\nheaders: {request.headers}",
+                f"ERROR invalid action.\nMETHOD: {request.method}",
                 status=406,
             )
         data = request.POST.dict()
+        if "package.path" in data:
+            # Through the nginx upload module the text fields of the form are dropped: the client also sends them
+            # in the query string, which `upload_pass_args` forwards. The body wins when both carry a field.
+            data = {**request.GET.dict(), **data}
         if "action" not in data:
             return HttpResponse(
-                f"ERROR no asked action.\nPOST: {data}\nheaders: {request.headers}",
+                f"ERROR no asked action.\nPOST: {data}",
                 status=406,
             )
         action = data["action"]
+        unsafe_field = find_unsafe_field(data)
+        if unsafe_field is not None:
+            return HttpResponse(f"ERROR invalid {unsafe_field} field.", status=406)
+        if "package.path" in data and not is_spooled_upload(data["package.path"]):
+            return HttpResponse("ERROR package.path is not an uploaded file.", status=406)
         if action == "version":
             return HttpResponse(f"version: {SITE_VERSION}\n", status=200)
         elif action in PAGE_ACTIONS:
@@ -307,20 +348,20 @@ def revision_api(request):
                 if len(request.FILES.dict()) > 0:
                     form = RevisionItemEntryFullForm(request.POST, request.FILES)
                     if form.is_valid():
-                        if entry_exists(request):
+                        if entry_exists(request, data):
                             return HttpResponse(
                                 "WARNING: Entry already exists.",
                                 status=201,
                             )
                         form.save()
                         return HttpResponse(
-                            f"GOOD.\nPOST: {data}\nFILES: {request.FILES.dict()}\nheaders: {request.headers}",
+                            f"GOOD.\nPOST: {data}\nFILES: {request.FILES.dict()}",
                             status=200,
                         )
                     else:
                         form.full_clean()
                         return HttpResponse(
-                            f"INVALID FORM.\nPOST: {data}\nFILES: {request.FILES.dict()}\nheaders: {request.headers}",
+                            f"INVALID FORM.\nPOST: {data}\nFILES: {request.FILES.dict()}",
                             status=406,
                         )
                 elif "package.path" in data:
@@ -340,23 +381,22 @@ def revision_api(request):
                             missing.append(d)
                     if not ok:
                         return HttpResponse(
-                            f"ERROR INVALID REQUEST.\n"
-                            f"POST: {data}\n"
-                            f"ERROR  Missing data: {missing}\n"
-                            f"headers: {request.headers}",
+                            f"ERROR INVALID REQUEST.\nPOST: {data}\nERROR  Missing data: {missing}\n",
                             status=406,
                         )
                     origin_path = Path(data["package.path"])
                     new_path = (
                         Path(settings.MEDIA_ROOT) / "packages" / data["branch"] / data["hash"] / data["package.name"]
                     )
-                    if entry_exists(request):
+                    if entry_exists(request, data):
                         return HttpResponse(
                             "WARNING: Entry already exists.",
                             status=201,
                         )
                     new_path.parent.mkdir(parents=True, exist_ok=True)
                     move(origin_path, new_path)
+                    # The spool is written world-writable (upload_store_access); a published package is not.
+                    new_path.chmod(0o644)
                     RevisionItemEntry.objects.create(
                         hash=data["hash"],
                         branch=data["branch"],
@@ -367,20 +407,17 @@ def revision_api(request):
                         package=str(new_path.relative_to(settings.MEDIA_ROOT)),
                     )
                     return HttpResponse(
-                        f"GOOD.\nPOST: {data}\nheaders: {request.headers}",
+                        f"GOOD.\nPOST: {data}",
                         status=200,
                     )
                 else:
                     return HttpResponse(
-                        f"ERROR  INVALID REQUEST.\nPOST: {data}\nERROR NO FILE\nheaders: {request.headers}",
+                        f"ERROR  INVALID REQUEST.\nPOST: {data}\nERROR NO FILE",
                         status=406,
                     )
             except Exception as err:
                 return HttpResponse(
-                    f"ERROR problem with the data: {err}.\n"
-                    f"POST: {data}\n"
-                    f"FILES: {request.FILES.dict()}\n"
-                    f"headers: {request.headers}\n ",
+                    f"ERROR problem with the data: {err}.\nPOST: {data}\nFILES: {request.FILES.dict()}\n",
                     status=406,
                 )
         elif action == "push_doc":
@@ -389,73 +426,61 @@ def revision_api(request):
             try:
                 if "branch" not in data:
                     return HttpResponse(
-                        f"ERROR INVALID REQUEST.\n"
-                        f"POST: {data}\n"
-                        f"ERROR  Missing branch field\n"
-                        f"headers: {request.headers}",
+                        f"ERROR INVALID REQUEST.\nPOST: {data}\nERROR  Missing branch field\n",
                         status=406,
                     )
-                # Determine file origin: Nginx upload module or direct upload
+                # Determine file origin: Nginx upload module (already checked to be in the spool) or direct upload
                 if "package.path" in data:
                     origin_path = Path(data["package.path"])
-                    origin_name = Path(data["package.name"])
-                    if not origin_path.exists():
-                        return HttpResponse(
-                            f"ERROR  INVALID REQUEST.\n"
-                            f"POST: {data}\n"
-                            f"ERROR NO FILE {origin_path} exists in defined package field.\n"
-                            f"headers: {request.headers}",
-                            status=406,
-                        )
+                    origin_name = Path(data.get("package.name", origin_path.name))
                 elif "package" in request.FILES:
                     uploaded = request.FILES["package"]
+                    origin_name = Path(uploaded.name)
+                    if not SAFE_PATH_FIELDS["package.name"].match(origin_name.name):
+                        return HttpResponse("ERROR invalid package file name.", status=406)
                     upload_dir = Path(settings.MEDIA_ROOT) / "_upload"
                     upload_dir.mkdir(parents=True, exist_ok=True)
-                    origin_path = upload_dir / uploaded.name
-                    origin_name = Path(uploaded.name)
+                    origin_path = upload_dir / origin_name.name
                     with open(origin_path, "wb") as f:
                         for chunk in uploaded.chunks():
                             f.write(chunk)
                 else:
                     return HttpResponse(
-                        f"ERROR  INVALID REQUEST.\n"
-                        f"POST: {data}\n"
-                        f"ERROR NO FILE in package field.\n"
-                        f"headers: {request.headers}",
+                        f"ERROR  INVALID REQUEST.\nPOST: {data}\nERROR NO FILE in package field.\n",
                         status=406,
                     )
-                new_path = Path(settings.MEDIA_ROOT) / "documentation" / data["branch"]
-                if new_path.exists():
-                    if not new_path.is_dir():
-                        new_path.unlink(missing_ok=True)
+                try:
+                    suffix = origin_name.suffix
+                    # Checked before anything is removed: a wrong archive must not wipe the current docs.
+                    if suffix not in DOC_ARCHIVE_SUFFIXES:
+                        return HttpResponse(
+                            f"ERROR  INVALID REQUEST.\nPOST: {data}\n"
+                            f"ERROR FILE {origin_name} Format not supported {suffix}.\n",
+                            status=406,
+                        )
+                    new_path = Path(settings.MEDIA_ROOT) / "documentation" / data["branch"]
+                    if new_path.exists():
+                        if not new_path.is_dir():
+                            new_path.unlink(missing_ok=True)
+                        else:
+                            shutil.rmtree(new_path, ignore_errors=True)
+                    new_path.mkdir(parents=True)
+                    if suffix == ".zip":
+                        with zipfile.ZipFile(origin_path, "r") as zip_ref:
+                            zip_ref.extractall(new_path)
                     else:
-                        shutil.rmtree(new_path, ignore_errors=True)
-                new_path.mkdir(parents=True)
-                suffix = origin_name.suffix
-                if suffix == ".zip":
-                    with zipfile.ZipFile(origin_path, "r") as zip_ref:
-                        zip_ref.extractall(new_path)
-                elif suffix == ".tgz":
-                    with tarfile.open(origin_path, "r:gz") as tar_ref:
-                        tar_ref.extractall(new_path, filter="data")
-                else:
-                    return HttpResponse(
-                        f"ERROR  INVALID REQUEST.\n"
-                        f"POST: {data}\n"
-                        f"ERROR FILE {origin_name} Format not supported {suffix}.\n"
-                        f"headers: {request.headers}",
-                        status=406,
-                    )
+                        with tarfile.open(origin_path, "r:gz") as tar_ref:
+                            tar_ref.extractall(new_path, filter="data")
+                finally:
+                    # The archive is extracted (or refused): the spooled copy is no longer needed.
+                    origin_path.unlink(missing_ok=True)
                 return HttpResponse(
-                    f"GOOD.\nPOST: {data}\nheaders: {request.headers}",
+                    f"GOOD.\nPOST: {data}",
                     status=200,
                 )
             except Exception as err:
                 return HttpResponse(
-                    f"ERROR problem with the data: {err}.\n"
-                    f"POST: {data}\n"
-                    f"FILES: {request.FILES.dict()}\n"
-                    f"headers: {request.headers}\n ",
+                    f"ERROR problem with the data: {err}.\nPOST: {data}\nFILES: {request.FILES.dict()}\n",
                     status=406,
                 )
         elif action == "delete":
@@ -470,7 +495,7 @@ def revision_api(request):
             return HttpResponse("GOOD. Deleted.", status=200)
         else:
             return HttpResponse(
-                f"ERROR invalid action.\nPOST: {data}\nheaders: {request.headers}",
+                f"ERROR invalid action.\nPOST: {data}",
                 status=406,
             )
     except Exception as err:

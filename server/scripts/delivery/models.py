@@ -5,7 +5,8 @@ from django.db import models
 from django.utils import timezone
 from django.utils.text import Truncator
 from markdownx.models import MarkdownxField
-from markdownx.utils import markdownify
+
+from .markdown_utils import markdownify_safe
 
 TRUNCATION = 200  # Length of truncate text.
 COMMENT_TRUNCATION = 100  # Length of truncated comment.
@@ -37,14 +38,14 @@ class NewsEntry(models.Model):
         Truncate render of markdown content.
         :return: Html output.
         """
-        return Truncator(markdownify(str(self.content))).chars(TRUNCATION, truncate="...", html=True)
+        return Truncator(markdownify_safe(str(self.content))).chars(TRUNCATION, truncate="...", html=True)
 
     def content_all_md(self):
         """
         Full render of markdown content.
         :return: Html output.
         """
-        return markdownify(str(self.content))
+        return markdownify_safe(str(self.content))
 
     def nb_comments(self):
         """
@@ -104,14 +105,14 @@ class NewsComment(models.Model):
         Truncated render of markdown content.
         :return: Html output.
         """
-        return Truncator(markdownify(str(self.content))).chars(COMMENT_TRUNCATION, truncate="...", html=True)
+        return Truncator(markdownify_safe(str(self.content))).chars(COMMENT_TRUNCATION, truncate="...", html=True)
 
     def content_all_md(self):
         """
         full render of markdown content.
         :return: Html output.
         """
-        return markdownify(str(self.content))
+        return markdownify_safe(str(self.content))
 
     class Meta:
         """

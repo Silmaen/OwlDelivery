@@ -14,6 +14,8 @@ import os
 import sys
 from pathlib import Path
 
+from django.core.management.utils import get_random_secret_key
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 SITE_DIR = BASE_DIR.parent
@@ -22,12 +24,34 @@ SITE_DIR = BASE_DIR.parent
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-=mnlaqamlk--(f7q19^w(6q0cfx6q&t@_^78r=9cyqwn9ux(t*"
+# From SECRET_KEY in .env, else from the file entrypoint.py generates on the data volume (never served by nginx).
+# The random fallback only serves the tests and one-off commands: workers sharing no key could not share sessions.
+SECRET_KEY_FILE = Path("/app/data/secret_key")
+SECRET_KEY = os.environ.get("SECRET_KEY", "")
+if not SECRET_KEY and SECRET_KEY_FILE.is_file():
+    SECRET_KEY = SECRET_KEY_FILE.read_text().strip()
+if not SECRET_KEY:
+    SECRET_KEY = get_random_secret_key()
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get("DEBUG_MODE", "False") == "True"
-#
-ALLOWED_HOSTS = ["*"]
+
+# Behind its public domain name (no port), the site is served in https by the TLS proxy in front of nginx.
+DOMAIN_NAME = os.environ.get("DOMAIN_NAME", "")
+DOMAIN_HOST = DOMAIN_NAME.split(":")[0]
+PUBLIC_HTTPS = bool(DOMAIN_NAME) and ":" not in DOMAIN_NAME
+# Only the site's own names: a forged Host header would otherwise end up in the password reset links.
+# ALLOWED_HOSTS in .env (comma separated) adds other names, a LAN address for instance.
+if os.environ.get("ALLOWED_HOSTS"):
+    ALLOWED_HOSTS = [host.strip() for host in os.environ["ALLOWED_HOSTS"].split(",") if host.strip()]
+elif DOMAIN_HOST:
+    ALLOWED_HOSTS = [DOMAIN_HOST, f".{DOMAIN_HOST}", "localhost", "127.0.0.1"]
+else:
+    ALLOWED_HOSTS = ["*"]
+if PUBLIC_HTTPS:
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
 CSRF_TRUSTED_ORIGINS = ["http://127.0.0.1", "http://localhost"]
 if "DOMAIN_NAME" in os.environ and os.environ["DOMAIN_NAME"]:
     CSRF_TRUSTED_ORIGINS += [
@@ -167,6 +191,8 @@ MARKDOWNX_MARKDOWN_EXTENSIONS = [
     "markdown.extensions.extra",
     "markdown.extensions.codehilite",
 ]
+# The editor preview renders like the site: sanitized (delivery/markdown_utils.py).
+MARKDOWNX_MARKDOWNIFY_FUNCTION = "delivery.markdown_utils.markdownify_safe"
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
@@ -187,10 +213,5 @@ EMAIL_USE_TLS = os.environ.get("EMAIL_USE_TLS", "True") == "True"
 EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "")
 EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
 
-# error handlers
-handler400 = "delivery.views_error.bad_request"
-handler403 = "delivery.views_error.permission_denied"
-handler404 = "delivery.views_error.page_not_found"
-handler500 = "delivery.views_error.server_error"
 
 ENABLE_STAFF = os.environ.get("ENABLE_STAFF", "").lower() in ["on", "true", "yes"]

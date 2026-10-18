@@ -6,7 +6,11 @@
 FROM alpine/git:v2.54.0 AS git-info
 COPY .git /repo/.git
 WORKDIR /repo
-RUN git rev-parse --short HEAD > /git-rev.txt
+# In a git worktree `.git` is a file pointing outside the build context, so rev-parse fails:
+# pass the hash instead (`--build-arg GIT_REV=$(git rev-parse --short HEAD)`), else "unknown".
+ARG GIT_REV=""
+RUN if [ -n "$GIT_REV" ]; then echo "$GIT_REV"; else git rev-parse --short HEAD 2>/dev/null || echo unknown; fi \
+    > /git-rev.txt
 
 FROM python:3.14-alpine
 

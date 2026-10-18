@@ -7,6 +7,23 @@ What has shipped, newest first. What is planned lives in [ROADMAP.md](ROADMAP.md
 - Gunicorn and Nginx timeouts raised and upload concurrency fixed, so large packages no longer fail mid-upload.
 - `deploy.sh` deploys on a server in one command: fast-forward, database snapshot, base image refresh, build, health check.
 - `/media` only serves `packages/`, `documentation/` and `markdownx/`, so the database and logs are no longer downloadable.
+- `/api` answers no longer echo the request headers, which carried the HTTP Basic credentials of the caller.
+- `/api` refuses `branch`, `hash`, file names and `package.path` that leave their folder: a push could move or delete any file of the data volume.
+- `push_doc` checks the archive format before removing the current documentation, and deletes its spooled copy.
+- Markdown of news, comments and pages is sanitized with `nh3`: a comment can no longer run a script in a moderator's browser.
+- Django's `SECRET_KEY` is no longer committed: it comes from `.env` or is generated once in `PATH_DATA/secret_key`.
+- The container logs mask every password, secret, key and token of the environment.
+- No more default admin password: with an empty `ADMIN_PASSWD`, the first admin gets a generated one in `PATH_DATA/initial_admin_password`.
+- Gunicorn workers run as `PUID`/`PGID` instead of root, without `--reload`.
+- Admin news and revision item pages require their permission; anonymous visitors saw every comment.
+- A user manager can no longer change their own account or a superuser, nor grant a permission they do not hold.
+- Admin actions redirect to fixed pages instead of the `Referer` header.
+- Deleting a revision item deletes its archive, which stayed downloadable from its URL.
+- `ALLOWED_HOSTS` follows `DOMAIN_NAME` (extra names through `ALLOWED_HOSTS` in `.env`), and cookies are `Secure` behind the TLS proxy.
+- API calls in HTTP Basic no longer open a session each.
+- The image builds from a git worktree too: the commit hash can be passed with `--build-arg GIT_REV`.
+- Packages above 100 MB upload through `/upload` again: the nginx module dropped their fields, `api.py` now also sends them in the query string.
+- The custom error pages are used at last: their handlers sat in `settings.py`, where Django never reads them.
 - Base images pinned on a version (Python 3.14 Alpine), refreshed at every deployment.
 - Changelog and roadmap moved out of the README into `CHANGELOG.md` and `ROADMAP.md`.
 - Site name, footer and meta description come from the database (`SiteSettings`), seeded by `manage.py seed_pages` at start.

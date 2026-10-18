@@ -3,3 +3,4 @@ pillow
 gunicorn
 django-markdownx
 markdown
+nh3
