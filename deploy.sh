@@ -16,6 +16,7 @@
 #   ./deploy.sh restart         restart without rebuilding
 #   ./deploy.sh backup          snapshot the database, deploy nothing
 #   ./deploy.sh superuser       create an admin account
+#   ./deploy.sh password [user] set a new password (default user: ADMIN_NAME, else admin)
 #   ./deploy.sh shell           Django shell inside the web container
 #   ./deploy.sh help            this help
 #
@@ -404,7 +405,7 @@ while [ $# -gt 0 ]; do
         --dry-run)   DRY_RUN=1 ;;
         -h|--help|help) usage; exit 0 ;;
         --check)     COMMAND="check" ;;
-        deploy|check|status|logs|stop|restart|backup|superuser|shell)
+        deploy|check|status|logs|stop|restart|backup|superuser|password|shell)
             COMMAND="$1"
             if [ $# -gt 1 ] && [[ "$2" != -* ]]; then
                 ARGUMENT="$2"
@@ -425,5 +426,9 @@ case "$COMMAND" in
     restart)   step "Restarting"; docker compose restart; check_health; summary ;;
     backup)    check_tools; backup_database ;;
     superuser) docker compose exec "${MANAGE[@]}" createsuperuser ;;
+    # Interactive on purpose (it asks the new password twice): only ever run by hand. As PUID:PGID, so the
+    # database journal it writes does not end up owned by root.
+    password)  docker compose exec -u "$(env_value PUID 1000):$(env_value PGID 1000)" "${MANAGE[@]}" \
+                   changepassword "${ARGUMENT:-$(env_value ADMIN_NAME admin)}" ;;
     shell)     docker compose exec "${MANAGE[@]}" shell ;;
 esac

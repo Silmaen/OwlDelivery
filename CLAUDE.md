@@ -145,7 +145,7 @@ PUID/PGID (`--user`/`--group`), without `--reload`.
 
 `./deploy.sh` = git fast-forward → database snapshot → `docker pull` of the `FROM` images →
 `docker compose build` → `up -d` → wait for `healthy`. Other commands: `check` (exit 10 if an
-update is pending), `status`, `logs`, `stop`, `restart`, `backup`, `superuser`, `shell`,
+update is pending), `status`, `logs`, `stop`, `restart`, `backup`, `superuser`, `password [user]`, `shell`,
 `help`; flags `--no-pull`, `--no-backup`, `--dry-run`.
 
 Invariants, because the fleet console of `home-server-stacks` runs this file through its wake

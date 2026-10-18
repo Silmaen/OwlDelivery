@@ -79,7 +79,8 @@ Copy `.env.sample` and adjust values. All variables are passed via the `env_file
 When `ADMIN_PASSWD` is empty, the first admin gets a generated password,
 written to `PATH_DATA/initial_admin_password` (readable by `PUID` only). Change it after the first login and delete
 the file. The old sample value `admin` is still accepted, with a warning in the logs. Like before, `ADMIN_PASSWD` only
-matters when the database has no admin yet: changing it later does not change the existing password. Passwords, secrets, keys and tokens of the environment are masked in the container logs.
+matters when the database has no admin yet: changing it later does not change the existing password. A lost
+password is reset with `./deploy.sh password` (the `ADMIN_NAME` account) or `./deploy.sh password <user>`. Passwords, secrets, keys and tokens of the environment are masked in the container logs.
 
 ### Email (SMTP)
 
