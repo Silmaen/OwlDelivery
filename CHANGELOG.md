@@ -26,6 +26,7 @@ What has shipped, newest first. What is planned lives in [ROADMAP.md](ROADMAP.md
 - The custom error pages are used at last: their handlers sat in `settings.py`, where Django never reads them.
 - Logout works again: the header posts it, Django 5+ refuses a logout by GET.
 - The users admin says why a row is read-only (your own account, a superuser).
+- `./deploy.sh password [user]` resets a lost password.
 - Base images pinned on a version (Python 3.14 Alpine), refreshed at every deployment.
 - Changelog and roadmap moved out of the README into `CHANGELOG.md` and `ROADMAP.md`.
 - Site name, footer and meta description come from the database (`SiteSettings`), seeded by `manage.py seed_pages` at start.
