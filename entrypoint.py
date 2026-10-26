@@ -416,6 +416,19 @@ def seed_pages():
     return True
 
 
+def update_stats_data():
+    """
+    Refresh the country database of the statistics and drop the old hits; neither is fatal.
+    """
+    print("Updating the statistics data")
+    os.chdir(server_scripts)
+    if not exec_cmd("python3 manage.py update_geoip"):
+        print("WARNING: could not update the GeoIP database.", file=stderr)
+    if not exec_cmd("python3 manage.py purge_stats"):
+        print("WARNING: could not purge the old statistics.", file=stderr)
+    return True
+
+
 def collect_static():
     """
     Collect static files for Django
@@ -491,6 +504,7 @@ def main():
         if not seed_pages():
             fall_back()
             return
+        update_stats_data()
         if not correct_permission():
             fall_back()
             return

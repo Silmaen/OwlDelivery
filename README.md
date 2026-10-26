@@ -101,6 +101,7 @@ Email is required for password reset functionality.
 | `DEBUG_MODE` | `False` | Enable Django debug mode (development only) |
 | `ENABLE_STAFF` | `False` | Enable the advanced admin section for staff users |
 | `GUNICORN_WORKERS` | `4` | Number of Gunicorn worker processes |
+| `GEOIP_DOWNLOAD` | `True` | Download the DB-IP Lite country database of the statistics at start (`PATH_DATA/geoip/`) |
 
 ### DOMAIN_NAME Details
 

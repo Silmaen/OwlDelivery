@@ -33,6 +33,7 @@ from .views_admin import (
 from .views_admin_pages import admin_pages, admin_pages_action, admin_pages_detail, admin_pages_settings
 from .views_docs import docs
 from .views_pages import home, presentation, robots_txt
+from .views_stats import admin_stats, stats_download
 
 urlpatterns = [
     path("", home, name="index"),
@@ -57,6 +58,7 @@ urlpatterns = [
     path("admin/pages/settings", admin_pages_settings, name="a_pages_settings"),
     path("admin/pages/<str:kind>/<int:pk>", admin_pages_detail, name="a_pages_detail"),
     path("admin/pages/<str:kind>/<int:pk>/action", admin_pages_action, name="a_pages_action"),
+    path("admin/stats", admin_stats, name="a_stats"),
     path("admin/revisions", admin_revisions, name="a_revisions"),
     path("admin/branches", admin_branches, name="a_branches"),
     path("admin/revisions/<int:page>", admin_revisions_page, name="a_revisions_page"),
@@ -77,4 +79,6 @@ urlpatterns = [
     ),
     path("script_api", dl_script, name="dl_script"),
     path("api", revision_api, name="rev_api"),
+    # Reached only through the nginx mirror of /media/packages/ (internal location, 404 from outside).
+    path("_stats/download", stats_download, name="stats_download"),
 ] + static(main_settings.MEDIA_URL, document_root=main_settings.MEDIA_ROOT)
