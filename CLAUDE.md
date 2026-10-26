@@ -70,6 +70,9 @@ OwlDelivery/
 │       ├── delivery/                   # Main app: packages, news, branches, pages, API
 │       │   ├── models.py               # NewsEntry, NewsComment, RevisionItemEntry, BranchEntry
 │       │   ├── models_pages.py         # Page content models (SiteSettings, PageSection, ShowcaseImage, ...)
+│       │   ├── models_stats.py         # TrafficHit: one row per page view / package download
+│       │   ├── stats_utils.py          # Hit recording (client IP, daily visitor hash, GeoIP, referrer) + report
+│       │   ├── stats_middleware.py     # PageViewMiddleware: counts the public HTML pages
 │       │   ├── signals.py              # content_version bump (cache key), image and package file clean-up
 │       │   ├── markdown_utils.py       # markdownify_safe: markdown + nh3, the only markdown renderer
 │       │   ├── pages_utils.py          # Block builders + per-block cache of the two pages
@@ -79,6 +82,7 @@ OwlDelivery/
 │       │   ├── views.py                # Public views + /api endpoint (path validation, nginx upload merge)
 │       │   ├── views_pages.py          # Home (/), presentation, robots.txt
 │       │   ├── views_docs.py           # /docs/<branch>/: site header + doxygen in a frame
+│       │   ├── views_stats.py          # /_stats/download (nginx mirror), /admin/stats
 │       │   ├── api_pages.py            # push_screenshot, push_release, release_info
 │       │   ├── views_admin.py          # Admin CRUD views (revisions paginated: get_revision_page)
 │       │   ├── views_admin_pages.py    # Admin Pages tab (generic per-kind views)
@@ -108,6 +112,7 @@ OwlDelivery/
 | `/docs/<branch>/[<page>]` | `views_docs.docs` | Doxygen tree in a frame under the site header |
 | `/robots.txt`, `/sitemap.xml` | `views_pages`, `sitemaps` | SEO |
 | `/api`, `/upload` | `views.revision_api` (+ nginx) | CI pushes |
+| `/_stats/download` | `views_stats.stats_download` | Download counter, reached only by the nginx mirror (404 from outside) |
 
 ## Container Paths
 
@@ -120,6 +125,7 @@ OwlDelivery/
 | Upload temp | `/app/data/_upload/{0-9}/` (nginx spool, world-writable files; emptied after each push) |
 | Page images | `/app/data/pages/gallery/` (originals), `/app/data/pages/thumbs/` (WebP) |
 | Secret key | `/app/data/secret_key` (generated when `SECRET_KEY` is unset, mode 600) |
+| GeoIP database | `/app/data/geoip/country.mmdb` (DB-IP Lite, `update_geoip` at start, refreshed after 30 days) |
 | First admin password | `/app/data/initial_admin_password` (when `ADMIN_PASSWD` is unset, mode 600) |
 | Logs | `/app/data/log/` (access, gunicorn, debugging) |
 | Static (collected) | `/app/staticfiles/` |
@@ -131,12 +137,14 @@ OwlDelivery/
 
 ```
 check_env() → check_user_exist() → check_timezone() → check_secret_key() → correct_permission()
-→ do_migrations() → seed_pages() → correct_permission() → collect_static()
+→ do_migrations() → seed_pages() → update_stats_data() → correct_permission() → collect_static()
 → check_admin_user() → start_server() (nginx + gunicorn foreground via execvp)
 ```
 
 `correct_permission()` runs twice: before migrations (so DB is writable) and after (to fix files created as root by dump_migrations).
 `seed_pages` creates the missing default content of the pages and never modifies an existing row.
+`update_stats_data` runs `update_geoip` (skipped with `GEOIP_DOWNLOAD=False`) and `purge_stats` (hits older than
+`STATS_RETENTION_DAYS`); neither failure stops the start.
 `check_env()` masks the values of PASSWD/PASSWORD/SECRET/KEY/TOKEN variables. `check_admin_user()` creates the
 first admin with `createsuperuser --noinput` (password through `DJANGO_SUPERUSER_PASSWORD`, never on the command
 line); with an empty `ADMIN_PASSWD` it generates one in `/app/data/initial_admin_password` (`admin` only warns).
@@ -176,6 +184,7 @@ outside the context, so pass `--build-arg GIT_REV=$(git rev-parse --short HEAD)`
 - `PATH_DATA` - Host data volume path (default: `./docker_data/data`)
 - `ADMIN_NAME`/`ADMIN_PASSWD` - Initial superuser credentials
 - `DEBUG_MODE`, `TZ`, `ENABLE_STAFF`, email settings (`EMAIL_HOST`, etc.)
+- `GEOIP_DOWNLOAD` - Download the DB-IP Lite country database at start (default `True`)
 
 ## API Endpoint (`/api`)
 
@@ -208,6 +217,9 @@ Script Python téléchargé par les clients (CI, développeurs) via `GET /api` p
   deletes its archive (`signals.on_package_delete`)
 - **BranchEntry** - Branch metadata (name, visible, stable, date)
 - **NewsEntry.published** - Draft flag: hidden from `/`, `/news` and the detail page when false
+- **TrafficHit** (`models_stats.py`) - Page view or download: path, item, user, `automated`, `visitor` (keyed
+  hash of IP + user agent, rotates daily: no IP is stored), `country`, `referrer` (external host only). Admin
+  (superuser/staff) and service account are read from `user` at query time, so flagging an account is retroactive
 - **Page content** (`models_pages.py`): `SiteSettings` (singleton `pk=1`, site texts + `content_version`),
   `PageSection` (page, key, title, intro, enabled, order), `ShowcaseImage`, `FeatureCard`, `SampleGame`,
   `RoadmapMilestone`, `ReleaseNote`, `SiteLink`. Each block of `/` and `/presentation` is cached under
@@ -224,6 +236,8 @@ Script Python téléchargé par les clients (CI, développeurs) via `GET /api` p
 - `delivery.add_revisionitementry` / `delivery.delete_revisionitementry` - Upload/delete packages
 - `delivery.change_<page model>` - Any of them opens the Pages admin tab and `?preview=1`
 - `delivery.add_showcaseimage` / `delivery.add_releasenote` - CI push of screenshots / release notes
+- `delivery.view_traffichit` - Statistics tab (`/admin/stats`); the group `Service accounts` (`SERVICE_GROUP`,
+  "Service" column of the users admin) grants nothing and only takes an account out of the statistics
 - User manager (`auth.delete_user`): never changes their own account or a superuser, and only grants or removes a
   permission they hold themselves (`USER_TOGGLES` in `views_admin.py`)
 - Every admin view checks its permission, including GET; admin redirects go to fixed URL names, never `Referer`.
@@ -255,6 +269,9 @@ Script Python téléchargé par les clients (CI, développeurs) via `GET /api` p
 - Markdown is always rendered with `markdown_utils.markdownify_safe` (python-markdown + nh3), never `markdownify`
   alone: the templates print it `|safe`
 - FileField stores relative paths (e.g., `packages/main/abc123/file.zip`), MEDIA_ROOT is `/app/data`
+- Page views are counted by `PageViewMiddleware` (GET, 200, HTML, not `UNTRACKED_PREFIXES`, not `?preview`);
+  downloads by an nginx `mirror` of `/media/packages/` to the internal `/_stats/download` (resumed `Range`, `HEAD`
+  and unknown files not counted). Requests from loopback (health check) are never counted
 - `/media` is a **whitelist** in nginx (`packages/`, `documentation/`, `markdownx/`, `pages/`), everything
   else returns 404: the data volume also holds `delivery.db`, `log/` and `_upload/`, and a bare
   `alias /app/data` published the database. Adding a public subdirectory is a deliberate edit of

@@ -139,3 +139,130 @@
   padding: var(--sp-2) 0;
   border-bottom: 1px solid var(--color-neutral-600);
 }
+
+/* Statistics admin: tiles, activity chart, tables side by side */
+.stats {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-6);
+}
+
+.stats__check {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-size: var(--text-sm);
+  cursor: pointer;
+}
+
+.stats__tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: var(--sp-4);
+}
+
+.stats-tile {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  padding: var(--sp-4);
+  background: var(--color-neutral-800);
+  border-radius: var(--radius-lg);
+  border-left: 3px solid var(--color-primary);
+}
+
+.stats-tile__value {
+  font-size: var(--text-3xl);
+  font-weight: 700;
+  line-height: var(--leading-tight);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-neutral-50);
+}
+
+.stats-tile__label {
+  font-size: var(--text-sm);
+  color: var(--color-neutral-200);
+}
+
+.stats__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-6);
+}
+
+@media (min-width: 1024px) {
+  .stats__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.stats__panel {
+  min-width: 0;
+}
+
+.stats__title {
+  margin-bottom: var(--sp-3);
+  font-size: var(--text-lg);
+}
+
+.stats__note {
+  margin-bottom: var(--sp-2);
+  font-size: var(--text-sm);
+}
+
+.stats-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 10rem;
+  padding: var(--sp-2);
+  background: var(--color-neutral-800);
+  border-radius: var(--radius-md);
+}
+
+.stats-chart__bar {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column-reverse;
+  min-width: 2px;
+  height: 100%;
+}
+
+.stats-chart__bar:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.stats-chart__views,
+.stats-chart__key--views {
+  background: var(--color-primary);
+}
+
+.stats-chart__downloads,
+.stats-chart__key--downloads {
+  background: var(--color-neutral-100);
+}
+
+.stats-chart__views,
+.stats-chart__downloads {
+  display: block;
+}
+
+.stats-chart__axis,
+.stats-chart__legend {
+  display: flex;
+  gap: var(--sp-4);
+  margin-top: var(--sp-2);
+  font-size: var(--text-xs);
+}
+
+.stats-chart__axis {
+  justify-content: space-between;
+}
+
+.stats-chart__key {
+  display: inline-block;
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: var(--radius-sm);
+  vertical-align: middle;
+}

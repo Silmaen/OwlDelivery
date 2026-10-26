@@ -16,6 +16,8 @@
             <th class="cell--center">Pages push</th>
             <th class="cell--center">User view</th>
             <th class="cell--center">User del.</th>
+            <th class="cell--center">Stats view</th>
+            <th class="cell--center" title="Service accounts (CI, scripts) are left out of the statistics">Service</th>
             <th class="cell--actions"></th>
         </tr>
         </thead>
@@ -65,6 +67,14 @@
             <td class="cell--center">
                 {% if user_for.can_delete_user %}<span class="material-symbols-outlined perm">edit</span>
                 {% else %}<span class="material-symbols-outlined noperm">edit_off</span>{% endif %}
+            </td>
+            <td class="cell--center">
+                {% if user_for.can_view_stats %}<span class="material-symbols-outlined perm">monitoring</span>
+                {% else %}<span class="material-symbols-outlined noperm">monitoring</span>{% endif %}
+            </td>
+            <td class="cell--center">
+                {% if user_for.is_service %}<span class="material-symbols-outlined perm">smart_toy</span>
+                {% else %}<span class="material-symbols-outlined text-muted">person</span>{% endif %}
             </td>
             <td></td>
             {% else %}
@@ -155,6 +165,26 @@
                     <button type="submit" class="btn btn--icon btn--ghost" title="Toggle user delete">
                         {% if user_for.can_delete_user %}<span class="material-symbols-outlined perm">edit</span>
                         {% else %}<span class="material-symbols-outlined noperm">edit_off</span>{% endif %}
+                    </button>
+                </form>
+            </td>
+            <td class="cell--center">
+                <form method="post" action="{% url 'modif_user' user_for.pk %}">
+                    {% csrf_token %}
+                    <input type="hidden" value="toggle_stats_view" name="action">
+                    <button type="submit" class="btn btn--icon btn--ghost" title="Toggle statistics view">
+                        {% if user_for.can_view_stats %}<span class="material-symbols-outlined perm">monitoring</span>
+                        {% else %}<span class="material-symbols-outlined noperm">monitoring</span>{% endif %}
+                    </button>
+                </form>
+            </td>
+            <td class="cell--center">
+                <form method="post" action="{% url 'modif_user' user_for.pk %}">
+                    {% csrf_token %}
+                    <input type="hidden" value="toggle_service" name="action">
+                    <button type="submit" class="btn btn--icon btn--ghost" title="Toggle service account (left out of the statistics)">
+                        {% if user_for.is_service %}<span class="material-symbols-outlined perm">smart_toy</span>
+                        {% else %}<span class="material-symbols-outlined text-muted">person</span>{% endif %}
                     </button>
                 </form>
             </td>

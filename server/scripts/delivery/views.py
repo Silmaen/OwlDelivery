@@ -26,6 +26,7 @@ from .perms_utils import (
     can_see_news_admin,
     can_see_pages_admin,
     can_see_revision_admin,
+    can_see_stats_admin,
     is_comment_moderator,
 )
 from .release_utils import (
@@ -254,6 +255,8 @@ def admin(request):
         return redirect("a_pages")
     if can_see_revision_admin(request):
         return redirect("a_revisions")
+    if can_see_stats_admin(request):
+        return redirect("a_stats")
     return redirect("a_users")
 
 

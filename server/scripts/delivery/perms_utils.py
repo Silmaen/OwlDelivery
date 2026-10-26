@@ -27,6 +27,7 @@ def can_see_admin(request):
         "delivery.add_newsentry",
         "delivery.delete_newsentry",
         "delivery.delete_newscomment",
+        "delivery.view_traffichit",
         *PAGES_PERMISSIONS,
     ]:
         if request.user.has_perm(perm):
@@ -89,6 +90,12 @@ def can_see_pages_admin(request):
         if request.user.has_perm(perm):
             return True
     return False
+
+
+def can_see_stats_admin(request):
+    if not request.user.is_authenticated:
+        return False
+    return request.user.has_perm("delivery.view_traffichit")
 
 
 def can_edit_pages(request):

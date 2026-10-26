@@ -4,3 +4,4 @@ gunicorn
 django-markdownx
 markdown
 nh3
+maxminddb

@@ -217,3 +217,4 @@ from .models_pages import (  # noqa: E402, F401
     SiteLink,
     SiteSettings,
 )
+from .models_stats import TrafficHit  # noqa: E402, F401

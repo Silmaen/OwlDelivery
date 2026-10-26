@@ -1,0 +1,186 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="stats">
+    <form method="get" action="{% url 'a_stats' %}" class="admin-filter">
+        <label class="form-group__label" for="stats-days">Period</label>
+        <select class="form-group__input" id="stats-days" name="days" onchange="this.form.submit()">
+            {% for period in periods %}
+            <option value="{{ period }}"{% if period == days %} selected{% endif %}>Last {{ period }} days</option>
+            {% endfor %}
+        </select>
+        <label class="stats__check"><input type="checkbox" name="admins" value="1" onchange="this.form.submit()"{% if audience.admins %} checked{% endif %}> Admins</label>
+        <label class="stats__check"><input type="checkbox" name="services" value="1" onchange="this.form.submit()"{% if audience.services %} checked{% endif %}> Service accounts</label>
+        <label class="stats__check"><input type="checkbox" name="automated" value="1" onchange="this.form.submit()"{% if audience.automated %} checked{% endif %}> Robots &amp; scripts</label>
+        <noscript><button type="submit" class="btn btn--sm">Filter</button></noscript>
+    </form>
+
+    <div class="stats__tiles">
+        <div class="stats-tile">
+            <span class="stats-tile__value">{{ report.totals.views }}</span>
+            <span class="stats-tile__label">Page views</span>
+        </div>
+        <div class="stats-tile" title="One visitor on one day counts once">
+            <span class="stats-tile__value">{{ report.totals.visits }}</span>
+            <span class="stats-tile__label">Visits</span>
+        </div>
+        <div class="stats-tile">
+            <span class="stats-tile__value">{{ report.totals.downloads }}</span>
+            <span class="stats-tile__label">Downloads</span>
+        </div>
+        <div class="stats-tile">
+            <span class="stats-tile__value">{{ report.totals.users }}</span>
+            <span class="stats-tile__label">Signed-in users</span>
+        </div>
+    </div>
+
+    <section class="stats__panel">
+        <h2 class="stats__title">Activity {% if report.timeline.weekly %}per week{% else %}per day{% endif %}</h2>
+        <div class="stats-chart" role="img" aria-label="Page views and downloads {% if report.timeline.weekly %}per week{% else %}per day{% endif %}, peak {{ report.timeline.peak }}">
+            {% for bar in report.timeline.bars %}
+            <div class="stats-chart__bar" title="{% if report.timeline.weekly %}Week of {% endif %}{{ bar.day|date:'d/m/Y' }}: {{ bar.views }} view{{ bar.views|pluralize }}, {{ bar.downloads }} download{{ bar.downloads|pluralize }}">
+                <span class="stats-chart__downloads" style="height: {{ bar.downloads_pct|stringformat:'s' }}%"></span>
+                <span class="stats-chart__views" style="height: {{ bar.views_pct|stringformat:'s' }}%"></span>
+            </div>
+            {% endfor %}
+        </div>
+        <div class="stats-chart__axis text-muted">
+            <span>{{ report.timeline.bars.0.day|date:'d/m' }}</span>
+            <span>peak {{ report.timeline.peak }}</span>
+            {% with last=report.timeline.bars|last %}<span>{{ last.day|date:'d/m' }}</span>{% endwith %}
+        </div>
+        <div class="stats-chart__legend text-muted">
+            <span><span class="stats-chart__key stats-chart__key--views"></span> Page views</span>
+            <span><span class="stats-chart__key stats-chart__key--downloads"></span> Downloads</span>
+        </div>
+    </section>
+
+    <div class="stats__grid">
+        <section class="stats__panel">
+            <h2 class="stats__title">Pages</h2>
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead><tr><th>Page</th><th class="text-right">Views</th><th class="text-right">Visits</th></tr></thead>
+                    <tbody>
+                    {% for row in report.top_pages %}
+                    <tr><td><a href="{{ row.path }}">{{ row.path }}</a></td><td class="text-right">{{ row.views }}</td><td class="text-right">{{ row.visits }}</td></tr>
+                    {% empty %}
+                    <tr><td colspan="3" class="text-muted">No page view in this period.</td></tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="stats__panel">
+            <h2 class="stats__title">Signed-in users</h2>
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead><tr><th>User</th><th class="text-right">Views</th><th class="text-right">Downloads</th><th>Last seen</th></tr></thead>
+                    <tbody>
+                    {% for row in report.users %}
+                    <tr>
+                        <td>
+                            {{ row.user__username }}
+                            {% if row.role == "admin" %}<span class="badge badge--primary">Admin</span>
+                            {% elif row.role == "service" %}<span class="badge badge--neutral">Service</span>{% endif %}
+                        </td>
+                        <td class="text-right">{{ row.views }}</td>
+                        <td class="text-right">{{ row.downloads }}</td>
+                        <td>{{ row.last }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="4" class="text-muted">No signed-in user in this period.</td></tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="stats__panel">
+            <h2 class="stats__title">Anonymous visitors by country</h2>
+            <p class="text-muted stats__note">
+                {{ report.totals.anonymous_views }} view{{ report.totals.anonymous_views|pluralize }},
+                {{ report.totals.anonymous_visits }} visit{{ report.totals.anonymous_visits|pluralize }},
+                {{ report.totals.anonymous_downloads }} download{{ report.totals.anonymous_downloads|pluralize }}
+            </p>
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead><tr><th>Country</th><th class="text-right">Visits</th><th class="text-right">Views</th><th class="text-right">Downloads</th></tr></thead>
+                    <tbody>
+                    {% for row in report.countries %}
+                    <tr>
+                        <td>{% if row.country %}<span aria-hidden="true">{{ row.flag }}</span> {{ row.country }}{% else %}<span class="text-muted">Unknown</span>{% endif %}</td>
+                        <td class="text-right">{{ row.visits }}</td>
+                        <td class="text-right">{{ row.views }}</td>
+                        <td class="text-right">{{ row.downloads }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="4" class="text-muted">No anonymous visitor in this period.</td></tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="stats__panel">
+            <h2 class="stats__title">Anonymous visitors by referring site</h2>
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead><tr><th>Site</th><th class="text-right">Visits</th><th class="text-right">Views</th></tr></thead>
+                    <tbody>
+                    {% for row in report.referrers %}
+                    <tr><td>{{ row.referrer }}</td><td class="text-right">{{ row.visits }}</td><td class="text-right">{{ row.views }}</td></tr>
+                    {% empty %}
+                    <tr><td colspan="3" class="text-muted">No visitor came from another site in this period.</td></tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="stats__panel">
+            <h2 class="stats__title">Downloads by package</h2>
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead><tr><th>Package</th><th class="text-right">Downloads</th><th class="text-right">Visitors</th><th>Last</th></tr></thead>
+                    <tbody>
+                    {% for row in report.packages %}
+                    <tr>
+                        <td>{% if row.item__name %}{{ row.item__name }} <span class="text-muted">{{ row.item__flavor_name }}</span>{% else %}<span class="text-muted">Deleted packages</span>{% endif %}</td>
+                        <td class="text-right">{{ row.downloads }}</td>
+                        <td class="text-right">{{ row.visits }}</td>
+                        <td>{{ row.last }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="4" class="text-muted">No download in this period.</td></tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="stats__panel">
+            <h2 class="stats__title">Downloads by branch</h2>
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead><tr><th>Branch</th><th class="text-right">Downloads</th></tr></thead>
+                    <tbody>
+                    {% for row in report.branches %}
+                    <tr><td>{% if row.item__branch %}<span class="badge badge--neutral">{{ row.item__branch }}</span>{% else %}<span class="text-muted">Deleted packages</span>{% endif %}</td><td class="text-right">{{ row.downloads }}</td></tr>
+                    {% empty %}
+                    <tr><td colspan="2" class="text-muted">No download in this period.</td></tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+
+    <p class="text-muted stats__note">
+        No IP address is stored: a visitor is a hash that changes every day. Hits are kept {{ retention_days }} days.
+        {% if report.geoip %}IP geolocation by <a href="https://db-ip.com">DB-IP</a>.
+        {% else %}No country database yet (<code>PATH_DATA/geoip/country.mmdb</code>, downloaded at container start): countries are unknown.{% endif %}
+    </p>
+</div>
+{% endblock %}

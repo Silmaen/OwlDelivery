@@ -1,7 +1,7 @@
 from urllib.parse import urlencode
 
 from django.conf import settings
-from django.contrib.auth.models import Permission, User
+from django.contrib.auth.models import Group, Permission, User
 from django.core.paginator import Paginator
 from django.db.models import Max, Min
 from django.shortcuts import get_object_or_404, redirect, render
@@ -15,6 +15,7 @@ from .perms_utils import (
     can_see_news_admin,
     can_see_pages_admin,
     can_see_revision_admin,
+    can_see_stats_admin,
     can_see_user_admin,
     is_comment_moderator,
 )
@@ -23,6 +24,7 @@ from .revision_utils import (
     get_revision_branches,
     get_revision_info,
 )
+from .stats_utils import SERVICE_GROUP
 from .views import SITE_HASH, SITE_VERSION
 
 SUBPAGES = [
@@ -49,6 +51,12 @@ SUBPAGES = [
         "url": "a_branches",
         "display_name": "Branches",
         "permission": can_see_revision_admin,
+    },
+    {
+        "name": "stats",
+        "url": "a_stats",
+        "display_name": "Statistics",
+        "permission": can_see_stats_admin,
     },
     {
         "name": "users",
@@ -84,6 +92,7 @@ USER_TOGGLES = {
     "toggle_revision_delete": ("delivery", ["delete_revisionitementry"]),
     "toggle_pages_edit": ("delivery", PAGES_EDIT_CODENAMES),
     "toggle_pages_push": ("delivery", PAGES_PUSH_CODENAMES),
+    "toggle_stats_view": ("delivery", ["view_traffichit"]),
 }
 
 
@@ -106,6 +115,7 @@ def admin_users(request):
     if locker.is_locked():
         return redirect("/")
     entries = User.objects.order_by("username")
+    service_ids = set(User.objects.filter(groups__name=SERVICE_GROUP).values_list("pk", flat=True))
     p_users = []
     for entry in entries:
         p_users.append(
@@ -124,6 +134,8 @@ def admin_users(request):
                 "can_delete_user": entry.has_perm("auth.delete_user"),
                 "can_edit_pages": all(entry.has_perm(f"delivery.{code}") for code in PAGES_EDIT_CODENAMES),
                 "can_push_pages": all(entry.has_perm(f"delivery.{code}") for code in PAGES_PUSH_CODENAMES),
+                "can_view_stats": entry.has_perm("delivery.view_traffichit"),
+                "is_service": entry.pk in service_ids,
             }
         )
     return render(
@@ -175,6 +187,13 @@ def admin_modif_user(request, pk):
         return redirect("a_users")
     if action == "delete":
         user.delete()
+    elif action == "toggle_service":
+        # A group rather than a permission: it grants nothing, it only takes the account out of the statistics.
+        group, _ = Group.objects.get_or_create(name=SERVICE_GROUP)
+        if user.groups.filter(pk=group.pk).exists():
+            user.groups.remove(group)
+        else:
+            user.groups.add(group)
     elif action in USER_TOGGLES:
         app_label, codenames = USER_TOGGLES[action]
         if not all(request.user.has_perm(f"{app_label}.{code}") for code in codenames):
