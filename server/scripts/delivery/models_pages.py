@@ -102,6 +102,9 @@ def validate_showcase_image(value):
     Refuse images that are too heavy or too wide for the pages.
     :param value: The uploaded file.
     """
+    # The stored file of an edit without a new upload: checked when it came in, and its file is closed.
+    if getattr(value, "_committed", False):
+        return
     if value.size > IMAGE_MAX_BYTES:
         raise ValidationError(f"Image larger than {IMAGE_MAX_BYTES // (1024 * 1024)} MB.")
     width, _ = get_image_dimensions(value)
