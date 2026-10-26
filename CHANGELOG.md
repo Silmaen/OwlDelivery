@@ -8,6 +8,7 @@ What has shipped, newest first. What is planned lives in [ROADMAP.md](ROADMAP.md
 - The users admin says why a row is read-only (your own account, a superuser).
 - `./deploy.sh password [user]` resets a lost password.
 - Long release notes are folded to a few lines, with a button to read them in full (presentation, downloads, branch pages).
+- Editing a screenshot without uploading a new file (caption, alternative text) no longer fails with an error 500.
 
 ## 0.5.0 — 2026-10-18
 

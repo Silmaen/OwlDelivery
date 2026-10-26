@@ -53,6 +53,12 @@ class PagesApiTest(PagesTestCase):
         self.assertTrue(image.published)
         self.assertNotEqual(image.image.name, old_name)
 
+    def test_push_without_a_file_updates_the_texts(self):
+        self.post({"action": "push_screenshot", "key": "raycast", "caption": "CI caption", "package": png_upload()})
+        response = self.post({"action": "push_screenshot", "key": "raycast", "caption": "New caption"})
+        self.assertEqual(response.status_code, 200, response.content)
+        self.assertEqual(ShowcaseImage.objects.get(key="raycast").caption, "New caption")
+
     def test_publish_flag_and_site_images(self):
         self.post({"action": "push_screenshot", "key": "hub", "publish": "true", "package": png_upload()})
         self.post(

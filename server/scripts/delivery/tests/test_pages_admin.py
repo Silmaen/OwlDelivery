@@ -4,7 +4,7 @@ Tests of the Pages tab of the site admin.
 
 from django.contrib.auth.models import Permission, User
 
-from delivery.models_pages import FeatureCard, PageSection, SiteLink, SiteSettings
+from delivery.models_pages import FeatureCard, PageSection, ShowcaseImage, SiteLink, SiteSettings
 from delivery.pages_seed import seed_pages
 from delivery.views_admin import PAGES_EDIT_CODENAMES, PAGES_PUSH_CODENAMES
 
@@ -68,6 +68,22 @@ class PagesAdminTest(PagesTestCase):
         )
         self.assertRedirects(response, "/admin/pages", fetch_redirect_response=False)
         self.assertContains(self.client.get("/admin/pages"), "admin-thumb")
+
+    def test_edit_image_texts_without_a_new_file(self):
+        self.login_editor()
+        self.client.post(
+            "/admin/pages",
+            {"kind": "image", "key": "hub", "image": png_upload(), "alt_text": "A village", "order": 1},
+        )
+        image = ShowcaseImage.objects.get(key="hub")
+        old_name = image.image.name
+        response = self.client.post(
+            f"/admin/pages/image/{image.pk}",
+            {"key": "hub", "caption": "New caption", "alt_text": "New alt", "order": 1, "published": "on"},
+        )
+        self.assertRedirects(response, "/admin/pages", fetch_redirect_response=False)
+        image.refresh_from_db()
+        self.assertEqual((image.caption, image.alt_text, image.image.name), ("New caption", "New alt", old_name))
 
     def test_up_and_down_swap(self):
         self.login_editor()
