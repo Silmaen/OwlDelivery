@@ -167,6 +167,14 @@ class DownloadTest(MediaTestCase):
         self.mirror(HTTP_RANGE="bytes=0-")
         self.assertEqual(TrafficHit.objects.count(), 1)
 
+    def test_packages_are_split_by_version(self):
+        other = make_item("0.5.1", "def456")
+        self.mirror()
+        self.mirror()
+        self.mirror(f"/media/{other.package.name}")
+        rows = [(row["item__branch"], row["item__hash"], row["downloads"]) for row in get_report()["packages"]]
+        self.assertEqual(rows, [("main", "abc123", 2), ("0.5.1", "def456", 1)])
+
     def test_deleted_package_keeps_its_hits(self):
         self.mirror()
         self.item.delete()

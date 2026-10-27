@@ -407,12 +407,13 @@ def get_robot_rows(robots):
 
 def get_package_rows(downloads):
     """
-    Downloads per package and flavor, all revisions together; a deleted package keeps its hits under no name.
+    Downloads per package, flavor and version (branch and revision hash); a deleted package keeps its hits under
+    no name.
     """
     rows = (
-        downloads.values("item__name", "item__flavor_name")
+        downloads.values("item__name", "item__flavor_name", "item__branch", "item__hash")
         .annotate(downloads=Count("id"), visits=Count("visitor", distinct=True), last=Max("date"))
-        .order_by("-downloads", "item__name", "item__flavor_name")
+        .order_by("-downloads", "item__name", "item__flavor_name", "item__branch", "item__hash")
     )
     return list(rows[:STATS_TOP_ROWS])
 
