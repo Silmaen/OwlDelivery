@@ -11,6 +11,7 @@ What has shipped, newest first. What is planned lives in [ROADMAP.md](ROADMAP.md
 - An account allowed to read the statistics counts as an admin, so its own visits leave them.
 - The statistics locate visitors by city and network (ISP, organisation), and show where signed-in users connect and came from.
 - The statistics count the visitors who viewed several pages and detail the robots and scripts by name.
+- The downloads statistics show the version (branch and revision) of each downloaded package.
 
 ## 0.5.1 — 2026-10-19
 

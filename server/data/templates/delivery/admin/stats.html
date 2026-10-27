@@ -201,17 +201,18 @@
             <h2 class="stats__title">Downloads by package</h2>
             <div class="table-responsive">
                 <table class="data-table">
-                    <thead><tr><th>Package</th><th class="text-right">Downloads</th><th class="text-right">Visitors</th><th>Last</th></tr></thead>
+                    <thead><tr><th>Package</th><th>Version</th><th class="text-right">Downloads</th><th class="text-right">Visitors</th><th>Last</th></tr></thead>
                     <tbody>
                     {% for row in report.packages %}
                     <tr>
                         <td>{% if row.item__name %}{{ row.item__name }} <span class="text-muted">{{ row.item__flavor_name }}</span>{% else %}<span class="text-muted">Deleted packages</span>{% endif %}</td>
+                        <td>{% if row.item__branch %}<span class="badge badge--neutral">{{ row.item__branch }}</span> <a href="{% url 'revision_detail' row.item__hash %}"><code>{{ row.item__hash }}</code></a>{% else %}<span class="text-muted">—</span>{% endif %}</td>
                         <td class="text-right">{{ row.downloads }}</td>
                         <td class="text-right">{{ row.visits }}</td>
                         <td>{{ row.last }}</td>
                     </tr>
                     {% empty %}
-                    <tr><td colspan="4" class="text-muted">No download in this period.</td></tr>
+                    <tr><td colspan="5" class="text-muted">No download in this period.</td></tr>
                     {% endfor %}
                     </tbody>
                 </table>
