@@ -2,12 +2,8 @@
 
 What has shipped, newest first. What is planned lives in [ROADMAP.md](ROADMAP.md).
 
-## 0.5.1 — in development
+## 0.5.2 — in development
 
-- Logout works again: the header posts it, Django 5+ refuses a logout by GET.
-- The users admin says why a row is read-only (your own account, a superuser).
-- `./deploy.sh password [user]` resets a lost password.
-- Long release notes are folded to a few lines, with a button to read them in full (presentation, downloads, branch pages).
 - Editing a screenshot without uploading a new file (caption, alternative text) no longer fails with an error 500.
 - A Statistics admin tab shows page views and package downloads per page, per user, per country and referring site of anonymous visitors, and per package.
 - Admins, service accounts (new "Service" toggle in the users admin) and robots are left out of the statistics unless asked for.
@@ -15,6 +11,13 @@ What has shipped, newest first. What is planned lives in [ROADMAP.md](ROADMAP.md
 - An account allowed to read the statistics counts as an admin, so its own visits leave them.
 - The statistics locate visitors by city and network (ISP, organisation), and show where signed-in users connect and came from.
 - The statistics count the visitors who viewed several pages and detail the robots and scripts by name.
+
+## 0.5.1 — 2026-10-19
+
+- Logout works again: the header posts it, Django 5+ refuses a logout by GET.
+- The users admin says why a row is read-only (your own account, a superuser).
+- `./deploy.sh password [user]` resets a lost password.
+- Long release notes are folded to a few lines, with a button to read them in full (presentation, downloads, branch pages).
 
 ## 0.5.0 — 2026-10-18
 
@@ -59,9 +62,6 @@ What has shipped, newest first. What is planned lives in [ROADMAP.md](ROADMAP.md
 
 - New user interface: design tokens, BEM components, responsive layout and mobile navigation.
 - Backend modernized: Django 6, Docker Compose, container user ownership of the data volume.
-
-## 0.3.1 — 2025-02-05
-
 - API fix for the suffixes of package files.
 
 ## 0.3.0 — 2025-02-05
@@ -73,7 +73,7 @@ What has shipped, newest first. What is planned lives in [ROADMAP.md](ROADMAP.md
 
 - Revisions reorganized by branch, with branch filtering.
 
-## 0.1.0 — 2024-05-18
+## 0.1.0 — 2024-05-19
 
 - User management: login, registration, permissions, profile, password reset.
 - Revision management: browsing, push script, automated upload.
