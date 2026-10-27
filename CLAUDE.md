@@ -125,7 +125,7 @@ OwlDelivery/
 | Upload temp | `/app/data/_upload/{0-9}/` (nginx spool, world-writable files; emptied after each push) |
 | Page images | `/app/data/pages/gallery/` (originals), `/app/data/pages/thumbs/` (WebP) |
 | Secret key | `/app/data/secret_key` (generated when `SECRET_KEY` is unset, mode 600) |
-| GeoIP database | `/app/data/geoip/country.mmdb` (DB-IP Lite, `update_geoip` at start, refreshed after 30 days) |
+| GeoIP databases | `/app/data/geoip/city.mmdb` + `asn.mmdb` (DB-IP Lite, ~135 MB, `update_geoip` at start, refreshed after 30 days; a legacy `country.mmdb` is read until `city.mmdb` replaces it) |
 | First admin password | `/app/data/initial_admin_password` (when `ADMIN_PASSWD` is unset, mode 600) |
 | Logs | `/app/data/log/` (access, gunicorn, debugging) |
 | Static (collected) | `/app/staticfiles/` |
@@ -184,7 +184,7 @@ outside the context, so pass `--build-arg GIT_REV=$(git rev-parse --short HEAD)`
 - `PATH_DATA` - Host data volume path (default: `./docker_data/data`)
 - `ADMIN_NAME`/`ADMIN_PASSWD` - Initial superuser credentials
 - `DEBUG_MODE`, `TZ`, `ENABLE_STAFF`, email settings (`EMAIL_HOST`, etc.)
-- `GEOIP_DOWNLOAD` - Download the DB-IP Lite country database at start (default `True`)
+- `GEOIP_DOWNLOAD` - Download the DB-IP Lite city and ASN databases at start (default `True`)
 
 ## API Endpoint (`/api`)
 
@@ -218,8 +218,10 @@ Script Python téléchargé par les clients (CI, développeurs) via `GET /api` p
 - **BranchEntry** - Branch metadata (name, visible, stable, date)
 - **NewsEntry.published** - Draft flag: hidden from `/`, `/news` and the detail page when false
 - **TrafficHit** (`models_stats.py`) - Page view or download: path, item, user, `automated`, `visitor` (keyed
-  hash of IP + user agent, rotates daily: no IP is stored), `country`, `referrer` (external host only). Admin
-  (superuser/staff) and service account are read from `user` at query time, so flagging an account is retroactive
+  hash of IP + user agent, rotates daily: no IP is stored), `country`/`region`/`city`/`network` (DB-IP city and
+  ASN), `agent` (robot name, robots only), `referrer` (external host only). Admin (superuser, staff or
+  `view_traffichit` holder) and service account are read from `user` at query time, so flagging an account is
+  retroactive. A user's "came from" is read on every hit of their daily visitor hash, the pre-login ones included
 - **Page content** (`models_pages.py`): `SiteSettings` (singleton `pk=1`, site texts + `content_version`),
   `PageSection` (page, key, title, intro, enabled, order), `ShowcaseImage`, `FeatureCard`, `SampleGame`,
   `RoadmapMilestone`, `ReleaseNote`, `SiteLink`. Each block of `/` and `/presentation` is cached under

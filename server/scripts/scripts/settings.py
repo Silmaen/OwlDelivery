@@ -131,8 +131,8 @@ DATABASES = {
 }
 DATABASES_LOCK_PATH = "/app/data/delivery.lock"
 
-# Country database of the statistics (DB-IP Lite, refreshed at start by `manage.py update_geoip`).
-GEOIP_PATH = "/app/data/geoip/country.mmdb"
+# Location databases of the statistics (DB-IP Lite city and ASN, refreshed at start by `manage.py update_geoip`).
+GEOIP_DIR = "/app/data/geoip"
 
 # The tests build their in-memory database straight from the models: the migrations are generated at
 # container start (entrypoint.py) and never committed, so there is nothing to apply.

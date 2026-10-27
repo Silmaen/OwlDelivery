@@ -12,6 +12,9 @@ What has shipped, newest first. What is planned lives in [ROADMAP.md](ROADMAP.md
 - A Statistics admin tab shows page views and package downloads per page, per user, per country and referring site of anonymous visitors, and per package.
 - Admins, service accounts (new "Service" toggle in the users admin) and robots are left out of the statistics unless asked for.
 - Downloads are counted through an nginx mirror, so every link counts without slowing the transfer; no IP address is stored.
+- An account allowed to read the statistics counts as an admin, so its own visits leave them.
+- The statistics locate visitors by city and network (ISP, organisation), and show where signed-in users connect and came from.
+- The statistics count the visitors who viewed several pages and detail the robots and scripts by name.
 
 ## 0.5.0 — 2026-10-18
 

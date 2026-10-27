@@ -20,9 +20,15 @@
             <span class="stats-tile__value">{{ report.totals.views }}</span>
             <span class="stats-tile__label">Page views</span>
         </div>
-        <div class="stats-tile" title="One visitor on one day counts once">
+        <div class="stats-tile" title="Unique visitors of each day, added up: one visitor on one day counts once">
             <span class="stats-tile__value">{{ report.totals.visits }}</span>
-            <span class="stats-tile__label">Visits</span>
+            <span class="stats-tile__label">Unique visitors (per day)</span>
+            <span class="stats-tile__detail">{{ report.totals.pages_per_visit }} pages per visit</span>
+        </div>
+        <div class="stats-tile" title="Visitors of a day who viewed at least two pages">
+            <span class="stats-tile__value">{{ report.totals.engaged_visits }}</span>
+            <span class="stats-tile__label">Viewed several pages</span>
+            <span class="stats-tile__detail">out of {{ report.totals.visits }}</span>
         </div>
         <div class="stats-tile">
             <span class="stats-tile__value">{{ report.totals.downloads }}</span>
@@ -31,6 +37,11 @@
         <div class="stats-tile">
             <span class="stats-tile__value">{{ report.totals.users }}</span>
             <span class="stats-tile__label">Signed-in users</span>
+            <span class="stats-tile__detail">{{ report.totals.engaged_users }} viewed several pages</span>
+        </div>
+        <div class="stats-tile stats-tile--muted" title="Always counted here, whatever the Robots box says">
+            <span class="stats-tile__value">{{ report.totals.robot_hits }}</span>
+            <span class="stats-tile__label">Robot &amp; script hits</span>
         </div>
     </div>
 
@@ -55,6 +66,39 @@
         </div>
     </section>
 
+    <section class="stats__panel">
+        <h2 class="stats__title">Signed-in users</h2>
+        <div class="table-responsive">
+            <table class="data-table">
+                <thead><tr>
+                    <th>User</th><th class="text-right">Views</th><th class="text-right">Downloads</th>
+                    <th class="text-right" title="Days with activity (one per day and device)">Visits</th>
+                    <th>Connects from</th><th>Network</th><th>Came from</th><th>Last seen</th>
+                </tr></thead>
+                <tbody>
+                {% for row in report.users %}
+                <tr>
+                    <td>
+                        {{ row.user__username }}
+                        {% if row.role == "admin" %}<span class="badge badge--primary">Admin</span>
+                        {% elif row.role == "service" %}<span class="badge badge--neutral">Service</span>{% endif %}
+                    </td>
+                    <td class="text-right">{{ row.views }}</td>
+                    <td class="text-right">{{ row.downloads }}</td>
+                    <td class="text-right">{{ row.visits }}</td>
+                    <td>{% for place, count in row.places %}<span class="stats__value" title="{{ count }} hit{{ count|pluralize }}">{{ place }}</span>{% empty %}<span class="text-muted">—</span>{% endfor %}</td>
+                    <td>{% for network, count in row.networks %}<span class="stats__value" title="{{ count }} hit{{ count|pluralize }}">{{ network }}</span>{% empty %}<span class="text-muted">—</span>{% endfor %}</td>
+                    <td>{% for site, count in row.referrers %}<span class="stats__value" title="{{ count }} hit{{ count|pluralize }}">{{ site }}</span>{% empty %}<span class="text-muted">direct</span>{% endfor %}</td>
+                    <td>{{ row.last }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="8" class="text-muted">No signed-in user in this period.</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+
     <div class="stats__grid">
         <section class="stats__panel">
             <h2 class="stats__title">Pages</h2>
@@ -72,30 +116,6 @@
             </div>
         </section>
 
-        <section class="stats__panel">
-            <h2 class="stats__title">Signed-in users</h2>
-            <div class="table-responsive">
-                <table class="data-table">
-                    <thead><tr><th>User</th><th class="text-right">Views</th><th class="text-right">Downloads</th><th>Last seen</th></tr></thead>
-                    <tbody>
-                    {% for row in report.users %}
-                    <tr>
-                        <td>
-                            {{ row.user__username }}
-                            {% if row.role == "admin" %}<span class="badge badge--primary">Admin</span>
-                            {% elif row.role == "service" %}<span class="badge badge--neutral">Service</span>{% endif %}
-                        </td>
-                        <td class="text-right">{{ row.views }}</td>
-                        <td class="text-right">{{ row.downloads }}</td>
-                        <td>{{ row.last }}</td>
-                    </tr>
-                    {% empty %}
-                    <tr><td colspan="4" class="text-muted">No signed-in user in this period.</td></tr>
-                    {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </section>
 
         <section class="stats__panel">
             <h2 class="stats__title">Anonymous visitors by country</h2>
@@ -117,6 +137,44 @@
                     </tr>
                     {% empty %}
                     <tr><td colspan="4" class="text-muted">No anonymous visitor in this period.</td></tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="stats__panel">
+            <h2 class="stats__title">Anonymous visitors by city</h2>
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead><tr><th>City</th><th class="text-right">Visits</th><th class="text-right">Views</th><th class="text-right">Downloads</th></tr></thead>
+                    <tbody>
+                    {% for row in report.cities %}
+                    <tr>
+                        <td><span aria-hidden="true">{{ row.flag }}</span> {{ row.label }} <span class="text-muted">{{ row.country }}</span></td>
+                        <td class="text-right">{{ row.visits }}</td>
+                        <td class="text-right">{{ row.views }}</td>
+                        <td class="text-right">{{ row.downloads }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="4" class="text-muted">No located visitor in this period.</td></tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="stats__panel">
+            <h2 class="stats__title">Anonymous visitors by network</h2>
+            <p class="text-muted stats__note">The internet provider or the organisation that owns the address.</p>
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead><tr><th>Network</th><th class="text-right">Visits</th><th class="text-right">Views</th><th class="text-right">Downloads</th></tr></thead>
+                    <tbody>
+                    {% for row in report.networks %}
+                    <tr><td>{{ row.network }}</td><td class="text-right">{{ row.visits }}</td><td class="text-right">{{ row.views }}</td><td class="text-right">{{ row.downloads }}</td></tr>
+                    {% empty %}
+                    <tr><td colspan="4" class="text-muted">No known network in this period.</td></tr>
                     {% endfor %}
                     </tbody>
                 </table>
@@ -177,10 +235,37 @@
         </section>
     </div>
 
+    <section class="stats__panel">
+        <h2 class="stats__title">Robots &amp; scripts</h2>
+        <p class="text-muted stats__note">Crawlers, link previews, monitoring and command-line clients (curl, wget, python), always listed here.</p>
+        <div class="table-responsive">
+            <table class="data-table">
+                <thead><tr>
+                    <th>Name</th><th class="text-right">Page views</th><th class="text-right">Distinct pages</th>
+                    <th class="text-right">Downloads</th><th class="text-right">Networks</th><th>Last seen</th>
+                </tr></thead>
+                <tbody>
+                {% for row in report.robots %}
+                <tr>
+                    <td>{% if row.agent %}{{ row.agent }}{% else %}<span class="text-muted">Unnamed (recorded before the names)</span>{% endif %}</td>
+                    <td class="text-right">{{ row.views }}</td>
+                    <td class="text-right">{{ row.pages }}</td>
+                    <td class="text-right">{{ row.downloads }}</td>
+                    <td class="text-right">{{ row.networks }}</td>
+                    <td>{{ row.last }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="6" class="text-muted">No robot nor script in this period.</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+
     <p class="text-muted stats__note">
         No IP address is stored: a visitor is a hash that changes every day. Hits are kept {{ retention_days }} days.
         {% if report.geoip %}IP geolocation by <a href="https://db-ip.com">DB-IP</a>.
-        {% else %}No country database yet (<code>PATH_DATA/geoip/country.mmdb</code>, downloaded at container start): countries are unknown.{% endif %}
+        {% else %}No location database yet (<code>PATH_DATA/geoip/</code>, downloaded at container start): places and networks are unknown.{% endif %}
     </p>
 </div>
 {% endblock %}

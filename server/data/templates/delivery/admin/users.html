@@ -172,7 +172,7 @@
                 <form method="post" action="{% url 'modif_user' user_for.pk %}">
                     {% csrf_token %}
                     <input type="hidden" value="toggle_stats_view" name="action">
-                    <button type="submit" class="btn btn--icon btn--ghost" title="Toggle statistics view">
+                    <button type="submit" class="btn btn--icon btn--ghost" title="Toggle statistics view (a statistics viewer counts as an admin)">
                         {% if user_for.can_view_stats %}<span class="material-symbols-outlined perm">monitoring</span>
                         {% else %}<span class="material-symbols-outlined noperm">monitoring</span>{% endif %}
                     </button>

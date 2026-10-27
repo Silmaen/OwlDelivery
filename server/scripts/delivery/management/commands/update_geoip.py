@@ -1,5 +1,6 @@
 """
-Download the country database of the statistics: DB-IP Lite (CC BY 4.0, no account needed), refreshed monthly.
+Download the location databases of the statistics: DB-IP Lite city and ASN (CC BY 4.0, no account needed),
+refreshed monthly. City gives the country, region and city; ASN the network (ISP or organisation).
 """
 
 import gzip
@@ -14,7 +15,11 @@ import maxminddb
 from django.conf import settings
 from django.core.management.base import BaseCommand
 
-GEOIP_URL = "https://download.db-ip.com/free/dbip-country-lite-{month}.mmdb.gz"
+from delivery.stats_utils import GEOIP_FILES
+
+GEOIP_URL = "https://download.db-ip.com/free/dbip-{name}-lite-{month}.mmdb.gz"
+# The databases to download (the city one is about 60 MB compressed); country.mmdb is only the legacy fallback.
+GEOIP_DOWNLOADS = ("city", "asn")
 GEOIP_MAX_AGE_DAYS = 30
 GEOIP_TIMEOUT = 30
 # The download host (behind Cloudflare) refuses the default user agent of urllib with a 403.
@@ -56,29 +61,39 @@ def download(url, target):
 
 
 class Command(BaseCommand):
-    help = "Download the DB-IP Lite country database when missing or older than a month (GEOIP_DOWNLOAD=False skips)."
+    help = "Download the DB-IP Lite city and ASN databases when missing or a month old (GEOIP_DOWNLOAD=False skips)."
 
     def add_arguments(self, parser):
-        parser.add_argument("--force", action="store_true", help="Download even if the database is recent.")
+        parser.add_argument("--force", action="store_true", help="Download even if the databases are recent.")
 
     def handle(self, *args, **options):
         if os.environ.get("GEOIP_DOWNLOAD", "True").lower() in ("false", "off", "no", "0"):
             self.stdout.write("GeoIP download disabled (GEOIP_DOWNLOAD).")
             return
-        target = Path(settings.GEOIP_PATH)
-        if target.is_file() and not options["force"]:
+        folder = Path(settings.GEOIP_DIR)
+        for name in GEOIP_DOWNLOADS:
+            if self.update(name, folder / GEOIP_FILES[name], options["force"]) and name == "city":
+                # The city database also gives the country: the older country-only one is no longer needed.
+                (folder / GEOIP_FILES["country"]).unlink(missing_ok=True)
+
+    def update(self, name, target, force):
+        """
+        :return: True when the database is present and recent, after a download or not.
+        """
+        if target.is_file() and not force:
             age = date.today() - date.fromtimestamp(target.stat().st_mtime)
             if age.days < GEOIP_MAX_AGE_DAYS:
-                self.stdout.write(f"GeoIP database up to date ({age.days} days old).")
-                return
-        # Never fatal: without the database the countries are only unknown.
+                self.stdout.write(f"GeoIP {name} database up to date ({age.days} days old).")
+                return True
+        # Never fatal: without the database the locations are only unknown.
         for month in candidate_months(date.today()):
-            url = GEOIP_URL.format(month=month)
+            url = GEOIP_URL.format(name=name, month=month)
             try:
                 download(url, target)
             except Exception as err:
                 self.stderr.write(f"WARNING: GeoIP download failed ({url}): {err}")
                 continue
-            self.stdout.write(f"GeoIP database updated (DB-IP Lite {month}).")
-            return
-        self.stderr.write("WARNING: no GeoIP database could be downloaded, the countries stay unknown.")
+            self.stdout.write(f"GeoIP {name} database updated (DB-IP Lite {month}).")
+            return True
+        self.stderr.write(f"WARNING: no GeoIP {name} database could be downloaded.")
+        return target.is_file()
