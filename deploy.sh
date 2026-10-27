@@ -18,6 +18,7 @@
 #   ./deploy.sh superuser       create an admin account
 #   ./deploy.sh password [user] set a new password (default user: ADMIN_NAME, else admin)
 #   ./deploy.sh shell           Django shell inside the web container
+#   ./deploy.sh purge-robots    delete the robot hits recorded before the robots were named
 #   ./deploy.sh help            this help
 #
 # `check` (alias `--check`) exits with a status meant to be scripted:
@@ -405,7 +406,7 @@ while [ $# -gt 0 ]; do
         --dry-run)   DRY_RUN=1 ;;
         -h|--help|help) usage; exit 0 ;;
         --check)     COMMAND="check" ;;
-        deploy|check|status|logs|stop|restart|backup|superuser|password|shell)
+        deploy|check|status|logs|stop|restart|backup|superuser|password|shell|purge-robots)
             COMMAND="$1"
             if [ $# -gt 1 ] && [[ "$2" != -* ]]; then
                 ARGUMENT="$2"
@@ -431,4 +432,6 @@ case "$COMMAND" in
     password)  docker compose exec -u "$(env_value PUID 1000):$(env_value PGID 1000)" "${MANAGE[@]}" \
                    changepassword "${ARGUMENT:-$(env_value ADMIN_NAME admin)}" ;;
     shell)     docker compose exec "${MANAGE[@]}" shell ;;
+    purge-robots) docker compose exec -T -u "$(env_value PUID 1000):$(env_value PGID 1000)" "${MANAGE[@]}" \
+                   purge_stats --unnamed-robots ;;
 esac

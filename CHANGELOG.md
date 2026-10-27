@@ -14,6 +14,9 @@ What has shipped, newest first. What is planned lives in [ROADMAP.md](ROADMAP.md
 - The downloads statistics show the version (branch and revision) of each downloaded package.
 - Anonymous scripts (curl, wget, python…) from outside get a 403 outside `/api`; an authenticated one or the internal network still passes.
 - nginx limits the requests per outside visitor (pages, documentation, downloads) and robots.txt keeps crawlers off the packages and the documentation.
+- Crawlers and link previews from outside get a 403 on the packages.
+- A superuser can mark a user as staff from the users admin.
+- `./deploy.sh purge-robots` deletes the robot hits recorded before the robots were named.
 
 ## 0.5.1 — 2026-10-19
 

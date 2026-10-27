@@ -156,7 +156,7 @@ PUID/PGID (`--user`/`--group`), without `--reload`.
 `./deploy.sh` = git fast-forward → database snapshot → `docker pull` of the `FROM` images →
 `docker compose build` → `up -d` → wait for `healthy`. Other commands: `check` (exit 10 if an
 update is pending), `status`, `logs`, `stop`, `restart`, `backup`, `superuser`, `password [user]`, `shell`,
-`help`; flags `--no-pull`, `--no-backup`, `--dry-run`.
+`purge-robots`, `help`; flags `--no-pull`, `--no-backup`, `--dry-run`.
 
 Invariants, because the fleet console of `home-server-stacks` runs this file through its wake
 agent: executable, committed, works with **no argument**, never reads stdin, never asks a
@@ -240,6 +240,7 @@ Script Python téléchargé par les clients (CI, développeurs) via `GET /api` p
 - `delivery.add_showcaseimage` / `delivery.add_releasenote` - CI push of screenshots / release notes
 - `delivery.view_traffichit` - Statistics tab (`/admin/stats`); the group `Service accounts` (`SERVICE_GROUP`,
   "Service" column of the users admin) grants nothing and only takes an account out of the statistics
+- Staff (`is_staff`, Django admin and out of the statistics) is toggled by a superuser only (`toggle_staff`)
 - User manager (`auth.delete_user`): never changes their own account or a superuser, and only grants or removes a
   permission they hold themselves (`USER_TOGGLES` in `views_admin.py`)
 - Every admin view checks its permission, including GET; admin redirects go to fixed URL names, never `Referer`.
@@ -284,6 +285,7 @@ Script Python téléchargé par les clients (CI, développeurs) via `GET /api` p
   `limit_req` per client (real IP from `X-Forwarded-For`, private hops trusted): zone
   `pages` (10 r/s) on Django and the documentation, `downloads` (1 r/s, burst 10) on the packages; answers 429.
   `views_pages.ROBOTS_DISALLOW` lists what robots.txt keeps from the crawlers
+- A crawler user agent (`$is_robot`) without credentials gets a 403 on `/media/packages/` (internal network excepted)
 - Static files are collected at container start (`/app/staticfiles`): after a CSS/JS change, restart the container
 - `server/VERSION` is generated at Docker build time (version + git short hash) — never commit manually
 - `.gitignore` excludes `server/VERSION`, `sample_data/*`, `docker_data/`, `.env`, `poetry.lock`

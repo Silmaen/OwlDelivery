@@ -3,9 +3,11 @@ Traffic statistics: page views, downloads mirrored by nginx, the Statistics admi
 """
 
 from datetime import timedelta
+from io import StringIO
 from unittest import mock
 
 from django.contrib.auth.models import Group, Permission, User
+from django.core.management import call_command
 from django.test import RequestFactory, TestCase
 from django.utils import timezone
 
@@ -313,3 +315,22 @@ class ServiceAccountToggleTest(TestCase):
         grant(self.manager, "view_traffichit")
         self.client.post(f"/admin/user/{self.ci.pk}", {"action": "toggle_stats_view"})
         self.assertTrue(User.objects.get(pk=self.ci.pk).has_perm("delivery.view_traffichit"))
+
+    def test_staff_is_set_by_a_superuser_only(self):
+        self.client.post(f"/admin/user/{self.ci.pk}", {"action": "toggle_staff"})
+        self.assertFalse(User.objects.get(pk=self.ci.pk).is_staff)
+        self.client.force_login(User.objects.create_superuser("root", "root@example.com", "root-password"))
+        self.client.post(f"/admin/user/{self.ci.pk}", {"action": "toggle_staff"})
+        self.assertTrue(User.objects.get(pk=self.ci.pk).is_staff)
+        self.client.post(f"/admin/user/{self.ci.pk}", {"action": "toggle_staff"})
+        self.assertFalse(User.objects.get(pk=self.ci.pk).is_staff)
+
+
+class PurgeUnnamedRobotsTest(TestCase):
+    def test_only_unnamed_robot_hits_go(self):
+        for automated, agent in ((True, ""), (True, "Googlebot"), (False, "")):
+            TrafficHit.objects.create(kind=HIT_PAGE, path="/", automated=automated, agent=agent)
+        call_command("purge_stats", "--unnamed-robots", stdout=StringIO())
+        self.assertEqual(
+            sorted(TrafficHit.objects.values_list("automated", "agent")), [(False, ""), (True, "Googlebot")]
+        )

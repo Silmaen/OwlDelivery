@@ -194,6 +194,14 @@ def purge_old_hits(days=STATS_RETENTION_DAYS):
     return deleted
 
 
+def purge_unnamed_robots():
+    """
+    Delete the robot hits recorded before the robots were named: they cannot be told apart any more.
+    """
+    deleted, _ = TrafficHit.objects.filter(automated=True, agent="").delete()
+    return deleted
+
+
 def country_flag(code):
     """
     Flag emoji of an ISO country code.

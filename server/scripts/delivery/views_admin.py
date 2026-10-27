@@ -136,6 +136,7 @@ def admin_users(request):
                 "can_push_pages": all(entry.has_perm(f"delivery.{code}") for code in PAGES_PUSH_CODENAMES),
                 "can_view_stats": entry.has_perm("delivery.view_traffichit"),
                 "is_service": entry.pk in service_ids,
+                "is_staff": entry.is_staff,
             }
         )
     return render(
@@ -187,6 +188,12 @@ def admin_modif_user(request, pk):
         return redirect("a_users")
     if action == "delete":
         user.delete()
+    elif action == "toggle_staff":
+        # Staff opens the Django admin (/staff, ENABLE_STAFF) and leaves the statistics: a superuser's call.
+        if not request.user.is_superuser:
+            return redirect("a_users")
+        user.is_staff = not user.is_staff
+        user.save(update_fields=["is_staff"])
     elif action == "toggle_service":
         # A group rather than a permission: it grants nothing, it only takes the account out of the statistics.
         group, _ = Group.objects.get_or_create(name=SERVICE_GROUP)
