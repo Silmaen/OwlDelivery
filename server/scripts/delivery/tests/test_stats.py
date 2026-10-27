@@ -11,7 +11,15 @@ from django.utils import timezone
 
 from delivery.models import TrafficHit
 from delivery.models_stats import HIT_DOWNLOAD, HIT_PAGE
-from delivery.stats_utils import SERVICE_GROUP, client_address, country_flag, get_report, purge_old_hits
+from delivery.stats_utils import (
+    SERVICE_GROUP,
+    agent_name,
+    client_address,
+    country_flag,
+    get_report,
+    place_label,
+    purge_old_hits,
+)
 
 from .helpers import MediaTestCase, make_item
 
@@ -67,12 +75,53 @@ class PageViewTest(TestCase):
         self.client.get("/news", **VISITOR, HTTP_HOST="owl.example.org", HTTP_REFERER="https://owl.example.org/")
         self.assertEqual(sorted(TrafficHit.objects.values_list("referrer", flat=True)), ["", "github.com"])
 
-    def test_country_comes_from_the_public_address(self):
-        with mock.patch("delivery.stats_utils.get_geoip_reader") as reader:
-            reader.return_value.get.return_value = {"country": {"iso_code": "fr"}}
+    def test_location_comes_from_the_public_address(self):
+        city = mock.Mock()
+        city.get.return_value = {
+            "country": {"iso_code": "fr"},
+            "subdivisions": [{"names": {"en": "Occitanie"}}],
+            "city": {"names": {"en": "Toulouse"}},
+        }
+        asn = mock.Mock()
+        asn.get.return_value = {"autonomous_system_organization": "Orange S.A."}
+        with mock.patch(
+            "delivery.stats_utils.get_geoip_reader", side_effect=lambda name: {"city": city, "asn": asn}.get(name)
+        ):
             self.client.get("/news", **VISITOR)
-        reader.return_value.get.assert_called_once_with("8.8.8.8")
-        self.assertEqual(TrafficHit.objects.get().country, "FR")
+        city.get.assert_called_once_with("8.8.8.8")
+        hit = TrafficHit.objects.get()
+        self.assertEqual(
+            (hit.country, hit.region, hit.city, hit.network), ("FR", "Occitanie", "Toulouse", "Orange S.A.")
+        )
+
+    def test_legacy_country_database_still_read(self):
+        country = mock.Mock()
+        country.get.return_value = {"country": {"iso_code": "DE"}}
+        with mock.patch(
+            "delivery.stats_utils.get_geoip_reader", side_effect=lambda name: country if name == "country" else None
+        ):
+            self.client.get("/news", **VISITOR)
+        hit = TrafficHit.objects.get()
+        self.assertEqual((hit.country, hit.city, hit.network), ("DE", "", ""))
+
+    def test_robot_names(self):
+        self.assertEqual(
+            agent_name("Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)"), "Googlebot"
+        )
+        self.assertEqual(agent_name("Mozilla/5.0 (compatible; bingbot/2.0)"), "bingbot")
+        self.assertEqual(agent_name("python-requests/2.32.3"), "python-requests")
+        self.assertEqual(agent_name("curl/8.5.0"), "curl")
+        self.assertEqual(agent_name("Mozilla/5.0 (compatible; Uptime-Kuma/1.23)"), "Uptime-Kuma")
+        self.assertEqual(agent_name("Mozilla/5.0 (X11) HeadlessChrome/124.0"), "headless")
+        self.assertEqual(agent_name(""), "(no user agent)")
+        self.client.get("/news", **{**VISITOR, "HTTP_USER_AGENT": "Googlebot/2.1"})
+        self.client.get("/news", **VISITOR)
+        self.assertEqual(sorted(TrafficHit.objects.values_list("agent", flat=True)), ["", "Googlebot"])
+
+    def test_place_label(self):
+        self.assertEqual(place_label("FR", "Occitanie", "Toulouse"), "Toulouse, Occitanie, FR")
+        self.assertEqual(place_label("SG", "Singapore", "Singapore"), "Singapore, SG")
+        self.assertEqual(place_label("", "", ""), "")
 
     def test_client_address_ignores_prepended_hops(self):
         request = RequestFactory().get(
@@ -156,6 +205,57 @@ class StatsReportTest(TestCase):
         self.assertTrue(timeline["weekly"])
         self.assertEqual(sum(bar["views"] for bar in timeline["bars"]), 4)
         self.assertEqual(len(get_report(7)["timeline"]["bars"]), 8)
+
+    def test_engaged_visitors_and_users(self):
+        TrafficHit.objects.create(kind=HIT_PAGE, path="/", user=self.reader, visitor=f"v{self.reader.pk}")
+        totals = get_report(30)["totals"]
+        # vNone viewed 2 pages, the reader 2 pages too: both engaged.
+        self.assertEqual((totals["engaged_visits"], totals["engaged_users"], totals["pages_per_visit"]), (2, 1, 2.0))
+        self.assertEqual(totals["robot_hits"], 1)
+
+    def test_robots_are_always_detailed(self):
+        TrafficHit.objects.create(kind=HIT_PAGE, path="/", visitor="bot", automated=True, agent="Googlebot")
+        rows = {row["agent"]: row for row in get_report(30)["robots"]}
+        self.assertEqual((rows["Googlebot"]["views"], rows[""]["views"]), (1, 1))
+        self.assertEqual(rows["Googlebot"]["pages"], 1)
+
+    def test_user_origin_includes_the_visit_before_login(self):
+        visitor = f"v{self.reader.pk}"
+        TrafficHit.objects.create(kind=HIT_PAGE, path="/", visitor=visitor, referrer="github.com")
+        TrafficHit.objects.create(
+            kind=HIT_PAGE,
+            path="/",
+            user=self.reader,
+            visitor=visitor,
+            country="FR",
+            region="Occitanie",
+            city="Toulouse",
+            network="Orange S.A.",
+        )
+        row = get_report(30)["users"][0]
+        self.assertEqual(row["referrers"], [("github.com", 1)])
+        self.assertEqual(row["places"][0], ("Toulouse, Occitanie, FR", 1))
+        self.assertEqual(row["networks"], [("Orange S.A.", 1)])
+
+    def test_anonymous_cities_and_networks(self):
+        TrafficHit.objects.create(
+            kind=HIT_PAGE, path="/", visitor="x", country="FR", region="Brittany", city="Rennes", network="Free SAS"
+        )
+        report = get_report(30)
+        self.assertEqual([row["label"] for row in report["cities"]], ["Rennes, Brittany"])
+        self.assertEqual([row["network"] for row in report["networks"]], ["Free SAS"])
+
+    def test_stats_viewers_are_admins(self):
+        grant(self.reader, "view_traffichit")
+        self.assertEqual(get_report(30)["users"], [])
+        viewers = Group.objects.create(name="Viewers")
+        viewers.permissions.add(Permission.objects.get(codename="view_traffichit"))
+        other = User.objects.create_user("other", password="other-password")
+        other.groups.add(viewers)
+        TrafficHit.objects.create(kind=HIT_PAGE, path="/news", user=other, visitor="other")
+        self.assertEqual(get_report(30)["totals"]["views"], 2)
+        roles = {row["user__username"]: row["role"] for row in get_report(30, admins=True)["users"]}
+        self.assertEqual((roles["reader"], roles["other"]), ("admin", "admin"))
 
     def test_purge(self):
         self.assertEqual(purge_old_hits(30), 1)

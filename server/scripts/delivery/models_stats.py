@@ -41,6 +41,10 @@ class TrafficHit(models.Model):
     automated = models.BooleanField(default=False, verbose_name="Robot or script")
     visitor = models.CharField(max_length=16, blank=True, default="", verbose_name="Daily visitor hash")
     country = models.CharField(max_length=2, blank=True, default="", verbose_name="Country code")
+    region = models.CharField(max_length=100, blank=True, default="", verbose_name="Region")
+    city = models.CharField(max_length=100, blank=True, default="", verbose_name="City")
+    network = models.CharField(max_length=100, blank=True, default="", verbose_name="Network (ISP, organisation)")
+    agent = models.CharField(max_length=64, blank=True, default="", verbose_name="Robot or script name")
     referrer = models.CharField(max_length=255, blank=True, default="", verbose_name="Referring site")
 
     class Meta:

@@ -266,3 +266,18 @@
   border-radius: var(--radius-sm);
   vertical-align: middle;
 }
+
+.stats-tile__detail {
+  font-size: var(--text-xs);
+  color: var(--color-neutral-300);
+}
+
+.stats-tile--muted {
+  border-left-color: var(--color-neutral-300);
+}
+
+/* Several values in one cell (places, networks, referrers of a user): one per line */
+.stats__value {
+  display: block;
+  white-space: nowrap;
+}
