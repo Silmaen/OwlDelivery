@@ -32,6 +32,10 @@ from .perms_utils import can_see_admin
 from .release_utils import get_latest_docs_url
 from .views import SITE_HASH, SITE_VERSION, STAFF_ACTIVE
 
+# Kept away from the crawlers: the packages and the documentation (heavy, and nginx refuses the anonymous scripts
+# there anyway), one revision per page, and what needs an account.
+ROBOTS_DISALLOW = ("/media/", "/docs/", "/revision/", "/admin/", "/profile/", "/api", "/upload")
+
 
 def page_context(request, page):
     return {
@@ -135,5 +139,6 @@ def presentation(request):
 
 
 def robots_txt(request):
-    lines = ["User-agent: *", "Allow: /", f"Sitemap: {absolute_url(request, reverse('sitemap'))}"]
+    lines = ["User-agent: *", *(f"Disallow: {prefix}" for prefix in ROBOTS_DISALLOW)]
+    lines += ["Allow: /", f"Sitemap: {absolute_url(request, reverse('sitemap'))}"]
     return HttpResponse("\n".join(lines) + "\n", content_type="text/plain")

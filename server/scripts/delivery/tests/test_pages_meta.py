@@ -65,6 +65,7 @@ class PagesMetaTest(PagesTestCase):
         seed_pages()
         robots = self.client.get("/robots.txt")
         self.assertContains(robots, "Sitemap: http://testserver/sitemap.xml")
+        self.assertContains(robots, "Disallow: /media/")
         sitemap = self.client.get("/sitemap.xml")
         self.assertContains(sitemap, "<loc>http://testserver/presentation</loc>")
         self.assertContains(sitemap, "<loc>http://testserver/</loc>")

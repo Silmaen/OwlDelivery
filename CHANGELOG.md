@@ -12,6 +12,8 @@ What has shipped, newest first. What is planned lives in [ROADMAP.md](ROADMAP.md
 - The statistics locate visitors by city and network (ISP, organisation), and show where signed-in users connect and came from.
 - The statistics count the visitors who viewed several pages and detail the robots and scripts by name.
 - The downloads statistics show the version (branch and revision) of each downloaded package.
+- Anonymous scripts (curl, wget, python…) get a 403 outside `/api`; an authenticated one still passes.
+- nginx limits the requests per visitor (pages, documentation, downloads) and robots.txt keeps crawlers off the packages and the documentation.
 
 ## 0.5.1 — 2026-10-19
 
