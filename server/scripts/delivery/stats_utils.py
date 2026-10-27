@@ -44,8 +44,8 @@ AUTOMATED_AGENTS = re.compile(
 BOT_NAME = re.compile(r"[A-Za-z][\w.-]*(?:bot|crawler|spider|slurp|archiver|fetcher)\b", re.IGNORECASE)
 COMPATIBLE_NAME = re.compile(r"compatible;\s*([^;/)]+)")
 PRODUCT_NAME = re.compile(r"^([A-Za-z][\w.-]*)")
-# Files of `settings.GEOIP_DIR` (management command update_geoip). country.mmdb is the database of 0.5.1's first
-# version: still read for the country until city.mmdb replaces it.
+# Files of `settings.GEOIP_DIR` (management command update_geoip). country.mmdb, country only, is the database of the
+# first statistics version: still read for the country until city.mmdb replaces it.
 GEOIP_FILES = {"city": "city.mmdb", "asn": "asn.mmdb", "country": "country.mmdb"}
 _geoip = {}
 
