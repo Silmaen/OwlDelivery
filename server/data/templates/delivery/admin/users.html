@@ -18,6 +18,7 @@
             <th class="cell--center">User del.</th>
             <th class="cell--center">Stats view</th>
             <th class="cell--center" title="Service accounts (CI, scripts) are left out of the statistics">Service</th>
+            <th class="cell--center" title="Staff: Django admin access, left out of the statistics; set by a superuser">Staff</th>
             <th class="cell--actions"></th>
         </tr>
         </thead>
@@ -75,6 +76,10 @@
             <td class="cell--center">
                 {% if user_for.is_service %}<span class="material-symbols-outlined perm">smart_toy</span>
                 {% else %}<span class="material-symbols-outlined text-muted">person</span>{% endif %}
+            </td>
+            <td class="cell--center">
+                {% if user_for.is_staff %}<span class="material-symbols-outlined perm">badge</span>
+                {% else %}<span class="material-symbols-outlined noperm">badge</span>{% endif %}
             </td>
             <td></td>
             {% else %}
@@ -187,6 +192,21 @@
                         {% else %}<span class="material-symbols-outlined text-muted">person</span>{% endif %}
                     </button>
                 </form>
+            </td>
+            <td class="cell--center">
+                {% if user.is_superuser %}
+                <form method="post" action="{% url 'modif_user' user_for.pk %}">
+                    {% csrf_token %}
+                    <input type="hidden" value="toggle_staff" name="action">
+                    <button type="submit" class="btn btn--icon btn--ghost" title="Toggle staff (Django admin access, left out of the statistics)">
+                        {% if user_for.is_staff %}<span class="material-symbols-outlined perm">badge</span>
+                        {% else %}<span class="material-symbols-outlined noperm">badge</span>{% endif %}
+                    </button>
+                </form>
+                {% else %}
+                {% if user_for.is_staff %}<span class="material-symbols-outlined perm">badge</span>
+                {% else %}<span class="material-symbols-outlined noperm">badge</span>{% endif %}
+                {% endif %}
             </td>
             <td class="cell--actions">
                 <form method="post" action="{% url 'modif_user' user_for.pk %}">
