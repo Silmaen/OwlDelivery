@@ -279,8 +279,9 @@ Script Python téléchargé par les clients (CI, développeurs) via `GET /api` p
   `alias /app/data` published the database. Adding a public subdirectory is a deliberate edit of
   `server/config/http.d/Django_server.conf`
 - nginx refuses (403) a script user agent (`$is_script`: curl, wget, python, empty…) that sends neither
-  `Authorization` nor the `sessionid` cookie, except on `/api`, `/upload`, `robots.txt`, `sitemap.xml` and from
-  loopback (health check). `limit_req` per client (real IP from `X-Forwarded-For`, private hops trusted): zone
+  `Authorization` nor the `sessionid` cookie, except on `/api`, `/upload`, `robots.txt`, `sitemap.xml`. The internal
+  network (`$is_internal`: loopback and private ranges, health check, gatus, LAN) is neither filtered nor limited.
+  `limit_req` per client (real IP from `X-Forwarded-For`, private hops trusted): zone
   `pages` (10 r/s) on Django and the documentation, `downloads` (1 r/s, burst 10) on the packages; answers 429.
   `views_pages.ROBOTS_DISALLOW` lists what robots.txt keeps from the crawlers
 - Static files are collected at container start (`/app/staticfiles`): after a CSS/JS change, restart the container
